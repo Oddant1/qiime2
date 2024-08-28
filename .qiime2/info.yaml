@@ -6,5 +6,5 @@ short_description: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
                    labore et dolore magna aliqua. Ut enim ad minim veniam, quis
                    nostrud exercitation ullamco laboris nisi ut aliquip ex ea
                    commodo consequat.
-long_description_path: .qiime2/info.md
+long_description_path: .qiime2/long_description.md
 user_docs_link: https://docs.qiime2.org/
