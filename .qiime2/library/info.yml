@@ -8,3 +8,4 @@ short_description: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
                    commodo consequat.
 long_description_path: README.md
 user_docs_link: https://docs.qiime2.org/
+non_conda_install: false
