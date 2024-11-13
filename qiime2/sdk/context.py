@@ -195,9 +195,9 @@ class Context:
            failure, a context can still identify what will (no longer) be
            returned.
         """
-        with self.cache.lock:
-            new_ref = self.cache.process_pool.save(ref)
+        new_ref = self.cache.process_pool.save(ref)
 
+        with self.cache.lock:
             if self.cache.named_pool is not None:
                 self.cache.named_pool.save(new_ref)
 
