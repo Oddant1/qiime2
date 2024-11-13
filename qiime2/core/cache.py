@@ -1624,28 +1624,6 @@ class Pool:
             if not os.path.lexists(dest):
                 os.symlink(src, dest)
 
-    def _rename_to_collection_pool(self, uuid, src):
-        uuid = str(uuid)
-
-        dest = self.data / uuid
-        alias = os.path.split(src)[0]
-        with self.lock:
-            # Rename errors if the destination already exists
-            if not os.path.exists(dest):
-                os.rename(src, dest)
-                set_permissions(dest, READ_ONLY_FILE, READ_ONLY_DIR)
-
-            # Create a new alias whether we renamed or not because this is
-            # still loading a new reference to the data even if the data is
-            # already there
-            process_alias = self._alias(uuid)
-
-        # Remove the aliased directory above the one we renamed. We need to do
-        # this whether we renamed or not because we aren't renaming this
-        # directory but the one beneath it
-        shutil.rmtree(alias)
-        return process_alias, dest
-
     def load(self, ref):
         """Loads a reference to an element in the pool.
 
