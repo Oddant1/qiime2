@@ -219,7 +219,7 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(dict_execution_contexts, self.tpool_expected)
 
     @pytest.mark.skipif(platform.system() == 'Darwin' and
-                        datetime.today().strftime('%m-%d') < '12-13',
+                        datetime.today().strftime('%Y-%m-%d') < '2024-12-13',
                         reason='Currently segmentation faulting on apple'
                                ' silicon Macs')
     def test_load_complex_config(self):
