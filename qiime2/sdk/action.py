@@ -14,7 +14,7 @@ import textwrap
 
 import decorator
 import dill
-from parsl.app.app import python_app, join_app
+from parsl.app.app import python_app
 
 import qiime2.sdk
 import qiime2.core.type as qtype

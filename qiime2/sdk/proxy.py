@@ -85,7 +85,7 @@ class ProxyResult(Proxy):
 
     def result(self):
         if self._alias_hook:
-            return  self._alias_hook()
+            return self._alias_hook()
 
         return self._get_element_(self._future_.result())
 
@@ -115,7 +115,8 @@ class ProxyArtifact(ProxyResult):
     """This represents a future Artifact that is being returned by a Parsl app
     """
     def _view(self, view_type, recorder):
-        return self._get_element_(self._future_.result())._view(view_type, recorder)
+        return self._get_element_(
+            self._future_.result())._view(view_type, recorder)
 
     def view(self, view_type):
         """If we want to view the result we need the future to be resolved

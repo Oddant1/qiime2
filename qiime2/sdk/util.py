@@ -10,8 +10,6 @@ import re
 from pkg_resources import iter_entry_points
 from typing import Dict, TYPE_CHECKING
 
-from parsl.app.app import python_app
-
 import qiime2.sdk
 import qiime2.core.type as qtype
 import qiime2.core.type.parse as _parse
