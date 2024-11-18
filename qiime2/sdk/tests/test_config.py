@@ -9,8 +9,6 @@
 import os
 import tempfile
 import unittest
-import platform
-from datetime import datetime
 
 import parsl
 from parsl.executors.threads import ThreadPoolExecutor
