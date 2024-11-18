@@ -13,7 +13,6 @@ import platform
 from datetime import datetime
 
 import parsl
-import pytest
 from parsl.executors.threads import ThreadPoolExecutor
 from parsl.errors import NoDataFlowKernelError
 
@@ -218,10 +217,6 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(list_execution_contexts, self.tpool_expected)
             self.assertEqual(dict_execution_contexts, self.tpool_expected)
 
-    @pytest.mark.skipif(platform.system() == 'Darwin' and
-                        datetime.today().strftime('%Y-%m-%d') < '2024-12-13',
-                        reason='Currently segmentation faulting on apple'
-                               ' silicon Macs')
     def test_load_complex_config(self):
         """ Test that all parsl modules we currently map are correct
         """
