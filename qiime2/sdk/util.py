@@ -186,12 +186,3 @@ def get_available_usage_drivers() -> Dict[str, 'UsageDriver']:
         entry_point.name: entry_point.resolve() for entry_point in
         iter_entry_points(group='qiime2.usage_drivers')
     }
-
-
-@python_app(executors=['default'])
-def create_future(results):
-    '''
-    There are some cases where we need a future but don't have one, this is
-    used to create one.
-    '''
-    return results
