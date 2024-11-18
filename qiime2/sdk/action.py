@@ -108,15 +108,6 @@ def _unmap_arg(arg, inputs):
     return unmapped
 
 
-def _alias(provenance, name, output, ctx):
-    prov = provenance.fork(name, output)
-
-    aliased_result = output._alias(prov)
-    aliased_result = ctx.add_parent_reference(aliased_result)
-
-    return aliased_result
-
-
 class Action(metaclass=abc.ABCMeta):
     """QIIME 2 Action"""
     type = 'action'
