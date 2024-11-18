@@ -67,37 +67,10 @@ class Context:
             # The function is the first arg, we ditch that
             args = args[1:]
 
-            # If we have a named_pool, we need to check for cached results that
-            # we can reuse.
-            #
-            # We can short circuit our index checking if any of our arguments
-            # are proxies because if we got a proxy as an argument, we know it
-            # is a new thing we are computing from a prior step in the pipeline
-            # and thus will not be cached.
-            if self.cache.named_pool is not None and \
-                    not self._contains_proxies(*args, **kwargs):
-
-                collated_inputs = action_obj.signature.collate_inputs(
-                    *args, **kwargs)
-                callable_args = action_obj.signature.coerce_user_input(
-                    **collated_inputs)
-
-                # Make args and kwargs look how they do when we read them
-                # out of a .yaml file (list of single value dicts of
-                # input_name: value)
-                arguments = []
-                for k, v in callable_args.items():
-                    arguments.append({k: v})
-
-                invocation = HashableInvocation(plugin_action, arguments)
-                if invocation in self.cache.named_pool.index:
-                    # It is conceivable that since we created our index the
-                    # pool we indexed has been destroyed. If that is the
-                    # case we want to just continue on and rerun the action
-                    try:
-                        return self._load_cache(action_obj, invocation)
-                    except KeyError:
-                        pass
+            # Check for cached results to recycle
+            if cached_results := self._check_cache(
+                    args, kwargs, action_obj, plugin_action):
+                return cached_results
 
             # If we didn't have cached results to reuse, we need to execute
             # the action.
@@ -129,6 +102,39 @@ class Context:
             deferred_action)
         action_obj._set_wrapper_properties(deferred_action)
         return deferred_action
+
+    def _check_cache(self, args, kwargs, action_obj, plugin_action):
+        # If we have a named_pool, we need to check for cached results that
+        # we can reuse.
+        #
+        # We can short circuit our index checking if any of our arguments
+        # are proxies because if we got a proxy as an argument, we know it
+        # is a new thing we are computing from a prior step in the pipeline
+        # and thus will not be cached.
+        if self.cache.named_pool is not None and \
+                not self._contains_proxies(*args, **kwargs):
+
+            collated_inputs = action_obj.signature.collate_inputs(
+                *args, **kwargs)
+            callable_args = action_obj.signature.coerce_user_input(
+                **collated_inputs)
+
+            # Make args and kwargs look how they do when we read them
+            # out of a .yaml file (list of single value dicts of
+            # input_name: value)
+            arguments = []
+            for k, v in callable_args.items():
+                arguments.append({k: v})
+
+            invocation = HashableInvocation(plugin_action, arguments)
+            if invocation in self.cache.named_pool.index:
+                # It is conceivable that since we created our index the
+                # pool we indexed has been destroyed. If that is the
+                # case we want to just continue on and rerun the action
+                try:
+                    return self._load_cache(action_obj, invocation)
+                except KeyError:
+                    pass
 
     def _load_cache(self, action_obj, invocation):
         """Load cached results
