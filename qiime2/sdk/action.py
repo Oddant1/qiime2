@@ -108,13 +108,6 @@ def _unmap_arg(arg, inputs):
     return unmapped
 
 
-@join_app
-def _deferred_alias(provenance, name, output, ctx, inputs=[]):
-    output = output.result()
-    alias = _alias(provenance, name, output, ctx)
-    return qiime2.sdk.util.create_future(alias)
-
-
 def _alias(provenance, name, output, ctx):
     prov = provenance.fork(name, output)
 
@@ -426,13 +419,6 @@ class Action(metaclass=abc.ABCMeta):
                 exe = action._bind(lambda: ctx, execution_ctx)
                 results = exe(*args, **kwargs)
 
-                # If we are running a pipeline, we need to create a future here
-                # because the parsl join app the pipeline was running in is
-                # expected to return a future, but we will have concrete
-                # results by this point if we are a pipeline
-                if isinstance(action, Pipeline) and ctx.parallel:
-                    return qiime2.sdk.util.create_future(results)
-
                 return results
 
         # Set the name of the closure to the name of the action, so we see the
@@ -445,10 +431,8 @@ class Action(metaclass=abc.ABCMeta):
         # those internal pipelines simultaneously.
         if isinstance(self, qiime2.sdk.action.Pipeline):
             execution_ctx['parsl_type'] = 'DFK'
-            future = join_app()(
-                    _run_parsl_action)(self, ctx, execution_ctx,
-                                       mapped_args, mapped_kwargs,
-                                       inputs=futures)
+            exe = self._bind(lambda: ctx, execution_ctx)
+            return exe(*args, **kwargs)
         else:
             execution_ctx['parsl_type'] = \
                 ctx.executor_name_type_mapping[executor]
@@ -683,51 +667,41 @@ class Pipeline(Action):
                 % (len(outputs), len(output_types)))
 
         results = []
+
+        # If we don't have a Result, we should have a collection, if we
+        # have neither, or our types just don't match up, something bad
+        # happened
         for output, (name, spec) in zip(outputs, output_types.items()):
-            # If we don't have a Result, we should have a collection, if we
-            # have neither, or our types just don't match up, something bad
-            # happened
-            if isinstance(output, qiime2.sdk.Result) and \
+            if (isinstance(output, qiime2.sdk.Result) or
+                    isinstance(output, Proxy)) and \
                     (output.type <= spec.qiime_type):
-                aliased_result = _alias(provenance, name, output, ctx)
+                if isinstance(output, Proxy):
+                    aliased_result = output._alias(name, provenance, ctx)
+                else:
+                    prov = provenance.fork(name, output)
+
+                    aliased_result = output._alias(prov)
+                    aliased_result = ctx.add_parent_reference(aliased_result)
+
                 results.append(aliased_result)
-            elif isinstance(output, Proxy) and \
-                    (output.type <= spec.qiime_type):
-                aliased_result = _deferred_alias(
-                    provenance, name, output, ctx,
-                    inputs=[output._future_])
-                aliased_result = output.__class__(
-                    future=aliased_result, selector=output._selector_,
-                    qiime_type=output._qiime_type_)
-                results.append(aliased_result)
-            elif spec.qiime_type.name == 'Collection' and \
-                    output.collection in spec.qiime_type:
+            elif spec.qiime_type.name == 'Collection':
                 size = len(output)
                 aliased_output = qiime2.sdk.ResultCollection()
                 for idx, (key, value) in enumerate(output.items()):
                     collection_name = create_collection_name(
                         name=name, key=key, idx=idx, size=size)
-
                     if isinstance(value, Proxy):
-                        aliased_result = _deferred_alias(
-                            provenance, collection_name, value, ctx,
-                            inputs=[value._future_])
-                        aliased_result = value.__class__(
-                            future=aliased_result, selector=value._selector_,
-                            qiime_type=value._qiime_type_)
+                        aliased_result = \
+                            value._alias(collection_name, provenance, ctx)
                     else:
-                        aliased_result = _alias(
-                            provenance, collection_name, value, ctx)
+                        prov = provenance.fork(collection_name, value)
+
+                        aliased_result = value._alias(prov)
+                        aliased_result = \
+                            ctx.add_parent_reference(aliased_result)
 
                     aliased_output[str(key)] = aliased_result
-
                 results.append(aliased_output)
-            else:
-                _type = output.type if isinstance(output, qiime2.sdk.Result) \
-                    else type(output)
-                raise TypeError(
-                    "Expected output type %r, received %r" %
-                    (spec.qiime_type, _type))
 
         if len(results) != len(self.signature.outputs):
             raise ValueError(

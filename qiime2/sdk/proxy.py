@@ -30,6 +30,7 @@ class ProxyResult(Proxy):
         self._future_ = future
         self._selector_ = selector
         self._qiime_type_ = qiime_type
+        self._alias_hook = None
 
     def __repr__(self):
         if self._qiime_type_ is None:
@@ -40,6 +41,21 @@ class ProxyResult(Proxy):
 
     def __hash__(self):
         return hash(self.uuid)
+
+    def _alias(self, name, provenance, ctx):
+        def _alias_hook():
+            result = new._get_element_(new._future_.result())
+
+            prov = provenance.fork(name, result)
+
+            aliased_result = result._alias(prov)
+            aliased_result = ctx.add_parent_reference(aliased_result)
+
+            return aliased_result
+
+        new = self.__class__(self._future_, self._selector_, self._qiime_type_)
+        new._alias_hook = _alias_hook
+        return new
 
     @property
     def _archiver(self):
@@ -68,6 +84,9 @@ class ProxyResult(Proxy):
         return self._archiver.citations
 
     def result(self):
+        if self._alias_hook:
+            return  self._alias_hook()
+
         return self._get_element_(self._future_.result())
 
     def _get_element_(self, results):
@@ -95,6 +114,9 @@ class ProxyResult(Proxy):
 class ProxyArtifact(ProxyResult):
     """This represents a future Artifact that is being returned by a Parsl app
     """
+    def _view(self, view_type, recorder):
+        return self._get_element_(self._future_.result())._view(view_type, recorder)
+
     def view(self, view_type):
         """If we want to view the result we need the future to be resolved
         """
