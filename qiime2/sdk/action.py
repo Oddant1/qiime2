@@ -445,7 +445,7 @@ class Action(metaclass=abc.ABCMeta):
             if not isinstance(self, Pipeline):
                 raise ValueError('Only pipelines may be run in parallel')
 
-            return self._bind_parsl(qiime2.sdk.Context(parallel=True), *args,
+            return self._bind_parsl(qiime2.sdk.ParallelContext(), *args,
                                     **kwargs)
 
         parsl_wrapper = self._rewrite_wrapper_signature(parsl_wrapper)

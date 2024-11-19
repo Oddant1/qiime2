@@ -10,27 +10,13 @@ from qiime2.core.type.util import is_collection_type
 from qiime2.core.type import HashableInvocation
 from qiime2.core.cache import get_cache
 import qiime2.sdk
-from qiime2.sdk.parallel_config import PARALLEL_CONFIG
 
 
 class Context:
-    def __init__(self, parent=None, parallel=False):
+    def __init__(self, parent=None):
         if parent is not None:
-            self.action_executor_mapping = parent.action_executor_mapping
-            self.executor_name_type_mapping = parent.executor_name_type_mapping
-            self.parallel = parent.parallel
             self.cache = parent.cache
         else:
-            self.action_executor_mapping = \
-                PARALLEL_CONFIG.action_executor_mapping
-            # Cast type to str so yaml doesn't think it needs tpo instantiate
-            # an executor object when we write this to then read this from
-            # provenance
-            self.executor_name_type_mapping = \
-                None if PARALLEL_CONFIG.parallel_config is None \
-                else {v.label: v.__class__.__name__
-                      for v in PARALLEL_CONFIG.parallel_config.executors}
-            self.parallel = parallel
             self.cache = get_cache()
             # Only ever do this on the root context. We only want to index the
             # pool once before we start adding our own stuff to it.
@@ -74,34 +60,16 @@ class Context:
 
             # If we didn't have cached results to reuse, we need to execute
             # the action.
-            #
-            # These factories will create new Contexts with this context as
-            # their parent. This allows scope cleanup to happen
-            # recursively. A factory is necessary so that independent
-            # applications of the returned callable receive their own
-            # Context objects.
-            #
-            # The parsl factory is a bit more complicated because we need
-            # to pass this exact Context along for a while longer until we
-            # run a normal _bind in action/_run_parsl_action. Then we
-            # create a new Context with this one as its parent inside of
-            # the parsl app
-            def _bind_parsl_context(ctx):
-                def _bind_parsl_args(*args, **kwargs):
-                    return action_obj._bind_parsl(
-                        Context(parent=ctx), *args, **kwargs)
-                return _bind_parsl_args
-
-            if self.parallel:
-                return _bind_parsl_context(self)(*args, **kwargs)
-
-            return action_obj._bind(
-                lambda: Context(parent=self))(*args, **kwargs)
+            return self._bind(action_obj, args, kwargs)
 
         deferred_action = action_obj._rewrite_wrapper_signature(
             deferred_action)
         action_obj._set_wrapper_properties(deferred_action)
         return deferred_action
+
+    # TODO: This may basically go away
+    def _bind(self, action_obj, args, kwargs):
+        return action_obj._bind(lambda: self)(*args, **kwargs)
 
     def _check_cache(self, args, kwargs, action_obj, plugin_action):
         # If we have a named_pool, we need to check for cached results that
