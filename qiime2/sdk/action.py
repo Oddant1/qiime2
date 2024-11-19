@@ -74,7 +74,6 @@ def _map_arg(arg, futures):
 def _unmap_arg(arg, inputs):
     """ Unmap a proxy artifact given to a parsl action
     """
-
     # We were hacky and set _future_ to be the index of this artifact in the
     # inputs list
     if isinstance(arg, Proxy):
