@@ -29,7 +29,8 @@ def _subprocess_apply(action, ctx, args, kwargs):
     # right cache
     with ctx.cache:
         exe = action._bind(
-            lambda: qiime2.sdk.Context(parent=ctx), {'type': 'asynchronous'})
+            lambda: qiime2.sdk.SerialContext(action, parent=ctx),
+            {'type': 'asynchronous'})
         results = exe(*args, **kwargs)
 
         return results
@@ -303,7 +304,7 @@ class Action(metaclass=abc.ABCMeta):
     def _get_callable_wrapper(self):
         # This is a "root" level invocation (not a nested call within a
         # pipeline), so no special factory is needed.
-        callable_wrapper = self._bind(qiime2.sdk.Context)
+        callable_wrapper = self._bind(lambda: qiime2.sdk.SerialContext(self))
         self._set_wrapper_name(callable_wrapper, '__call__')
         return callable_wrapper
 
@@ -327,7 +328,8 @@ class Action(metaclass=abc.ABCMeta):
 
             pool = concurrent.futures.ProcessPoolExecutor(max_workers=1)
             future = pool.submit(
-                _subprocess_apply, self, qiime2.sdk.Context(), args, kwargs)
+                _subprocess_apply, self, qiime2.sdk.SerialContext(self),
+                args, kwargs)
             # TODO: pool.shutdown(wait=False) caused the child process to
             # hang unrecoverably. This seems to be a bug in Python 3.7
             # It's probably best to gut concurrent.futures entirely, so we're
@@ -444,7 +446,7 @@ class Action(metaclass=abc.ABCMeta):
             if not isinstance(self, Pipeline):
                 raise ValueError('Only pipelines may be run in parallel')
 
-            return self._bind_parsl(qiime2.sdk.ParallelContext(), *args,
+            return self._bind_parsl(qiime2.sdk.ParallelContext(self), *args,
                                     **kwargs)
 
         parsl_wrapper = self._rewrite_wrapper_signature(parsl_wrapper)

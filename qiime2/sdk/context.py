@@ -13,7 +13,7 @@ import qiime2.sdk
 
 
 class Context:
-    def __init__(self, parent=None):
+    def __init__(self, action_obj, parent=None):
         if parent is not None:
             self.cache = parent.cache
         else:
@@ -24,6 +24,7 @@ class Context:
                 if self.cache.named_pool is not None:
                     self.cache.named_pool.create_index()
 
+        self.action_obj = action_obj
         self._parent = parent
 
     def get_action(self, plugin: str, action: str):
@@ -32,7 +33,6 @@ class Context:
         cleanup as appropriate.
         """
         plugin = plugin.replace('_', '-')
-        plugin_action = plugin + ':' + action
 
         pm = qiime2.sdk.PluginManager()
         try:
@@ -41,49 +41,28 @@ class Context:
             raise ValueError("A plugin named %r could not be found." % plugin)
 
         try:
-            action_obj = plugin_obj.actions[action]
+            new_action_obj = plugin_obj.actions[action]
         except KeyError:
             raise ValueError(
                 "An action named %r was not found for plugin %r"
                 % (action, plugin))
 
-        # We return this callable which determines whether to return cached
-        # results or to run the action requested.
-        def deferred_action(*args, **kwargs):
-            # The function is the first arg, we ditch that
-            args = args[1:]
+        # Create a context for the new action
+        child_context = self.__class__(new_action_obj, parent=self)
 
-            # If we have a named_pool, we need to check for cached results that
-            # we can reuse.
-            #
-            # We can short circuit our index checking if any of our arguments
-            # are proxies because if we got a proxy as an argument, we know it
-            # is a new thing we are computing from a prior step in the pipeline
-            # and thus will not be cached.
-            if self.cache.named_pool is not None and \
-                    not self._contains_proxies(*args, **kwargs) and \
-                        (cached_results := self._check_cache(
-                            args, kwargs, action_obj, plugin_action)):
-                    return cached_results
-
-            # If we didn't have cached results to reuse, we need to execute
-            # the action.
-            return self._bind(action_obj, args, kwargs)
-
-        deferred_action = action_obj._rewrite_wrapper_signature(
-            deferred_action)
-        action_obj._set_wrapper_properties(deferred_action)
+        # Return a callable for the new action
+        deferred_action = child_context.action_obj._rewrite_wrapper_signature(
+            child_context.deferred_action)
+        child_context.action_obj._set_wrapper_properties(deferred_action)
         return deferred_action
 
-    # TODO: This may basically go away
-    def _bind(self, action_obj, args, kwargs):
-        return action_obj._bind(lambda: self)(*args, **kwargs)
+    def _check_cache(self, args, kwargs):
+        plugin_action = f'{self.action_obj.plugin_id}:{self.action_obj.id}'
 
-    def _check_cache(self, args, kwargs, action_obj, plugin_action):
         # Type management for inputs
-        collated_inputs = action_obj.signature.collate_inputs(
+        collated_inputs = self.action_obj.signature.collate_inputs(
             *args, **kwargs)
-        callable_args = action_obj.signature.coerce_user_input(
+        callable_args = self.action_obj.signature.coerce_user_input(
             **collated_inputs)
 
         # Make args and kwargs look how they do when we read them
@@ -99,17 +78,17 @@ class Context:
             # pool we indexed has been destroyed. If that is the
             # case we want to just continue on and rerun the action
             try:
-                return self._load_cache(action_obj, invocation)
+                return self._load_cache(invocation)
             except KeyError:
                 pass
 
-    def _load_cache(self, action_obj, invocation):
+    def _load_cache(self, invocation):
         """Load cached results
         """
         cached_outputs = self.cache.named_pool.index[invocation]
         loaded_outputs = {}
 
-        for name, _type in action_obj.signature.outputs.items():
+        for name, _type in self.action_obj.signature.outputs.items():
             if is_collection_type(_type.qiime_type):
                 loaded_collection = qiime2.sdk.ResultCollection()
                 cached_collection = cached_outputs[name]
@@ -133,13 +112,6 @@ class Context:
 
         return qiime2.sdk.Results(
             loaded_outputs.keys(), loaded_outputs.values())
-
-    def _contains_proxies(self, *args, **kwargs):
-        """Returns True if any of the args or kwargs are proxies
-        """
-        return any(isinstance(arg, qiime2.sdk.proxy.Proxy) for arg in args) \
-            or any(isinstance(value, qiime2.sdk.proxy.Proxy) for
-                   value in kwargs.values())
 
     def _validate_collection(self, collection_order):
         """Validate that all indexed items in the collection agree on how
