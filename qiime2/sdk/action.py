@@ -95,12 +95,12 @@ def _unmap_arg(arg, inputs):
     elif isinstance(arg, dict):
         unmapped = {}
 
-        for key, value in arg.items():
-            if isinstance(value, Proxy):
-                resolved_result = inputs[value._future_]
-                unmapped[key] = value._get_element_(resolved_result)
+        for key, proxy in arg.items():
+            if isinstance(proxy, Proxy):
+                resolved_result = inputs[proxy._future_]
+                unmapped[key] = proxy._get_element_(resolved_result)
             else:
-                unmapped[key] = value
+                unmapped[key] = proxy
     # We didn't have a proxy at all
     else:
         unmapped = arg
