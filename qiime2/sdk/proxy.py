@@ -45,13 +45,7 @@ class ProxyResult(Proxy):
     def _alias(self, name, provenance, ctx):
         def _alias_hook():
             result = new._get_element_(new._future_.result())
-
-            prov = provenance.fork(name, result)
-
-            aliased_result = result._alias(prov)
-            aliased_result = ctx.add_parent_reference(aliased_result)
-
-            return aliased_result
+            return result._alias(name, provenance, ctx)
 
         new = self.__class__(self._future_, self._selector_, self._qiime_type_)
         new._alias_hook = _alias_hook

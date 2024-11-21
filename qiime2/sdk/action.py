@@ -667,33 +667,27 @@ class Pipeline(Action):
             if (isinstance(output, qiime2.sdk.Result) or
                     isinstance(output, Proxy)) and \
                     (output.type <= spec.qiime_type):
-                if isinstance(output, Proxy):
-                    aliased_result = output._alias(name, provenance, ctx)
-                else:
-                    prov = provenance.fork(name, output)
-
-                    aliased_result = output._alias(prov)
-                    aliased_result = ctx.add_parent_reference(aliased_result)
+                aliased_result = output._alias(name, provenance, ctx)
 
                 results.append(aliased_result)
-            elif spec.qiime_type.name == 'Collection':
+            elif spec.qiime_type.name == 'Collection' and \
+                    output.collection in spec.qiime_type:
                 size = len(output)
                 aliased_output = qiime2.sdk.ResultCollection()
                 for idx, (key, value) in enumerate(output.items()):
                     collection_name = create_collection_name(
                         name=name, key=key, idx=idx, size=size)
-                    if isinstance(value, Proxy):
-                        aliased_result = \
-                            value._alias(collection_name, provenance, ctx)
-                    else:
-                        prov = provenance.fork(collection_name, value)
-
-                        aliased_result = value._alias(prov)
-                        aliased_result = \
-                            ctx.add_parent_reference(aliased_result)
+                    aliased_result = \
+                        value._alias(collection_name, provenance, ctx)
 
                     aliased_output[str(key)] = aliased_result
                 results.append(aliased_output)
+            else:
+                _type = output.type if isinstance(output, qiime2.sdk.Result) \
+                    else type(output)
+                raise TypeError(
+                    "Expected output type %r, received %r" %
+                    (spec.qiime_type, _type))
 
         if len(results) != len(self.signature.outputs):
             raise ValueError(
