@@ -22,7 +22,7 @@ class SerialContext(Context):
 
         # If we didn't have cached results to reuse, we need to execute
         # the action.
-        return self._dispatch(args, kwargs)
+        return self.dispatch(args, kwargs)
 
-    def _dispatch(self, args, kwargs):
+    def dispatch(self, args, kwargs):
         return self.action_obj._bind(lambda: self)(*args, **kwargs)

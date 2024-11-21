@@ -6,9 +6,84 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+from parsl.app.app import python_app
+
 from qiime2.sdk import Context
-from qiime2.sdk.proxy import Proxy
+from qiime2.sdk.action import Pipeline
+from qiime2.sdk.proxy import Proxy, ProxyResults
 from qiime2.sdk.parallel_config import PARALLEL_CONFIG
+
+
+def _map_arg(arg, futures):
+    """ Map a proxy artifact for input to a parsl action
+    """
+    # We add this future to the list and create a new proxy with its index as
+    # its future.
+    if isinstance(arg, Proxy):
+        futures.append(arg._future_)
+        mapped = arg.__class__(len(futures) - 1, arg._selector_)
+    # We do the above but for all elements in the collection
+    elif isinstance(arg, list):
+        mapped = []
+
+        for proxy in arg:
+            if isinstance(proxy, Proxy):
+                futures.append(proxy._future_)
+                mapped.append(proxy.__class__(
+                    len(futures) - 1, proxy._selector_))
+            else:
+                mapped.append(proxy)
+    elif isinstance(arg, dict):
+        mapped = {}
+
+        for key, value in arg.items():
+            if isinstance(value, Proxy):
+                futures.append(value._future_)
+                mapped[key] = value.__class__(
+                    len(futures) - 1, value._selector_)
+            else:
+                mapped[key] = value
+    # We just have a real artifact and don't need to map
+    else:
+        mapped = arg
+
+    return mapped
+
+
+def _unmap_arg(arg, inputs):
+    """ Unmap a proxy artifact given to a parsl action
+    """
+    # We were hacky and set _future_ to be the index of this artifact in the
+    # inputs list
+    if isinstance(arg, Proxy):
+        resolved_result = inputs[arg._future_]
+        unmapped = arg._get_element_(resolved_result)
+    # If we got a collection of proxies as the input we were even hackier and
+    # added each proxy to the inputs list individually while having a list of
+    # their indices in the args.
+    elif isinstance(arg, list):
+        unmapped = []
+
+        for proxy in arg:
+            if isinstance(proxy, Proxy):
+                resolved_result = inputs[proxy._future_]
+                unmapped.append(proxy._get_element_(resolved_result))
+            else:
+                unmapped.append(proxy)
+    elif isinstance(arg, dict):
+        unmapped = {}
+
+        for key, proxy in arg.items():
+            if isinstance(proxy, Proxy):
+                resolved_result = inputs[proxy._future_]
+                unmapped[key] = proxy._get_element_(resolved_result)
+            else:
+                unmapped[key] = proxy
+    # We didn't have a proxy at all
+    else:
+        unmapped = arg
+
+    return unmapped
 
 
 class ParallelContext(Context):
@@ -44,7 +119,7 @@ class ParallelContext(Context):
 
         # If we didn't have cached results to reuse, we need to execute
         # the action.
-        return self._dispatch(args, kwargs)
+        return self.dispatch(*args, **kwargs)
 
     def _contains_proxies(self, *args, **kwargs):
         """Returns True if any of the args or kwargs are proxies
@@ -53,9 +128,110 @@ class ParallelContext(Context):
             or any(isinstance(value, Proxy) for
                    value in kwargs.values())
 
-    def _dispatch(self, args, kwargs):
+    def dispatch(self, *args, **kwargs):
         # We need to bind this action with a child context to indicate that it
         # is not the root pipeline. This is particularly important to parallel
         # pipelines because the root pipeline needs to wait for its returns
         # to resolve while the children do not.
-        return self.action_obj._bind_parsl(self, *args, **kwargs)
+        # return self.action_obj._bind_parsl(self, *args, **kwargs)
+        futures = []
+        mapped_args = []
+        mapped_kwargs = {}
+
+        # If this is the first time we called _bind_parsl on a pipeline, the
+        # first argument will be the callable for the pipeline which we do not
+        # want to pass on in this manner, so we skip it.
+        if len(args) >= 1 and callable(args[0]):
+            args = args[1:]
+
+        # Parsl will queue up apps with futures as their arguments then not
+        # execute the apps until the futures are resolved. This is an extremely
+        # handy feature, but QIIME 2 does not play nice with it out of the box.
+        # You can look in qiime2/sdk/proxy.py for some more details on how this
+        # is working, but we are basically taking future QIIME 2 results and
+        # mapping them to the correct inputs in the action we are trying to
+        # call. This is necessary if we are running a pipeline in particular
+        # because the inputs to the next action could contain outputs from the
+        # last action that might not be resolved yet because Parsl may be
+        # queueing the next action before the last one has completed.
+        for arg in args:
+            mapped = _map_arg(arg, futures)
+            mapped_args.append(mapped)
+
+        for key, value in kwargs.items():
+            mapped = _map_arg(value, futures)
+            mapped_kwargs[key] = mapped
+
+        # If the user specified a particular executor for a this action
+        # determine that here
+        if self.action_obj.plugin_id in self.action_executor_mapping:
+            executor = self.action_executor_mapping[
+                self.action_obj.plugin_id].get(self.action_obj.id, 'default')
+        else:
+            executor = 'default'
+
+        execution_ctx = {'type': 'parsl'}
+
+        # This a closure so we can change its name to our action name with
+        # impunity
+        def _run_parsl_action(ctx, execution_ctx, mapped_args,
+                              mapped_kwargs, inputs=[]):
+            """This is what the parsl app itself actually runs. It's basically
+            just a wrapper around our QIIME 2 action. When this is initially
+            called, args and kwargs may contain proxies that reference futures
+            in inputs. By the time this starts executing, those futures will
+            have resolved. We then need to take the resolved inputs and map the
+            correct parts of them to the correct args/kwargs before calling the
+            action with them.
+
+            This is necessary because a single future in inputs will resolve
+            into a Results object. We need to take singular Result objects off
+            of that Results object and map them to the correct inputs for the
+            action we want to call.
+            """
+            args = []
+            for arg in mapped_args:
+                unmapped = _unmap_arg(arg, inputs)
+                args.append(unmapped)
+
+            kwargs = {}
+            for key, value in mapped_kwargs.items():
+                unmapped = _unmap_arg(value, inputs)
+                kwargs[key] = unmapped
+
+            # We with in the cache here to make sure archiver.load* puts things
+            # in the right cache
+            with ctx.cache:
+                exe = ctx.action_obj._bind(lambda: self, execution_ctx)
+                results = exe(*args, **kwargs)
+
+                return results
+
+        # Set the name of the closure to the name of the action, so we see the
+        # correct name in the parsl log
+        self.action_obj._set_wrapper_name(
+            _run_parsl_action, self.action_obj.name)
+
+        # Pipelines run in join apps and are a sort of synchronization point
+        # right now. Unfortunately it is not currently possible to make say a
+        # pipeline that calls two other pipelines within it and execute both of
+        # those internal pipelines simultaneously.
+        if isinstance(self.action_obj, Pipeline):
+            execution_ctx['parsl_type'] = 'DFK'
+            exe = self.action_obj._bind(lambda: self, execution_ctx)
+            return exe(*args, **kwargs)
+        else:
+            execution_ctx['parsl_type'] = \
+                self.executor_name_type_mapping[executor]
+            future = python_app(
+                executors=[executor])(
+                    _run_parsl_action)(self, execution_ctx,
+                                       mapped_args, mapped_kwargs,
+                                       inputs=futures)
+
+        collated_input = self.action_obj.signature.collate_inputs(
+            *args, **kwargs)
+        output_types = self.action_obj.signature.solve_output(**collated_input)
+
+        # Again, we return a set of futures not a set of real results
+        return ProxyResults(future, output_types)
