@@ -21,7 +21,7 @@ import qiime2.core.type as qtype
 import qiime2.core.archive as archive
 from qiime2.core.util import (LateBindingAttribute, DropFirstParameter,
                               tuplize, create_collection_name)
-from qiime2.sdk.proxy import Proxy
+from qiime2.sdk.proxy import Proxy, ProxyResult
 
 
 def _subprocess_apply(action, ctx, args, kwargs):
@@ -665,7 +665,7 @@ class Pipeline(Action):
         # happened
         for output, (name, spec) in zip(outputs, output_types.items()):
             if (isinstance(output, qiime2.sdk.Result) or
-                    isinstance(output, Proxy)) and \
+                    isinstance(output, ProxyResult)) and \
                     (output.type <= spec.qiime_type):
                 aliased_result = output._alias(name, provenance, ctx)
 
