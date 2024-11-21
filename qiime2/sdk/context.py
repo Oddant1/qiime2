@@ -57,7 +57,8 @@ class Context:
         return deferred_action
 
     def _check_cache(self, args, kwargs):
-        plugin_action = f'{self.action_obj.plugin_id}:{self.action_obj.id}'
+        plugin = self.action_obj.plugin_id.replace('_', '-')
+        plugin_action = f'{plugin}:{self.action_obj.id}'
 
         # Type management for inputs
         collated_inputs = self.action_obj.signature.collate_inputs(
