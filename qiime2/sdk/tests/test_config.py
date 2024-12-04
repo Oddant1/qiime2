@@ -229,16 +229,16 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(PARALLEL_CONFIG.action_executor_mapping, {})
 
     def test_no_config(self):
-        with self.assertRaisesRegex(NoDataFlowKernelError,
-                                    'Must first load config'):
+        with self.assertRaisesRegex(ValueError,
+                                    'You must load a parallel config'):
             self.pipeline.parallel(self.art, self.art)
 
     def test_config_unset(self):
         with ParallelConfig():
             self.pipeline.parallel(self.art, self.art)
 
-        with self.assertRaisesRegex(NoDataFlowKernelError,
-                                    'Must first load config'):
+        with self.assertRaisesRegex(ValueError,
+                                    'You must load a parallel config'):
             self.pipeline.parallel(self.art, self.art)
 
     def test_concatenate_ints_mapping(self):

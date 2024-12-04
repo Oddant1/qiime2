@@ -224,6 +224,13 @@ class ParallelContext(Context):
             exe = self.action_obj._bind(lambda: self, execution_ctx)
             return exe(*args, **kwargs)
         else:
+            # This guard is done here because we are about to attempt to access
+            # an executor which will fail out with an obscure error if no
+            # config was loaded
+            if PARALLEL_CONFIG.parallel_config is None:
+                raise ValueError('You must load a parallel config before '
+                                 'running in parallel.')
+
             execution_ctx['parsl_type'] = \
                 self.executor_name_type_mapping[executor]
             future = python_app(
