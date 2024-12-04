@@ -19,7 +19,6 @@ import qiime2.sdk
 import qiime2.core.type as qtype
 import qiime2.core.archive as archive
 from qiime2.core.util import LateBindingAttribute, DropFirstParameter, tuplize
-from qiime2.sdk.proxy import Proxy
 
 
 def _subprocess_apply(action, ctx, args, kwargs):
@@ -480,33 +479,6 @@ class Pipeline(Action):
                 (len(results), len(self.signature.outputs)))
 
         return tuple(results)
-
-    def _coerce_pipeline_outputs(self, outputs, is_root):
-        """Ensure all futures are resolved and all collections are of type
-           ResultCollection
-        """
-        coerced_outputs = []
-
-        for output in outputs:
-            # Handle proxy outputs if root
-            if is_root and isinstance(output, Proxy):
-                output = output.result()
-
-            # Handle collection outputs
-            if isinstance(output, dict) or \
-                    isinstance(output, list):
-                output = qiime2.sdk.ResultCollection(output)
-
-            if isinstance(output, qiime2.sdk.ResultCollection):
-                # Handle proxies as elements of collections if root
-                if is_root:
-                    for key, value in output.items():
-                        if isinstance(value, Proxy):
-                            output[key] = value.result()
-
-            coerced_outputs.append(output)
-
-        return tuple(coerced_outputs)
 
     @classmethod
     def _init(cls, callable, inputs, parameters, outputs, plugin_id, name,
