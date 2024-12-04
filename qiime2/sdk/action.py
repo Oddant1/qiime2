@@ -18,9 +18,8 @@ import dill
 import qiime2.sdk
 import qiime2.core.type as qtype
 import qiime2.core.archive as archive
-from qiime2.core.util import (LateBindingAttribute, DropFirstParameter,
-                              tuplize, create_collection_name)
-from qiime2.sdk.proxy import Proxy, ProxyResult
+from qiime2.core.util import LateBindingAttribute, DropFirstParameter, tuplize
+from qiime2.sdk.proxy import Proxy
 
 
 def _subprocess_apply(action, ctx, args, kwargs):
@@ -460,20 +459,6 @@ class Pipeline(Action):
         #
         # We only want to wait for proxies to resolve if we are the root
         # pipeline
-        outputs = self._coerce_pipeline_outputs(
-            outputs, is_root=ctx._parent is None)
-
-        for output in outputs:
-            if isinstance(output, qiime2.sdk.ResultCollection):
-                for elem in output.values():
-                    if not (isinstance(elem, qiime2.sdk.Result) or
-                            isinstance(elem, Proxy)):
-                        raise TypeError("Pipelines must return `Result` "
-                                        "objects, not %s" % (type(elem), ))
-            elif not (isinstance(output, qiime2.sdk.Result) or
-                      isinstance(output, Proxy)):
-                raise TypeError("Pipelines must return `Result` objects, "
-                                "not %s" % (type(output), ))
 
         # This condition *is* tested by the caller of _callable_executor_, but
         # the kinds of errors a plugin developer see will make more sense if
@@ -486,36 +471,7 @@ class Pipeline(Action):
                 "semantic types: %d != %d"
                 % (len(outputs), len(output_types)))
 
-        results = []
-
-        # If we don't have a Result, we should have a collection, if we
-        # have neither, or our types just don't match up, something bad
-        # happened
-        for output, (name, spec) in zip(outputs, output_types.items()):
-            if (isinstance(output, qiime2.sdk.Result) or
-                    isinstance(output, ProxyResult)) and \
-                    (output.type <= spec.qiime_type):
-                aliased_result = output._alias(name, provenance, ctx)
-
-                results.append(aliased_result)
-            elif spec.qiime_type.name == 'Collection' and \
-                    output.collection in spec.qiime_type:
-                size = len(output)
-                aliased_output = qiime2.sdk.ResultCollection()
-                for idx, (key, value) in enumerate(output.items()):
-                    collection_name = create_collection_name(
-                        name=name, key=key, idx=idx, size=size)
-                    aliased_result = \
-                        value._alias(collection_name, provenance, ctx)
-
-                    aliased_output[str(key)] = aliased_result
-                results.append(aliased_output)
-            else:
-                _type = output.type if isinstance(output, qiime2.sdk.Result) \
-                    else type(output)
-                raise TypeError(
-                    "Expected output type %r, received %r" %
-                    (spec.qiime_type, _type))
+        results = ctx.clean_pipeline_outputs(outputs, output_types, provenance)
 
         if len(results) != len(self.signature.outputs):
             raise ValueError(
