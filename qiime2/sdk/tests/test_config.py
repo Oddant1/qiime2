@@ -12,7 +12,6 @@ import unittest
 
 import parsl
 from parsl.executors.threads import ThreadPoolExecutor
-from parsl.errors import NoDataFlowKernelError
 
 from qiime2 import Artifact, Cache
 
