@@ -19,13 +19,6 @@ class IResult(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def _archiver(self):
-        """
-        Return the archiver for this result
-        """
-
-    @property
-    @abc.abstractmethod
     def type(self):
         """
         The semantic type of this result
