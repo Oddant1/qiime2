@@ -25,6 +25,8 @@ import qiime2.plugin.model as model
 import qiime2.core.util as util
 import qiime2.core.exceptions as exceptions
 
+from qiime2.sdk.iresult import IResult
+
 # Note: Result, Artifact, and Visualization classes are in this file to avoid
 # circular dependencies between Result and its subclasses. Result is tightly
 # coupled to Artifact and Visualization because it is a base class and a
@@ -36,7 +38,7 @@ ResultMetadata = collections.namedtuple('ResultMetadata',
                                         ['uuid', 'type', 'format'])
 
 
-class Result(qiime2.sdk.IResult):
+class Result(IResult):
     """Base class for QIIME 2 result classes (Artifact and Visualization).
 
     This class is not intended to be instantiated. Instead, it acts as a public

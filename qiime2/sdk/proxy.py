@@ -6,7 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from qiime2.sdk import IResult
+from qiime2.sdk.iresult import IResult
 
 import qiime2.core.transform as transform
 from qiime2.core.type.util import is_visualization_type, is_collection_type
