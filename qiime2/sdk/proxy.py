@@ -6,8 +6,9 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2.core.transform as transform
+from qiime2.sdk import IResult
 
+import qiime2.core.transform as transform
 from qiime2.core.type.util import is_visualization_type, is_collection_type
 
 
@@ -22,7 +23,7 @@ class Proxy:
         return not (self == other)
 
 
-class ProxyResult(Proxy):
+class ProxyResult(Proxy, IResult):
     def __init__(self, future, selector, qiime_type=None):
         """We have a future that represents the results of some QIIME 2 action,
         and we have a selector indicating specifically which result we want

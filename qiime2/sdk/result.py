@@ -36,7 +36,7 @@ ResultMetadata = collections.namedtuple('ResultMetadata',
                                         ['uuid', 'type', 'format'])
 
 
-class Result:
+class Result(qiime2.sdk.IResult):
     """Base class for QIIME 2 result classes (Artifact and Visualization).
 
     This class is not intended to be instantiated. Instead, it acts as a public
