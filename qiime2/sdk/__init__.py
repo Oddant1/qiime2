@@ -9,6 +9,7 @@
 from .context import Context
 from .serial_context import SerialContext
 from .parallel_context import ParallelContext
+from .asynchronous_context import AsynchronousContext
 from .action import Action, Method, Visualizer, Pipeline
 from .plugin_manager import PluginManager, UninitializedPluginManagerError
 from .result import Result, Artifact, Visualization, ResultCollection
@@ -21,6 +22,7 @@ from ..core.exceptions import ValidationError, ImplementationError
 __all__ = ['Result', 'IResult', 'Results', 'Artifact', 'Visualization',
            'ResultCollection', 'Action', 'Method', 'Visualizer', 'Pipeline',
            'PluginManager', 'parse_type', 'parse_format', 'type_from_ast',
-           'Context', 'SerialContext', 'ParallelContext', 'Citations',
-           'PARALLEL_CONFIG', 'ValidationError', 'ImplementationError',
+           'Context', 'SerialContext', 'ParallelContext',
+           'AsynchronousContext', 'Citations', 'PARALLEL_CONFIG',
+           'ValidationError', 'ImplementationError',
            'UninitializedPluginManagerError']

@@ -7,7 +7,6 @@
 # ----------------------------------------------------------------------------
 
 import abc
-import concurrent.futures
 import inspect
 import tempfile
 import textwrap
@@ -20,18 +19,6 @@ import qiime2.core.type as qtype
 import qiime2.core.archive as archive
 from qiime2.core.util import (LateBindingAttribute, DropFirstParameter,
                               tuplize, create_collection_name)
-
-
-def _subprocess_apply(action, ctx, args, kwargs):
-    # We with in the cache here to make sure archiver.load* puts things in the
-    # right cache
-    with ctx.cache:
-        exe = action._bind(
-            lambda: qiime2.sdk.SerialContext(action, parent=ctx),
-            {'type': 'asynchronous'})
-        results = exe(*args, **kwargs)
-
-        return results
 
 
 def _coerce_pipeline_outputs(ctx, outputs):
@@ -262,34 +249,8 @@ class Action(metaclass=abc.ABCMeta):
         return callable_wrapper
 
     def _get_async_wrapper(self):
-        def async_wrapper(*args, **kwargs):
-            # TODO handle this better in the future, but stop the massive error
-            # caused by MacOSX asynchronous runs for now.
-            try:
-                import matplotlib as plt
-                if plt.rcParams['backend'].lower() == 'macosx':
-                    raise EnvironmentError(backend_error_template %
-                                           plt.matplotlib_fname())
-            except ImportError:
-                pass
-
-            # This function's signature is rewritten below using
-            # `decorator.decorator`. When the signature is rewritten, args[0]
-            # is the function whose signature was used to rewrite this
-            # function's signature.
-            args = args[1:]
-
-            pool = concurrent.futures.ProcessPoolExecutor(max_workers=1)
-            future = pool.submit(
-                _subprocess_apply, self, qiime2.sdk.SerialContext(self),
-                args, kwargs)
-            # TODO: pool.shutdown(wait=False) caused the child process to
-            # hang unrecoverably. This seems to be a bug in Python 3.7
-            # It's probably best to gut concurrent.futures entirely, so we're
-            # ignoring the resource leakage for the moment.
-            return future
-
-        async_wrapper = self._rewrite_wrapper_signature(async_wrapper)
+        async_wrapper = self._rewrite_wrapper_signature(
+            qiime2.sdk.AsynchronousContext(self).dispatch)
         self._set_wrapper_properties(async_wrapper)
         self._set_wrapper_name(async_wrapper, 'asynchronous')
         return async_wrapper
@@ -482,12 +443,12 @@ class Pipeline(Action):
         # Just make sure we have an iterable even if there was only one output
         outputs = tuplize(outputs)
 
-        outputs = _coerce_pipeline_outputs(ctx, outputs)
         # Make sure any collections returned are in the form of
         # ResultCollections
         #
         # We only want to wait for proxies to resolve if we are the root
         # pipeline
+        outputs = _coerce_pipeline_outputs(ctx, outputs)
 
         # This condition *is* tested by the caller of _callable_executor_, but
         # the kinds of errors a plugin developer see will make more sense if
