@@ -12,6 +12,15 @@ from qiime2.core.cache import get_cache
 import qiime2.sdk
 
 
+def _validate_collection(collection_order):
+    """Validate that all indexed items in the collection agree on how
+    large the collection should be and that we have that many elements.
+    """
+    assert all([elem.total == collection_order[0].total
+                for elem in collection_order])
+    assert len(collection_order) == collection_order[0].total
+
+
 class Context:
     def __init__(self, action_obj, parent=None):
         if parent is not None:
@@ -96,7 +105,7 @@ class Context:
 
                 # Get the order we should load collection items in
                 collection_order = list(cached_collection.keys())
-                self._validate_collection(collection_order)
+                _validate_collection(collection_order)
                 collection_order.sort(key=lambda x: x.idx)
 
                 for elem_info in collection_order:
@@ -113,14 +122,6 @@ class Context:
 
         return qiime2.sdk.Results(
             loaded_outputs.keys(), loaded_outputs.values())
-
-    def _validate_collection(self, collection_order):
-        """Validate that all indexed items in the collection agree on how
-        large the collection should be and that we have that many elements.
-        """
-        assert all([elem.total == collection_order[0].total
-                    for elem in collection_order])
-        assert len(collection_order) == collection_order[0].total
 
     def make_artifact(self, type, view, view_type=None):
         """Return a new artifact from a given view.
