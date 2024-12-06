@@ -255,7 +255,7 @@ class Result(IResult):
         alias._archiver = archive.Archiver.from_data(
             self.type, self.format, clone_original, provenance_capture)
 
-        return ctx.add_parent_reference(alias)
+        return ctx.add_reference(alias)
 
     def validate(self, level=NotImplemented):
         diff = self._archiver.validate_checksums()

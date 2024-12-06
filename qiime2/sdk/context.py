@@ -130,13 +130,13 @@ class Context:
         context.
         """
         artifact = qiime2.sdk.Artifact.import_data(type, view, view_type)
-        self.add_parent_reference(artifact)
+        self.add_reference(artifact)
         return artifact
 
     # NOTE: We end up with both the artifact and the pipeline alias of artifact
     # in the named cache in the end. We only have the pipeline alias in the
     # process pool
-    def add_parent_reference(self, ref):
+    def add_reference(self, ref):
         """Add a reference to something destructable that will be owned by the
            parent scope. The reason it needs to be tracked is so that on
            failure, a context can still identify what will (no longer) be

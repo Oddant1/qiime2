@@ -454,7 +454,7 @@ class Visualizer(Action):
             provenance.output_name = 'visualization'
             viz = qiime2.sdk.Visualization._from_data_dir(temp_dir,
                                                           provenance)
-            viz = ctx.add_parent_reference(viz)
+            viz = ctx.add_reference(viz)
 
             return (viz, )
 
