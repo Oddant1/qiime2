@@ -110,7 +110,7 @@ class ParallelContext(Context):
                 else {v.label: v.__class__.__name__
                       for v in PARALLEL_CONFIG.parallel_config.executors}
 
-    def deferred_action(self, *args, **kwargs):
+    def get_callable(self, *args, **kwargs):
         # The function is the first arg, we ditch that
         args = args[1:]
 

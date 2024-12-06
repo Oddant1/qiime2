@@ -300,7 +300,7 @@ class Action(metaclass=abc.ABCMeta):
             if not isinstance(self, Pipeline):
                 raise ValueError('Only pipelines may be run in parallel')
 
-            # TODO: could call deferred_action here instead and do index check
+            # TODO: could call get_callable here instead and do index check
             return qiime2.sdk.ParallelContext(self).dispatch(*args, **kwargs)
 
         parsl_wrapper = self._rewrite_wrapper_signature(parsl_wrapper)

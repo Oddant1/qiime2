@@ -60,10 +60,10 @@ class Context:
         child_context = self.__class__(new_action_obj, parent=self)
 
         # Return a callable for the new action
-        deferred_action = child_context.action_obj._rewrite_wrapper_signature(
-            child_context.deferred_action)
-        child_context.action_obj._set_wrapper_properties(deferred_action)
-        return deferred_action
+        get_callable = child_context.action_obj._rewrite_wrapper_signature(
+            child_context.get_callable)
+        child_context.action_obj._set_wrapper_properties(get_callable)
+        return get_callable
 
     def _check_cache(self, args, kwargs):
         plugin = self.action_obj.plugin_id.replace('_', '-')

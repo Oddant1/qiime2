@@ -10,7 +10,7 @@ from qiime2.sdk.context import Context
 
 
 class SerialContext(Context):
-    def deferred_action(self, *args, **kwargs):
+    def get_callable(self, *args, **kwargs):
         # The function is the first arg, we ditch that
         args = args[1:]
 
