@@ -128,7 +128,7 @@ class Action(metaclass=abc.ABCMeta):
         self.examples = examples
 
         self.id = callable.__name__
-        self._dynamic_call = self._get_callable_wrapper()
+        self._dynamic_call = self._callable_action_wrapper()
         self._dynamic_async = self._get_async_wrapper()
         # This a temp thing to play with parsl before integrating more deeply
         self._dynamic_parsl = self._get_parsl_wrapper()
@@ -254,7 +254,7 @@ class Action(metaclass=abc.ABCMeta):
         self._set_wrapper_name(bound_callable, self.id)
         return bound_callable
 
-    def _get_callable_wrapper(self):
+    def _callable_action_wrapper(self):
         # This is a "root" level invocation (not a nested call within a
         # pipeline), so no special factory is needed.
         callable_wrapper = self._bind(lambda: qiime2.sdk.SerialContext(self))
@@ -300,7 +300,7 @@ class Action(metaclass=abc.ABCMeta):
             if not isinstance(self, Pipeline):
                 raise ValueError('Only pipelines may be run in parallel')
 
-            # TODO: could call get_callable here instead and do index check
+            # TODO: could call callable_action here instead and do index check
             return qiime2.sdk.ParallelContext(self).dispatch(*args, **kwargs)
 
         parsl_wrapper = self._rewrite_wrapper_signature(parsl_wrapper)

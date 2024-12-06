@@ -60,10 +60,24 @@ class Context:
         child_context = self.__class__(new_action_obj, parent=self)
 
         # Return a callable for the new action
-        get_callable = child_context.action_obj._rewrite_wrapper_signature(
-            child_context.get_callable)
-        child_context.action_obj._set_wrapper_properties(get_callable)
-        return get_callable
+        callable_action = child_context.action_obj._rewrite_wrapper_signature(
+            child_context.callable_action)
+        child_context.action_obj._set_wrapper_properties(callable_action)
+        return callable_action
+
+    def callable_action(self, *args, **kwargs):
+        # The function is the first arg, we ditch that
+        args = args[1:]
+
+        # If we have a named_pool, we need to check for cached results that
+        # we can reuse.
+        if self.cache.named_pool is not None and \
+                (cached_results := self._check_cache(args, kwargs)):
+            return cached_results
+
+        # If we didn't have cached results to reuse, we need to execute
+        # the action.
+        return self.dispatch(args, kwargs)
 
     def _check_cache(self, args, kwargs):
         plugin = self.action_obj.plugin_id.replace('_', '-')
