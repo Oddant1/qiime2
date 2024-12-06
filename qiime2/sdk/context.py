@@ -149,6 +149,3 @@ class Context:
 
         # Return an artifact backed by the data in the cache
         return new_ref
-
-    def clean_pipeline_outputs(self, outputs, output_types, provenance):
-        raise NotImplementedError
