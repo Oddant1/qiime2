@@ -18,7 +18,8 @@ import dill
 import qiime2.sdk
 import qiime2.core.type as qtype
 import qiime2.core.archive as archive
-from qiime2.core.util import LateBindingAttribute, DropFirstParameter, tuplize
+from qiime2.core.util import (LateBindingAttribute, DropFirstParameter,
+                              tuplize, create_collection_name)
 
 
 def _subprocess_apply(action, ctx, args, kwargs):
@@ -31,6 +32,33 @@ def _subprocess_apply(action, ctx, args, kwargs):
         results = exe(*args, **kwargs)
 
         return results
+
+
+def _coerce_pipeline_outputs(ctx, outputs):
+    """Ensure all futures are resolved and all collections are of type
+        ResultCollection
+    """
+    coerced_outputs = []
+
+    for output in outputs:
+        # Handle collection outputs
+        if isinstance(output, dict) or \
+                isinstance(output, list):
+            output = qiime2.sdk.ResultCollection(output)
+
+        # Handle proxy outputs if root
+        if ctx._parent is None and output is not None:
+            output = output.result()
+
+        if isinstance(output, qiime2.sdk.ResultCollection):
+            # Handle proxies as elements of collections if root
+            if ctx._parent is None:
+                for key, value in output.items():
+                    output[key] = value.result()
+
+        coerced_outputs.append(output)
+
+    return tuple(coerced_outputs)
 
 
 class Action(metaclass=abc.ABCMeta):
@@ -453,6 +481,8 @@ class Pipeline(Action):
         outputs = self._callable(ctx, **view_args)
         # Just make sure we have an iterable even if there was only one output
         outputs = tuplize(outputs)
+
+        outputs = _coerce_pipeline_outputs(ctx, outputs)
         # Make sure any collections returned are in the form of
         # ResultCollections
         #
@@ -470,7 +500,45 @@ class Pipeline(Action):
                 "semantic types: %d != %d"
                 % (len(outputs), len(output_types)))
 
-        results = ctx.clean_pipeline_outputs(outputs, output_types, provenance)
+        message = "Pipelines must return `Result` objects, not %s"
+        for output in outputs:
+            if isinstance(output, qiime2.sdk.ResultCollection):
+                for elem in output.values():
+                    if not isinstance(elem, qiime2.sdk.IResult):
+                        raise TypeError(message % type(elem))
+            elif not isinstance(output, qiime2.sdk.IResult):
+                raise TypeError(message % type(output))
+
+        results = []
+
+        # If we don't have a Result, we should have a collection, if we
+        # have neither, or our types just don't match up, something bad
+        # happened
+        for output, (name, spec) in zip(outputs, output_types.items()):
+            if spec.qiime_type.name == 'Collection' and \
+                    output.collection in spec.qiime_type:
+                size = len(output)
+                aliased_output = qiime2.sdk.ResultCollection()
+
+                for idx, (key, value) in enumerate(output.items()):
+                    collection_name = create_collection_name(
+                        name=name, key=key, idx=idx, size=size)
+                    aliased_result = \
+                        value._alias(collection_name, provenance, ctx)
+
+                    aliased_output[str(key)] = aliased_result
+                results.append(aliased_output)
+            elif output.type <= spec.qiime_type:
+                aliased_result = output._alias(name, provenance, ctx)
+
+                results.append(aliased_result)
+
+            else:
+                _type = output.type if hasattr(output, 'type') \
+                    else type(output)
+                raise TypeError(
+                    "Expected output type %r, received %r" %
+                    (spec.qiime_type, _type))
 
         if len(results) != len(self.signature.outputs):
             raise ValueError(
