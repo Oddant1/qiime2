@@ -13,9 +13,6 @@ from qiime2.sdk.serial_context import SerialContext
 
 
 def _subprocess_apply(ctx, args, kwargs):
-    # We with in the cache here to make sure archiver.load* puts things in the
-    # right cache
-    # with ctx.cache:
     exe = ctx.action_obj._bind(
         lambda: SerialContext(ctx), {'type': 'asynchronous'})
     results = exe(*args, **kwargs)
