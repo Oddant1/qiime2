@@ -520,10 +520,3 @@ markdown_source_template = """
 %(source)s
 ```
 """
-
-# TODO add unit test for callables raising this
-backend_error_template = """
-Your current matplotlib backend (MacOSX) does not work with asynchronous calls.
-A recommended backend is Agg, and can be changed by modifying your
-matplotlibrc "backend" parameter, which can be found at: \n\n %s
-"""
