@@ -491,7 +491,6 @@ class Pipeline(Action):
                 aliased_result = output._alias(name, provenance, ctx)
 
                 results.append(aliased_result)
-
             else:
                 _type = output.type if hasattr(output, 'type') \
                     else type(output)
