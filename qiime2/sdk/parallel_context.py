@@ -221,7 +221,9 @@ class ParallelContext(Context):
         if isinstance(self.action_obj, Pipeline):
             execution_ctx['parsl_type'] = 'DFK'
             exe = self.action_obj._bind(lambda: self, execution_ctx)
-            return exe(*args, **kwargs)
+            results = exe(*args, **kwargs)
+
+            return results
         else:
             # This guard is done here because we are about to attempt to access
             # an executor which will fail out with an obscure error if no
