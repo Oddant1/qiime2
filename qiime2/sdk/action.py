@@ -23,7 +23,7 @@ from qiime2.core.util import (LateBindingAttribute, DropFirstParameter,
 
 def _coerce_pipeline_outputs(ctx, outputs):
     """Ensure all futures are resolved and all collections are of type
-        ResultCollection
+       ResultCollection
     """
     coerced_outputs = []
 
