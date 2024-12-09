@@ -44,6 +44,10 @@ class ProxyResult(Proxy, IResult):
         return hash(self.uuid)
 
     def _alias(self, name, provenance, ctx):
+        """We don't want to alias immediately because aliasing is a blocking
+        operation. Calling alias on a Proxy adds a hook that will create the
+        alias when the result on the Proxy is requested
+        """
         def _alias_hook():
             result = new._get_element_(new._future_.result())
             return result._alias(name, provenance, ctx)
@@ -80,6 +84,7 @@ class ProxyResult(Proxy, IResult):
 
     def result(self):
         if self._alias_hook:
+            # Create our alias on result request if a hook has been added
             return self._alias_hook()
 
         return self._get_element_(self._future_.result())
@@ -138,6 +143,9 @@ class ProxyVisualization(ProxyResult):
 
 
 class ProxyResultCollection(Proxy):
+    """This represents a collection of future results being returned by a Parsl
+       app
+    """
     def __init__(self, future, selector, qiime_type=None):
         self._future_ = future
         self._selector_ = selector
@@ -250,25 +258,28 @@ class ProxyResults(Proxy):
         return self.result()._asdict()
 
     def _result(self):
-        """ If you are calling an action in a try-except block in a pipeline,
-            you need to call this method on the Results object returned by the
-            action.
+        """If you are calling an action in a try-except block in a pipeline,
+           you need to call this method on the Results object returned by the
+           action.
 
-            This is because if the Pipeline was executed with parsl, we need to
-            block on the action in the try-except to ensure we get the result
-            and raise the potential exception while we are still inside of the
-            try-except. Otherwise we would just get the exception whenever the
-            future resolved which would likely be outside of the try-except, so
-            the exception would be raised and not caught.
+           This is because if the Pipeline was executed with parsl, we need to
+           block on the action in the try-except to ensure we get the result
+           and raise the potential exception while we are still inside of the
+           try-except. Otherwise we would just get the exception whenever the
+           future resolved which would likely be outside of the try-except, so
+           the exception would be raised and not caught.
 
-            If you call an action in the Python API using parsl inside of a
-            context manager (a withed in Cache for instance) you also must call
-            this method there to ensure you get you don't start using a
-            different cache/pool/whatever before your future resolves.
+           If you call an action in the Python API using parsl inside of a
+           context manager (a withed in Cache for instance) you also must call
+           this method there to ensure you get you don't start using a
+           different cache/pool/whatever before your future resolves.
         """
         return self._future_.result()
 
     def _create_proxy(self, selector):
+        """Create a ProxyResult for the element of the ProxyResults being
+           requested
+        """
         qiime_type = self._signature_[selector].qiime_type
 
         if is_collection_type(qiime_type):
