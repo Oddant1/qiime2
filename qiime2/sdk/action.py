@@ -28,18 +28,16 @@ def _coerce_pipeline_outputs(ctx, outputs):
     coerced_outputs = []
 
     for output in outputs:
-        # Handle collection outputs
-        if isinstance(output, dict) or \
-                isinstance(output, list):
+        # Ensure collection outputs are ResultCollection
+        if isinstance(output, dict) or isinstance(output, list):
             output = qiime2.sdk.ResultCollection(output)
 
         # Handle proxy outputs if root
         if ctx._parent is None and output is not None:
             output = output.result()
 
-        if isinstance(output, qiime2.sdk.ResultCollection):
-            # Handle proxies as elements of collections if root
-            if ctx._parent is None:
+            # Handle proxies as elements of collections
+            if isinstance(output, qiime2.sdk.ResultCollection):
                 for key, value in output.items():
                     output[key] = value.result()
 
