@@ -135,7 +135,6 @@ class ParallelContext(Context):
         # is not the root pipeline. This is particularly important to parallel
         # pipelines because the root pipeline needs to wait for its returns
         # to resolve while the children do not.
-        # return self.action_obj._bind_parsl(self, *args, **kwargs)
         futures = []
         mapped_args = []
         mapped_kwargs = {}
@@ -214,11 +213,11 @@ class ParallelContext(Context):
         self.action_obj._set_wrapper_name(
             _run_parsl_action, self.action_obj.name)
 
-        # Pipelines run in join apps and are a sort of synchronization point
-        # right now. Unfortunately it is not currently possible to make say a
-        # pipeline that calls two other pipelines within it and execute both of
-        # those internal pipelines simultaneously.
         if isinstance(self.action_obj, Pipeline):
+            # Nested pipelines are not run as a parsl app at all, they run as a
+            # normal python function that will call more python_apps. This
+            # means any blocking operation within a pipeline itself will block
+            # the entire pipeline
             execution_ctx['parsl_type'] = 'DFK'
             exe = self.action_obj._bind(lambda: self, execution_ctx)
             results = exe(*args, **kwargs)
