@@ -442,10 +442,7 @@ class Pipeline(Action):
         outputs = tuplize(outputs)
 
         # Make sure any collections returned are in the form of
-        # ResultCollections
-        #
-        # We only want to wait for proxies to resolve if we are the root
-        # pipeline
+        # ResultCollections and resolve proxies if this is the root pipeline
         outputs = _coerce_pipeline_outputs(ctx, outputs)
 
         # This condition *is* tested by the caller of _callable_executor_, but
@@ -470,7 +467,7 @@ class Pipeline(Action):
 
         results = []
 
-        # If we don't have a Result, we should have a collection, if we
+        # If we don't have a Collection, we should have a Result, if we
         # have neither, or our types just don't match up, something bad
         # happened
         for output, (name, spec) in zip(outputs, output_types.items()):
