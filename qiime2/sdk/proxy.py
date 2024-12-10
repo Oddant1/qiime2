@@ -115,13 +115,12 @@ class ProxyArtifact(ProxyResult):
     """This represents a future Artifact that is being returned by a Parsl app
     """
     def _view(self, view_type, recorder):
-        return self._get_element_(
-            self._future_.result())._view(view_type, recorder)
+        return self.result()._view(view_type, recorder)
 
     def view(self, view_type):
         """If we want to view the result we need the future to be resolved
         """
-        return self._get_element_(self._future_.result()).view(view_type)
+        return self.result().view(view_type)
 
     def has_metadata(self):
         from qiime2 import Metadata
