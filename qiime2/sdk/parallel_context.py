@@ -25,25 +25,9 @@ def _map_arg(arg, futures):
         mapped = arg.__class__(len(futures) - 1, arg._selector_)
     # We do the above but for all elements in the collection
     elif isinstance(arg, list):
-        mapped = []
-
-        for proxy in arg:
-            if isinstance(proxy, Proxy):
-                futures.append(proxy._future_)
-                mapped.append(proxy.__class__(
-                    len(futures) - 1, proxy._selector_))
-            else:
-                mapped.append(proxy)
+        mapped = [_map_arg(proxy, futures) for proxy in arg]
     elif isinstance(arg, dict):
-        mapped = {}
-
-        for key, value in arg.items():
-            if isinstance(value, Proxy):
-                futures.append(value._future_)
-                mapped[key] = value.__class__(
-                    len(futures) - 1, value._selector_)
-            else:
-                mapped[key] = value
+        mapped = {key: _map_arg(proxy, futures) for key, proxy in arg.items()}
     # We just have a real artifact and don't need to map
     else:
         mapped = arg
@@ -63,23 +47,10 @@ def _unmap_arg(arg, inputs):
     # added each proxy to the inputs list individually while having a list of
     # their indices in the args.
     elif isinstance(arg, list):
-        unmapped = []
-
-        for proxy in arg:
-            if isinstance(proxy, Proxy):
-                resolved_result = inputs[proxy._future_]
-                unmapped.append(proxy._get_element_(resolved_result))
-            else:
-                unmapped.append(proxy)
+        unmapped = [_unmap_arg(proxy, inputs) for proxy in arg]
     elif isinstance(arg, dict):
-        unmapped = {}
-
-        for key, proxy in arg.items():
-            if isinstance(proxy, Proxy):
-                resolved_result = inputs[proxy._future_]
-                unmapped[key] = proxy._get_element_(resolved_result)
-            else:
-                unmapped[key] = proxy
+        unmapped = {key: _unmap_arg(proxy, inputs) for
+                    key, proxy in arg.items()}
     # We didn't have a proxy at all
     else:
         unmapped = arg
