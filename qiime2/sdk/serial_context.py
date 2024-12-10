@@ -10,7 +10,7 @@ from qiime2.sdk.context import Context
 
 
 class SerialContext(Context):
-    def dispatch(self, args, kwargs):
+    def _dispatch_(self, args, kwargs):
         exe = self.action_obj._bind(lambda: self)
         results = exe(*args, **kwargs)
 

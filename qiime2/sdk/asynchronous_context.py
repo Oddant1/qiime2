@@ -21,7 +21,7 @@ def _subprocess_apply(ctx, args, kwargs):
 
 
 class AsynchronousContext(Context):
-    def dispatch(self, *args, **kwargs):
+    def _dispatch_(self, *args, **kwargs):
         # TODO handle this better in the future, but stop the massive error
         # caused by MacOSX asynchronous runs for now.
         try:

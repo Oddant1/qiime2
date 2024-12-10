@@ -99,9 +99,9 @@ class ParallelContext(Context):
 
         # If we didn't have cached results to reuse, we need to execute
         # the action.
-        return self.dispatch(*args, **kwargs)
+        return self._dispatch_(*args, **kwargs)
 
-    def dispatch(self, *args, **kwargs):
+    def _dispatch_(self, *args, **kwargs):
         # We need to bind this action with a child context to indicate that it
         # is not the root pipeline. This is particularly important to parallel
         # pipelines because the root pipeline needs to wait for its returns

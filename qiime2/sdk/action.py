@@ -248,7 +248,7 @@ class Action(metaclass=abc.ABCMeta):
 
     def _get_async_wrapper(self):
         async_wrapper = self._rewrite_wrapper_signature(
-            qiime2.sdk.AsynchronousContext(self).dispatch)
+            qiime2.sdk.AsynchronousContext(self)._dispatch_)
         self._set_wrapper_properties(async_wrapper)
         self._set_wrapper_name(async_wrapper, 'asynchronous')
         return async_wrapper
@@ -260,7 +260,7 @@ class Action(metaclass=abc.ABCMeta):
                 raise ValueError('Only pipelines may be run in parallel')
 
             # TODO: could call callable_action here instead and do index check
-            return qiime2.sdk.ParallelContext(self).dispatch(*args, **kwargs)
+            return qiime2.sdk.ParallelContext(self)._dispatch_(*args, **kwargs)
 
         parsl_wrapper = self._rewrite_wrapper_signature(parsl_wrapper)
         self._set_wrapper_properties(parsl_wrapper)

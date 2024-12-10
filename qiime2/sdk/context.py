@@ -77,7 +77,7 @@ class Context:
 
         # If we didn't have cached results to reuse, we need to execute
         # the action.
-        return self.dispatch(args, kwargs)
+        return self._dispatch_(args, kwargs)
 
     def _check_cache(self, args, kwargs):
         plugin = self.action_obj.plugin_id.replace('_', '-')
