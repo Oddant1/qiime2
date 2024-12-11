@@ -22,8 +22,8 @@ def _subprocess_apply(ctx, args, kwargs):
 
 class AsynchronousContext(Context):
     def _dispatch_(self, *args, **kwargs):
-        # TODO handle this better in the future, but stop the massive error
-        # caused by MacOSX asynchronous runs for now.
+        # x-ref for why this try except exists
+        # https://github.com/qiime2/qiime2/issues/73
         try:
             import matplotlib as plt
             if plt.rcParams['backend'].lower() == 'macosx':
