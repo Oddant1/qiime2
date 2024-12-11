@@ -8,11 +8,11 @@
 
 from parsl.app.app import python_app
 
-
-from qiime2.sdk.context import Context
 from qiime2.sdk.action import Pipeline
 from qiime2.sdk.proxy import Proxy, ProxyResults
 from qiime2.sdk.parallel_config import PARALLEL_CONFIG
+
+from .context import Context
 
 
 def _map_arg(arg, futures):

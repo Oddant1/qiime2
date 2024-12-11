@@ -8,8 +8,8 @@
 
 import concurrent.futures
 
-from qiime2.sdk.context import Context
-from qiime2.sdk.serial_context import SerialContext
+from .context import Context
+from .serial_context import SerialContext
 
 
 def _subprocess_apply(ctx, args, kwargs):

@@ -6,10 +6,8 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from .context import Context
-from .serial_context import SerialContext
-from .parallel_context import ParallelContext
-from .asynchronous_context import AsynchronousContext
+from .context import (Context, SerialContext, AsynchronousContext,
+                      ParallelContext)
 from .action import Action, Method, Visualizer, Pipeline
 from .plugin_manager import PluginManager, UninitializedPluginManagerError
 from .result import Result, Artifact, Visualization, ResultCollection

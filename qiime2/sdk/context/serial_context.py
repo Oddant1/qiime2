@@ -6,7 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from qiime2.sdk.context import Context
+from .context import Context
 
 
 class SerialContext(Context):
