@@ -61,11 +61,11 @@ class Context:
 
         # Return a callable for the new action
         callable_action = child_context.action_obj._rewrite_wrapper_signature(
-            child_context.callable_action)
+            child_context._callable_action_)
         child_context.action_obj._set_wrapper_properties(callable_action)
         return callable_action
 
-    def callable_action(self, *args, **kwargs):
+    def _callable_action_(self, *args, **kwargs):
         # The function is the first arg, we ditch that
         args = args[1:]
 

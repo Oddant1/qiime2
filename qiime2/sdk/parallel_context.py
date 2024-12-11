@@ -81,7 +81,7 @@ class ParallelContext(Context):
                 else {v.label: v.__class__.__name__
                       for v in PARALLEL_CONFIG.parallel_config.executors}
 
-    def callable_action(self, *args, **kwargs):
+    def _callable_action_(self, *args, **kwargs):
         # The function is the first arg, we ditch that
         args = args[1:]
 
