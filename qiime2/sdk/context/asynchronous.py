@@ -8,8 +8,8 @@
 
 import concurrent.futures
 
-from .context import Context
-from .serial_context import SerialContext
+from .base import Context
+from .serial import SerialContext
 
 
 def _subprocess_apply(ctx, args, kwargs):

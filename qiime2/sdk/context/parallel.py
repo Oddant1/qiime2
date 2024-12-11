@@ -12,7 +12,7 @@ from qiime2.sdk.action import Pipeline
 from qiime2.sdk.proxy import Proxy, ProxyResults
 from qiime2.sdk.parallel_config import PARALLEL_CONFIG
 
-from .context import Context
+from .base import Context
 
 
 def _map_arg(arg, futures):
