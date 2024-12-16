@@ -22,7 +22,7 @@ def _validate_collection(collection_order):
 
 
 class Context:
-    def __init__(self, action_obj, parent=None):
+    def __init__(self, action_obj=None, parent=None):
         if parent is not None:
             self.cache = parent.cache
         else:
@@ -32,6 +32,10 @@ class Context:
             with self.cache.lock:
                 if self.cache.named_pool is not None:
                     self.cache.named_pool.create_index()
+
+        if action_obj is None and parent is not None:
+            raise ValueError('Only parentless contexts can be instantiated '
+                             'without an action_obj')
 
         self.action_obj = action_obj
         self._parent = parent
