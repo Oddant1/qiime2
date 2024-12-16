@@ -9,12 +9,11 @@
 import concurrent.futures
 
 from .base import Context
-from .serial import SerialContext
 
 
 def _subprocess_apply(ctx, args, kwargs):
     exe = ctx.action_obj._bind(
-        lambda: SerialContext(ctx), {'type': 'asynchronous'})
+        lambda: Context(ctx), {'type': 'asynchronous'})
     results = exe(*args, **kwargs)
 
     return results

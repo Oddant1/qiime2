@@ -6,8 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from .context import (Context, SerialContext, AsynchronousContext,
-                      ParallelContext)
+from .context import Context, AsynchronousContext, ParallelContext
 from .action import Action, Method, Visualizer, Pipeline
 from .plugin_manager import PluginManager, UninitializedPluginManagerError
 from .result import Result, Artifact, Visualization, ResultCollection
@@ -20,7 +19,6 @@ from ..core.exceptions import ValidationError, ImplementationError
 __all__ = ['Result', 'IResult', 'Results', 'Artifact', 'Visualization',
            'ResultCollection', 'Action', 'Method', 'Visualizer', 'Pipeline',
            'PluginManager', 'parse_type', 'parse_format', 'type_from_ast',
-           'Context', 'SerialContext', 'ParallelContext',
-           'AsynchronousContext', 'Citations', 'PARALLEL_CONFIG',
-           'ValidationError', 'ImplementationError',
+           'Context', 'ParallelContext', 'AsynchronousContext', 'Citations',
+           'PARALLEL_CONFIG', 'ValidationError', 'ImplementationError',
            'UninitializedPluginManagerError']

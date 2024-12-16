@@ -242,7 +242,7 @@ class Action(metaclass=abc.ABCMeta):
     def _callable_action_wrapper(self):
         # This is a "root" level invocation (not a nested call within a
         # pipeline), so no special factory is needed.
-        callable_wrapper = self._bind(lambda: qiime2.sdk.SerialContext(self))
+        callable_wrapper = self._bind(lambda: qiime2.sdk.Context(self))
         self._set_wrapper_name(callable_wrapper, '__call__')
         return callable_wrapper
 

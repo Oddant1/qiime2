@@ -36,6 +36,12 @@ class Context:
         self.action_obj = action_obj
         self._parent = parent
 
+    def _dispatch_(self, args, kwargs):
+        exe = self.action_obj._bind(lambda: self)
+        results = exe(*args, **kwargs)
+
+        return results
+
     def get_action(self, plugin: str, action: str):
         """Return a function matching the callable API of an action.
         This function is aware of the pipeline context and manages its own

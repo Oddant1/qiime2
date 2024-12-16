@@ -7,10 +7,8 @@
 # ----------------------------------------------------------------------------
 
 from .base import Context
-from .serial import SerialContext
 from .parallel import ParallelContext
 from .asynchronous import AsynchronousContext
 
 
-__all__ = ["Context", "SerialContext", "AsynchronousContext",
-           "ParallelContext"]
+__all__ = ["Context", "AsynchronousContext", "ParallelContext"]
