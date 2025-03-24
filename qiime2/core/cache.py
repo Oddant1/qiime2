@@ -1256,7 +1256,7 @@ class Cache:
         Returns
         -------
         set[str]
-            All of the keys in the cache. Just the names now what they refer
+            All of the keys in the cache. Just the names not what they refer
             to.
         """
         return set(os.listdir(self.keys))
