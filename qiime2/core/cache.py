@@ -669,8 +669,9 @@ class Cache:
         True
         >>> test_dir.cleanup()
         """
-        pool = Pool(self, name=key, reuse=reuse)
-        self._register_key(key, key, pool=True)
+        with self.lock:
+            self._register_key(key, key, pool=True)
+            pool = Pool(self, name=key, reuse=reuse)
 
         return pool
 
