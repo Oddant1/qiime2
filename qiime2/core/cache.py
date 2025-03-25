@@ -237,7 +237,7 @@ def _exit_cleanup():
             try:
                 if os.path.exists(target):
                     shutil.rmtree(target)
-                    cache.garbage_collection()
+                    cache.unlocked_garbage_collection()
             finally:
                 cache.lock.__exit__()
 
@@ -797,6 +797,76 @@ class Cache:
                     set_permissions(target, None, USER_GROUP_RWX)
                     shutil.rmtree(target)
 
+    def unlocked_garbage_collection(self):
+        """ Runs a stripped down best effort garbage collection without
+        locking. This garbage collection may not get everything that needs
+        collected, but it won't trash anything it shouldn't and it won't hog
+        the lock.
+
+        It is possible to run this safely without locking because we get the
+        data, then we get the pools, then we get the process pools, and THEN we
+        get the keys last. Since we always add the key to the pool/data before
+        adding the pool/data itself we may end seeing keys for data that has
+        not yet been added, but we will not see data that has not yet been
+        keyed.
+        """
+        referenced_data = set()
+        referenced_pools = set()
+
+        # The order here matters
+        current_data = self.get_data()
+        current_pools = self.get_pools()
+        current_process_pools = self.get_processes()
+        # We need to get the keys last. This ensures that when we go through
+        # the data we got and remove any unreferenced data we aren't removing
+        # data that was added by keys we didn't see
+        current_keys = self.get_keys()
+
+        for key in current_keys:
+            loaded_key = self.read_key(key)
+
+            if (data := loaded_key.get('data')) is not None:
+                referenced_data.add(data)
+            elif (pool := loaded_key.get('pool')) is not None:
+                referenced_pools.add(pool)
+            # This really should never be happening unless someone messes
+            # with things manually
+            else:
+                raise ValueError(f"The key '{key}' in the cache '{self.path}'"
+                                 " does not point to anything")
+
+        # Add references to data in process pools
+        for process_pool in current_process_pools:
+            # Pick the creation time out of the pool name of format
+            # <process-id>-<process-create-time>@<user>
+            create_time = float(process_pool.split('-')[1].split('@')[0])
+
+            if time.time() - create_time >= self.process_pool_lifespan:
+                shutil.rmtree(
+                    self.processes / process_pool, ignore_errors=True)
+            else:
+                for data in os.listdir(self.processes / process_pool):
+                    referenced_data.add(data.split('.')[0])
+
+        # Walk over all pools and remove any that were not referenced
+        for pool in current_pools:
+            if pool not in referenced_pools:
+                shutil.rmtree(self.pools / pool, ignore_errors=True)
+            else:
+                for data in os.listdir(self.pools / pool):
+                    referenced_data.add(data)
+
+        # Walk over all data and remove any that was not referenced
+        for data in current_data:
+            # If this assert is ever tripped something real bad happened
+            assert is_uuid4(data)
+
+            if data not in referenced_data:
+                target = self.data / data
+
+                set_permissions(target, None, USER_GROUP_RWX)
+                shutil.rmtree(target, ignore_errors=True)
+
     def _check_dangling_reference(self, data_path, key_path):
         """ If the data specified does not exist then we have a dangling
         reference and we warn them about it and remove the reference.
@@ -1075,7 +1145,7 @@ class Cache:
         >>> # in memory, but it does have the same uuid as "saved_artifact."
         >>> cache.get_data() == set([str(artifact.uuid)])
         True
-        >>> cache.garbage_collection()
+        >>> cache.unlocked_garbage_collection()
         >>> # Now it is gone
         >>> cache.get_data() == set()
         True
@@ -1088,7 +1158,7 @@ class Cache:
                 raise KeyError(f"The cache '{self.path}' does not contain the"
                                f" key '{key}'") from e
 
-            self.garbage_collection()
+            self.unlocked_garbage_collection()
 
     def clear_lock(self):
         """Clears the flufl lock on the cache. This exists in case something
@@ -1703,7 +1773,7 @@ class Pool:
         >>> # in memory, but it does have the same uuid as "pool_artifact."
         >>> cache.get_data() == set([str(artifact.uuid)])
         True
-        >>> cache.garbage_collection()
+        >>> cache.unlocked_garbage_collection()
         >>> # Now it is gone
         >>> cache.get_data() == set()
         True
@@ -1722,7 +1792,7 @@ class Pool:
                     os.remove(target)
                 else:
                     shutil.rmtree(target)
-                self.cache.garbage_collection()
+                self.cache.unlocked_garbage_collection()
 
     def get_data(self):
         """Returns a set of all data in the pool.
