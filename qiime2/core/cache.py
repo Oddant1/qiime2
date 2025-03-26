@@ -823,21 +823,22 @@ class Cache:
         current_process_pools = self.get_processes()
         # We need to get the keys last. This ensures that when we go through
         # the data we got and remove any unreferenced data we aren't removing
-        # data that was added by keys we didn't see
-        current_keys = self.get_keys()
+        # data that was added by keys we didn't see/
+        #
+        # This is the only part of the process that does need to lock to ensure
+        # the keys we get are consistent. It locks inside of get_and_read_keys
+        current_keys = self.get_and_read_keys()
 
         for key in current_keys:
-            loaded_key = self.read_key(key)
-
-            if (data := loaded_key.get('data')) is not None:
+            if (data := key.get('data')) is not None:
                 referenced_data.add(data)
-            elif (pool := loaded_key.get('pool')) is not None:
+            elif (pool := key.get('pool')) is not None:
                 referenced_pools.add(pool)
             # This really should never be happening unless someone messes
             # with things manually
             else:
-                raise ValueError(f"The key '{key}' in the cache '{self.path}'"
-                                 " does not point to anything")
+                raise ValueError(f"The key '{key.get('origin')}' in the cache"
+                                 f" '{self.path}' does not point to anything")
 
         # Add references to data in process pools
         for process_pool in current_process_pools:
@@ -1334,6 +1335,25 @@ class Cache:
             to.
         """
         return set(os.listdir(self.keys))
+
+    def get_and_read_keys(self):
+        """Returns a list of all of the keys in the cache read with
+        yaml.safe_load
+
+        Returns
+        -------
+        list[dict]
+            All of the read keys in the cache
+        """
+        read_keys = []
+
+        with self.lock:
+            keys = self.get_keys()
+            for key in keys:
+                read_key = self.read_key(key)
+                read_keys.append(read_key)
+
+        return read_keys
 
     @property
     def lockfile(self):
