@@ -222,6 +222,7 @@ def _exit_cleanup():
     """
     for cache in USED_CACHES:
         target = cache.processes / os.path.basename(cache.process_pool.path)
+        removed = False
 
         # There are several legitimate reasons the path could not exist. It
         # happens during our cache tests when the entire cache is nuked in the
@@ -237,9 +238,12 @@ def _exit_cleanup():
             try:
                 if os.path.exists(target):
                     shutil.rmtree(target)
-                    cache.unlocked_garbage_collection()
+                    removed = True
             finally:
                 cache.lock.__exit__()
+
+        if removed:
+            cache.unlocked_garbage_collection()
 
 
 def monitor_thread(cache_dir, is_done):
