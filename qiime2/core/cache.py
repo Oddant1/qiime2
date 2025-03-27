@@ -783,6 +783,12 @@ class Cache:
         referenced_data = set()
         referenced_pools = set()
 
+        # If we aren't locked we can ignore rmtree errors. We may have tried to
+        # remove something someone else already removed. Don't care. If we are
+        # locked then we do care because no one else should be removing things
+        # we have kept track of
+        ignore_rmtree_errors = not locked
+
         # Walk over all keys and gather references
         for key in current_keys:
             # We do not check for dangling references here if we are unlocked
@@ -805,7 +811,8 @@ class Cache:
         # Walk over all pools and remove any that were not referenced
         for pool in current_pools:
             if pool not in referenced_pools:
-                shutil.rmtree(self.pools / pool, ignore_errors=not locked)
+                shutil.rmtree(self.pools / pool,
+                              ignore_errors=ignore_rmtree_errors)
             else:
                 for data in os.listdir(self.pools / pool):
                     # We still can't check for dangling references here when
@@ -832,7 +839,8 @@ class Cache:
 
             if time.time() - create_time >= self.process_pool_lifespan:
                 shutil.rmtree(
-                    self.processes / process_pool, ignore_errors=not locked)
+                    self.processes / process_pool,
+                    ignore_errors=ignore_rmtree_errors)
             else:
                 for data in os.listdir(self.processes / process_pool):
                     referenced_data.add(data.split('.')[0])
@@ -846,7 +854,7 @@ class Cache:
                 target = self.data / data
 
                 set_permissions(target, None, USER_GROUP_RWX)
-                shutil.rmtree(target, ignore_errors=not locked)
+                shutil.rmtree(target, ignore_errors=ignore_rmtree_errors)
 
     def _check_dangling_reference(self, data_path, key_path):
         """ If the data specified does not exist then we have a dangling
