@@ -729,7 +729,7 @@ class Cache:
         # of dangling references. Other than that, the quick version ought to
         # be just about equivalent...
         with self.lock:
-            current_keys = self.get_and_read_keys()
+            current_keys = self._get_and_read_keys(locked=True)
             current_pools = self._get_pools()
             current_process_pools = self._get_processes()
             current_data = self._get_data()
@@ -755,10 +755,7 @@ class Cache:
         current_data = self._get_data()
         current_pools = self._get_pools()
         current_process_pools = self._get_processes()
-
-        # This is the only part of the process that does need to lock to ensure
-        # the keys we get are consistent. It locks inside of get_and_read_keys.
-        current_keys = self.get_and_read_keys()
+        current_keys = self._get_and_read_keys(locked=False)
 
         self._garbage_collection(current_keys, current_pools,
                                  current_process_pools, current_data,
@@ -1004,12 +1001,15 @@ class Cache:
             If the key does not exists in the cache.
         """
         with self.lock:
-            try:
-                with open(self.keys / key) as fh:
-                    return yaml.safe_load(fh)
-            except FileNotFoundError as e:
-                raise KeyError(f"The cache '{self.path}' does not contain the "
-                               f"key '{key}'") from e
+            return self._read_key(key)
+
+    def _read_key(self, key):
+        try:
+            with open(self.keys / key) as fh:
+                return yaml.safe_load(fh)
+        except FileNotFoundError as e:
+            raise KeyError(f"The cache '{self.path}' does not contain the "
+                           f"key '{key}'") from e
 
     def load(self, key):
         """Loads the data pointed to by a key. Will defer to
@@ -1342,7 +1342,7 @@ class Cache:
         """
         return set(os.listdir(self.keys))
 
-    def get_and_read_keys(self):
+    def _get_and_read_keys(self, locked):
         """Returns a list of all of the keys in the cache read with
         yaml.safe_load
 
@@ -1353,10 +1353,16 @@ class Cache:
         """
         read_keys = []
 
-        with self.lock:
-            keys = self.get_keys()
-            for key in keys:
+        keys = self._get_keys()
+        for key in keys:
+            try:
                 read_key = self.read_key(key)
+            except KeyError:
+                # If we aren't locked we don't care if the key didn't exist.
+                # Could happen since we didn't lock
+                if locked:
+                    raise
+            else:
                 read_keys.append(read_key)
 
         return read_keys
