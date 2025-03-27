@@ -739,67 +739,18 @@ class Cache:
         We lock out other processes and threads from accessing the cache while
         garbage collecting to ensure the cache remains in a consistent state.
         """
-        referenced_pools = set()
-        referenced_data = set()
-
-        # Walk over keys and track all pools and data referenced
-        # This needs to be locked so we ensure that we don't have other threads
-        # or processes writing refs that we don't see leading to us deleting
-        # their data
+        # NOTE: The only real addition the locked version gives us is removal
+        # of dangling references. Other than that, the quick version ought to
+        # be just about equivalent...
         with self.lock:
-            for key in self.get_keys():
-                loaded_key = self.read_key(key)
+            current_keys = self.get_and_read_keys()
+            current_pools = self._get_pools()
+            current_process_pools = self._get_processes()
+            current_data = self._get_data()
 
-                # If the data/pool referenced by the key actually exists then
-                # track it. Otherwise remove the dangling reference
-                if (data := loaded_key.get('data')) is not None:
-                    if not self._check_dangling_reference(
-                            self.data / data, self.keys / key):
-                        referenced_data.add(data)
-                elif (pool := loaded_key.get('pool')) is not None:
-                    if not self._check_dangling_reference(
-                            self.pools / pool, self.keys / key):
-                        referenced_pools.add(pool)
-                # This really should never be happening unless someone messes
-                # with things manually
-                else:
-                    raise ValueError(f"The key '{key}' in the cache"
-                                     f" '{self.path}' does not point to"
-                                     " anything")
-
-            # Walk over pools and remove any that were not referred to by keys
-            # while tracking all data within those that were referenced
-            for pool in self.get_pools():
-                if pool not in referenced_pools:
-                    shutil.rmtree(self.pools / pool)
-                else:
-                    for data in os.listdir(self.pools / pool):
-                        if not self._check_dangling_reference(
-                                self.data / data, self.pools / pool / data):
-                            referenced_data.add(data)
-
-            # Add references to data in process pools
-            for process_pool in self.get_processes():
-                # Pick the creation time out of the pool name of format
-                # <process-id>-<process-create-time>@<user>
-                create_time = float(process_pool.split('-')[1].split('@')[0])
-
-                if time.time() - create_time >= self.process_pool_lifespan:
-                    shutil.rmtree(self.processes / process_pool)
-                else:
-                    for data in os.listdir(self.processes / process_pool):
-                        referenced_data.add(data.split('.')[0])
-
-            # Walk over all data and remove any that was not referenced
-            for data in self.get_data():
-                # If this assert is ever tripped something real bad happened
-                assert is_uuid4(data)
-
-                if data not in referenced_data:
-                    target = self.data / data
-
-                    set_permissions(target, None, USER_GROUP_RWX)
-                    shutil.rmtree(target)
+            self._garbage_collection(current_keys, current_pools,
+                                     current_process_pools, current_data,
+                                     locked=True)
 
     def quick_garbage_collection(self):
         """ Runs a stripped down best effort garbage collection without
@@ -810,37 +761,70 @@ class Cache:
         It is possible to run this safely without locking because we get the
         data, then we get the pools, then we get the process pools, and THEN we
         get the keys last. Since we always add the key to the pool/data before
-        adding the pool/data itself we may end seeing keys for data that has
+        adding the pool/data itself we may end up seeing keys for data that has
         not yet been added, but we will not see data that has not yet been
         keyed.
         """
-        referenced_data = set()
-        referenced_pools = set()
-
         # The order here matters
-        current_data = self.get_data()
-        current_pools = self.get_pools()
-        current_process_pools = self.get_processes()
-        # We need to get the keys last. This ensures that when we go through
-        # the data we got and remove any unreferenced data we aren't removing
-        # data that was added by keys we didn't see/
-        #
+        current_data = self._get_data()
+        current_pools = self._get_pools()
+        current_process_pools = self._get_processes()
+
         # This is the only part of the process that does need to lock to ensure
         # the keys we get are consistent. It locks inside of get_and_read_keys
         current_keys = self.get_and_read_keys()
 
+        self._garbage_collection(current_keys, current_pools,
+                                 current_process_pools, current_data,
+                                 locked=False)
+
+    def _garbage_collection(self, current_keys, current_pools,
+                            current_process_pools, current_data, locked):
+        referenced_data = set()
+        referenced_pools = set()
+
+        # Walk over all keys and gather references
         for key in current_keys:
+            # We do not check for dangling references here if we are unlocked
+            # because we could very easily see a key that does not yet have its
+            # data written since we write keys before linking data.
             if (data := key.get('data')) is not None:
-                referenced_data.add(data)
+                if not locked or not self._check_dangling_reference(
+                        self.data / data, self.keys / key.get('origin')):
+                    referenced_data.add(data)
             elif (pool := key.get('pool')) is not None:
-                referenced_pools.add(pool)
+                if not locked or not self._check_dangling_reference(
+                        self.pools / pool, self.keys / key.get('origin')):
+                    referenced_pools.add(pool)
             # This really should never be happening unless someone messes
             # with things manually
             else:
                 raise ValueError(f"The key '{key.get('origin')}' in the cache"
                                  f" '{self.path}' does not point to anything")
 
+        # Walk over all pools and remove any that were not referenced
+        for pool in current_pools:
+            if pool not in referenced_pools:
+                shutil.rmtree(self.pools / pool, ignore_errors=not locked)
+            else:
+                for data in os.listdir(self.pools / pool):
+                    # We still can't check for dangling references here when
+                    # not locked because the data could have been linked into
+                    # the pool and the data dir after we got the data dir
+                    if not locked or not self._check_dangling_reference(
+                            self.data / data, self.pools / pool / data):
+                        referenced_data.add(data)
+
         # Add references to data in process pools
+        #
+        # NOTE: It is conceivable in the quick GC that the process pool removal
+        # will happen while something is being written to the process pool. In
+        # theory we could remove a process pool out from under a process in
+        # fully locking GC as well. This shouldn't matter though because by
+        # default the process pool is only deleted like this after 45 days. If
+        # you have a process running longer than that
+        # 1. God help you
+        # 2. Increase the lifespan
         for process_pool in current_process_pools:
             # Pick the creation time out of the pool name of format
             # <process-id>-<process-create-time>@<user>
@@ -848,18 +832,10 @@ class Cache:
 
             if time.time() - create_time >= self.process_pool_lifespan:
                 shutil.rmtree(
-                    self.processes / process_pool, ignore_errors=True)
+                    self.processes / process_pool, ignore_errors=not locked)
             else:
                 for data in os.listdir(self.processes / process_pool):
                     referenced_data.add(data.split('.')[0])
-
-        # Walk over all pools and remove any that were not referenced
-        for pool in current_pools:
-            if pool not in referenced_pools:
-                shutil.rmtree(self.pools / pool, ignore_errors=True)
-            else:
-                for data in os.listdir(self.pools / pool):
-                    referenced_data.add(data)
 
         # Walk over all data and remove any that was not referenced
         for data in current_data:
@@ -870,7 +846,7 @@ class Cache:
                 target = self.data / data
 
                 set_permissions(target, None, USER_GROUP_RWX)
-                shutil.rmtree(target, ignore_errors=True)
+                shutil.rmtree(target, ignore_errors=not locked)
 
     def _check_dangling_reference(self, data_path, key_path):
         """ If the data specified does not exist then we have a dangling
@@ -1317,6 +1293,12 @@ class Cache:
             All of the data in the cache in the form of the top level
             directories which will be the uuids of the artifacts.
         """
+        with self.lock:
+            return self._get_data()
+
+    def _get_data(self):
+        """Get data without locking.
+        """
         return set(os.listdir(self.data))
 
     @property
@@ -1333,6 +1315,12 @@ class Cache:
         set[str]
             All of the keys in the cache. Just the names not what they refer
             to.
+        """
+        with self.lock:
+            return self._get_keys()
+
+    def _get_keys(self):
+        """Get keys without locking.
         """
         return set(os.listdir(self.keys))
 
@@ -1375,6 +1363,12 @@ class Cache:
         set[str]
             The names of all of the named pools in the cache.
         """
+        with self.lock:
+            return self._get_pools()
+
+    def _get_pools(self):
+        """Get pools without locking.
+        """
         return set(os.listdir(self.pools))
 
     @property
@@ -1390,6 +1384,12 @@ class Cache:
         -------
         set[str]
             The names of all of the process pools in the cache.
+        """
+        with self.lock:
+            return self._get_processes()
+
+    def _get_processes(self):
+        """Get process pools without locking.
         """
         return set(os.listdir(self.processes))
 
