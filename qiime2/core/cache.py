@@ -1356,7 +1356,7 @@ class Cache:
         keys = self._get_keys()
         for key in keys:
             try:
-                read_key = self.read_key(key)
+                read_key = self._read_key(key)
             except KeyError:
                 # If we aren't locked we don't care if the key didn't exist.
                 # Could happen since we didn't lock
