@@ -243,7 +243,7 @@ def _exit_cleanup():
                 cache.lock.__exit__()
 
         if removed:
-            cache.unlocked_garbage_collection()
+            cache.quick_garbage_collection()
 
 
 def monitor_thread(cache_dir, is_done):
@@ -801,7 +801,7 @@ class Cache:
                     set_permissions(target, None, USER_GROUP_RWX)
                     shutil.rmtree(target)
 
-    def unlocked_garbage_collection(self):
+    def quick_garbage_collection(self):
         """ Runs a stripped down best effort garbage collection without
         locking. This garbage collection may not get everything that needs
         collected, but it won't trash anything it shouldn't and it won't hog
@@ -1150,7 +1150,7 @@ class Cache:
         >>> # in memory, but it does have the same uuid as "saved_artifact."
         >>> cache.get_data() == set([str(artifact.uuid)])
         True
-        >>> cache.unlocked_garbage_collection()
+        >>> cache.quick_garbage_collection()
         >>> # Now it is gone
         >>> cache.get_data() == set()
         True
@@ -1163,7 +1163,7 @@ class Cache:
                 raise KeyError(f"The cache '{self.path}' does not contain the"
                                f" key '{key}'") from e
 
-            self.unlocked_garbage_collection()
+            self.quick_garbage_collection()
 
     def clear_lock(self):
         """Clears the flufl lock on the cache. This exists in case something
@@ -1797,7 +1797,7 @@ class Pool:
         >>> # in memory, but it does have the same uuid as "pool_artifact."
         >>> cache.get_data() == set([str(artifact.uuid)])
         True
-        >>> cache.unlocked_garbage_collection()
+        >>> cache.quick_garbage_collection()
         >>> # Now it is gone
         >>> cache.get_data() == set()
         True
@@ -1816,7 +1816,7 @@ class Pool:
                     os.remove(target)
                 else:
                     shutil.rmtree(target)
-                self.cache.unlocked_garbage_collection()
+                self.cache.quick_garbage_collection()
 
     def get_data(self):
         """Returns a set of all data in the pool.
