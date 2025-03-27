@@ -716,28 +716,14 @@ class Cache:
             self._register_key(key, pool_name, pool=True)
 
     def garbage_collection(self):
-        """Runs garbage collection on the cache in the following steps:
+        """Locks the cache then runs garbage collection ensuring all cache
+        entries that can be safely removed are safely removed.
 
-        **1.** Iterate over all keys and log all data and pools referenced by
-        the keys.
-
-        **2.** Iterate over all named pools and delete any that were not
-        referred to by a key while logging all data in pools that were referred
-        to by keys.
-
-        **3.** Iterate over all process pools and log all data they refer to.
-
-        **4.** Iterate over all data and remove any that was not referenced.
-
-        This process destroys data and named pools that do not have keys along
-        with process pools older than the process_pool_lifespan on the cache
-        which defaults to 45 days.
-
-        It removes keys and warns the user about the removal if the data
-        referenced by the keys does not exist.
-
-        We lock out other processes and threads from accessing the cache while
-        garbage collecting to ensure the cache remains in a consistent state.
+        Note
+        ----
+        Can potentially hog the lock for a very long time. In general,
+        quick_garbage_collection should be preferred for automatic collection,
+        and this should only be run manually.
         """
         # NOTE: The only real addition the locked version gives us is removal
         # of dangling references. Other than that, the quick version ought to
@@ -771,7 +757,7 @@ class Cache:
         current_process_pools = self._get_processes()
 
         # This is the only part of the process that does need to lock to ensure
-        # the keys we get are consistent. It locks inside of get_and_read_keys
+        # the keys we get are consistent. It locks inside of get_and_read_keys.
         current_keys = self.get_and_read_keys()
 
         self._garbage_collection(current_keys, current_pools,
@@ -780,6 +766,30 @@ class Cache:
 
     def _garbage_collection(self, current_keys, current_pools,
                             current_process_pools, current_data, locked):
+        """Runs garbage collection on the cache in the following steps:
+
+        **1.** Iterate over all keys and log all data and pools referenced by
+        the keys.
+
+        **2.** Iterate over all named pools and delete any that were not
+        referred to by a key while logging all data in pools that were referred
+        to by keys.
+
+        **3.** Iterate over all process pools and log all data they refer to.
+        Remove any that are older than the indicated lifespan.
+
+        **4.** Iterate over all data and remove any that was not referenced.
+
+        This process destroys data and named pools that do not have keys along
+        with process pools older than the process_pool_lifespan on the cache
+        which defaults to 45 days.
+
+        Locked Differences
+        ------------------
+
+        When locked, it removes keys and warns the user about the removal if
+        the data referenced by the keys does not exist. Same for pool symlinks
+        """
         referenced_data = set()
         referenced_pools = set()
 
