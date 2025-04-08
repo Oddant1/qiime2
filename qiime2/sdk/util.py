@@ -17,7 +17,6 @@ from qiime2.core.type import (
     is_semantic_type, is_primitive_type, is_collection_type, is_metadata_type,
     is_visualization_type, interrogate_collection_type, parse_primitive,
     is_union, is_metadata_column_type, is_parallel_type)
-import qiime2.core.cache as core_cache
 
 if TYPE_CHECKING:
     from qiime2.sdk.usage import UsageDriver
@@ -185,10 +184,3 @@ def get_available_usage_drivers() -> Dict[str, 'UsageDriver']:
         entry_point.name: entry_point.load() for entry_point in
         entry_points(group='qiime2.usage_drivers')
     }
-
-
-def get_cache():
-    '''
-    This is an alias of qiime2.core.cache.get_cache to be used by plugin devs.
-    '''
-    return core_cache.get_cache()

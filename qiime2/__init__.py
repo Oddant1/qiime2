@@ -10,7 +10,7 @@ from qiime2.sdk import Artifact, Visualization, ResultCollection
 from qiime2.metadata import (Metadata, MetadataColumn,
                              CategoricalMetadataColumn, NumericMetadataColumn)
 from qiime2.plugin import Citations
-from qiime2.core.cache import Cache, Pool
+from qiime2.core.cache import Cache, Pool, get_cache
 
 try:
     from ._version import __version__
@@ -26,7 +26,7 @@ __website__ = 'https://qiime2.org'
 
 __all__ = ['Artifact', 'Visualization', 'ResultCollection', 'Metadata',
            'MetadataColumn', 'CategoricalMetadataColumn',
-           'NumericMetadataColumn', 'Cache', 'Pool']
+           'NumericMetadataColumn', 'Cache', 'Pool', 'get_cache']
 
 
 # Used by `jupyter serverextension enable`
