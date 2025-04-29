@@ -695,9 +695,10 @@ class Cache:
         return Pool(self, reuse=True)
 
     def _create_collection_pool(self, ref_collection, key):
-        self._register_key(
-            key, key, pool=True, collection=ref_collection)
-        pool = Pool(self, name=key, reuse=False)
+        with self.lock:
+            self._register_key(
+                key, key, pool=True, collection=ref_collection)
+            pool = Pool(self, name=key, reuse=False)
 
         return pool
 
@@ -712,8 +713,9 @@ class Cache:
         keys : List[str]
             A list of all the keys to create referring to the pool.
         """
-        for key in keys:
-            self._register_key(key, pool_name, pool=True)
+        with self.lock:
+            for key in keys:
+                self._register_key(key, pool_name, pool=True)
 
     def garbage_collection(self):
         """Locks the cache then runs garbage collection ensuring all cache
@@ -929,7 +931,7 @@ class Cache:
             self._register_key(key, str(ref.uuid))
             self._copy_to_data(ref)
 
-        return self.load(key)
+            return self.load(key)
 
     def save_collection(self, ref_collection, key):
         """Saves a Collection to a pool in the cache with the given key. This
