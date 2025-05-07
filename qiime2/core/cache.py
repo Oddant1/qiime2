@@ -577,6 +577,9 @@ class Cache:
             re.compile(
                 r"QIIME 2\ncache: \d+\nframework: 20\d\d\.")
         with open(path / 'VERSION') as fh:
+            # Some of this is a bit silly because when it was originally
+            # written futuristic version errors were not implemented
+
             # Skip header line
             fh.readline()
             loaded = yaml.safe_load(fh)
