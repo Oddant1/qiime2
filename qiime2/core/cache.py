@@ -569,8 +569,24 @@ class Cache:
             re.compile(
                 r"QIIME 2\ncache: \d+\nframework: 20\d\d\.")
         with open(path / 'VERSION') as fh:
+            # Skip header line
+            fh.readline()
+            loaded = yaml.safe_load(fh)
+
+            if str(loaded['cache']) != "1":
+                cls._futuristic_archive_error(path, loaded['cache'])
+            # Seek back to beginning
+            fh.seek(0)
+
             version_file = fh.read()
             return regex.match(version_file) is not None
+
+    @classmethod
+    def _futuristic_archive_error(cls, cache_path, read_cache_version):
+        raise ValueError(f"The cache at `{cache_path}` is version"
+                         f" `{read_cache_version}`. The currently installed"
+                         " version of the framework can only handle version"
+                         f" `{cls.CURRENT_FORMAT_VERSION}` and earlier")
 
     @classmethod
     def validate_key(cls, key):
