@@ -368,6 +368,14 @@ class Cache:
     cache it is (if we make breaking changes in the future this version number
     will allow for backwards compatibility).
     """
+
+    # NOTE: For all versions past 1, this will be "v<version_number>" ex "v2".
+    # This is because the original version of the cache failed to properly
+    # validate this version number and raise a useful error if the number was
+    # a future verion. It only checked the cache version was a number at all.
+    # By adding a v in front of future versions of the cache, if you use a
+    # version of the cache with a version of QIIME 2 that doesn't support it
+    # you will get an error saying the indicated path is not a cache.
     CURRENT_FORMAT_VERSION = '1'
 
     # The files and folders you expect to see at the top level of a cache
@@ -573,8 +581,14 @@ class Cache:
             fh.readline()
             loaded = yaml.safe_load(fh)
 
-            if str(loaded['cache']) != "1":
-                cls._futuristic_archive_error(path, loaded['cache'])
+            # Yoink out our cache version and remove leading v if needed
+            loaded_version = str(loaded["cache"])
+            if loaded_version[0] == "v":
+                loaded_version = loaded_version[1:]
+
+            if int(loaded_version) > int(cls.CURRENT_FORMAT_VERSION):
+                cls._futuristic_archive_error(path, loaded_version)
+
             # Seek back to beginning
             fh.seek(0)
 
@@ -582,9 +596,9 @@ class Cache:
             return regex.match(version_file) is not None
 
     @classmethod
-    def _futuristic_archive_error(cls, cache_path, read_cache_version):
+    def _futuristic_archive_error(cls, cache_path, loaded_version):
         raise ValueError(f"The cache at `{cache_path}` is version"
-                         f" `{read_cache_version}`. The currently installed"
+                         f" `{loaded_version}`. The currently installed"
                          " version of the framework can only handle version"
                          f" `{cls.CURRENT_FORMAT_VERSION}` and earlier")
 
