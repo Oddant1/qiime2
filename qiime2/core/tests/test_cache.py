@@ -24,7 +24,8 @@ import pytest
 from flufl.lock import LockState
 
 import qiime2
-from qiime2.core.cache import Cache, _exit_cleanup, get_cache, _get_user
+from qiime2.core.cache import (Cache, _exit_cleanup, get_cache, _get_user,
+                               _VERSION_TEMPLATE)
 from qiime2.core.testing.type import IntSequence1, IntSequence2, SingleInt
 from qiime2.core.testing.util import get_dummy_plugin
 from qiime2.sdk.result import Artifact
@@ -664,3 +665,14 @@ class TestCache(unittest.TestCase):
         with self.assertRaisesRegex(
                 ValueError, f"Path: '{self.not_cache_path}' already exists"):
             Cache(self.not_cache_path)
+
+    def test_futuristic_cache(self):
+        future_version = 9001
+
+        with open(self.cache.version, 'w') as fh:
+            fh.write(_VERSION_TEMPLATE % (future_version, qiime2.__version__))
+
+        with self.assertRaisesRegex(
+            ValueError, f"The cache at `{self.cache.path}`.*`{future_version}`"
+                        f".*`{Cache.CURRENT_FORMAT_VERSION}`"):
+            Cache.is_cache(self.cache.path)
