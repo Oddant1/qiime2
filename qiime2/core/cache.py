@@ -584,12 +584,15 @@ class Cache:
             fh.readline()
             loaded = yaml.safe_load(fh)
 
-            # Yoink out our cache version and remove leading v if needed
+            # Yoink out our cache version and remove leading v if needed for
+            # easy integer comparison
             loaded_version = str(loaded["cache"])
             if loaded_version[0] == "v":
-                loaded_version = loaded_version[1:]
+                parsed_version = loaded_version[1:]
+            else:
+                parsed_version = loaded_version
 
-            if int(loaded_version) > int(cls.CURRENT_FORMAT_VERSION):
+            if int(parsed_version) > int(cls.CURRENT_FORMAT_VERSION):
                 cls._futuristic_archive_error(path, loaded_version)
 
             # Seek back to beginning
