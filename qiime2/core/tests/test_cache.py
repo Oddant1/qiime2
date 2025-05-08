@@ -667,7 +667,7 @@ class TestCache(unittest.TestCase):
             Cache(self.not_cache_path)
 
     def test_futuristic_cache(self):
-        future_version = 9001
+        future_version = "v9001"
 
         with open(self.cache.version, 'w') as fh:
             fh.write(_VERSION_TEMPLATE % (future_version, qiime2.__version__))
