@@ -575,7 +575,7 @@ class Cache:
 
         regex = \
             re.compile(
-                r"QIIME 2\ncache: \d+\nframework: 20\d\d\.")
+                r"QIIME 2\ncache: v?\d+\nframework: 20\d\d\.")
         with open(path / 'VERSION') as fh:
             # Some of this is a bit silly because when it was originally
             # written futuristic version errors were not implemented
