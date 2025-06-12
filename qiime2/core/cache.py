@@ -320,7 +320,8 @@ class MEGALock(tm):
                 self._thread_is_done = threading.Event()
                 self._thread = threading.Thread(
                     target=lock_thread,
-                    args=(self.flufl_lock, self.lifetime, self._thread_is_done),
+                    args=(self.flufl_lock, self.lifetime,
+                          self._thread_is_done),
                     daemon=True)
                 self._thread.start()
 
