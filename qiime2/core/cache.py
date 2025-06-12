@@ -792,8 +792,6 @@ class Cache:
 
                 if data not in referenced_data:
                     target = self.data / data
-
-                    set_permissions(target, None, USER_GROUP_RWX)
                     shutil.rmtree(target)
 
     def _check_dangling_reference(self, data_path, key_path):
