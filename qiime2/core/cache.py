@@ -282,7 +282,10 @@ def lock_thread(flufl_lock, lifetime, is_done):
         lock to notify this daemon to terminate.
     """
     while not is_done.is_set():
-        flufl_lock.refresh()
+        try:
+            flufl_lock.refresh()
+        except flufl.lock._lockfile.NotLockedError:
+            break
         time.sleep(lifetime.seconds * .9)
 
 
@@ -332,8 +335,7 @@ class MEGALock(tm):
             self.re_entries -= 1
 
         if self.re_entries == 0:
-            if hasattr(self, '_thread_is_done'):
-                self._thread_is_done.set()
+            self._thread_is_done.set()
             self.flufl_lock.unlock()
             self.thread_lock.release()
 
@@ -342,6 +344,8 @@ class MEGALock(tm):
 
         del lockless_dict['thread_lock']
         del lockless_dict['flufl_lock']
+        del lockless_dict['_thread']
+        del lockless_dict['_thread_is_done']
 
         return lockless_dict
 
