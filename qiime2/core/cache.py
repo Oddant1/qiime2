@@ -536,7 +536,11 @@ class Cache:
         self.__dict__.update(state)
 
         if not os.path.exists(self.path):
-            raise ValueError("Cache rehydrated without a valid path.")
+            raise ValueError(
+                f"Cache path `{self.path}` not visible from the current"
+                " compute environment. It is likely you submitted this job to"
+                " a compute node without setting your cache to a globally"
+                " accessible location.")
 
     @classmethod
     def is_cache(cls, path):
