@@ -532,6 +532,12 @@ class Cache:
 
         return threadless_dict
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        if not os.path.exists(self.path):
+            raise ValueError("Cache rehydrated without a valid path.")
+
     @classmethod
     def is_cache(cls, path):
         """Tells us if the path we were given is a cache.
