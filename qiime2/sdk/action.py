@@ -247,8 +247,11 @@ class Action(metaclass=abc.ABCMeta):
         return callable_wrapper
 
     def _get_async_wrapper(self):
-        async_wrapper = self._rewrite_wrapper_signature(
-            qiime2.sdk.AsynchronousContext(self)._dispatch_)
+        def async_wrapper(*args, **kwargs):
+            return qiime2.sdk.AsynchronousContext(self)._dispatch_(
+                *args, **kwargs)
+
+        async_wrapper = self._rewrite_wrapper_signature(async_wrapper)
         self._set_wrapper_properties(async_wrapper)
         self._set_wrapper_name(async_wrapper, 'asynchronous')
         return async_wrapper
