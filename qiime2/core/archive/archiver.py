@@ -421,18 +421,18 @@ class Archiver:
             Format.write(rec, type, format, data_initializer,
                          provenance_capture)
 
-            process_alias, data_path = cache._rename_to_data(uuid, path)
+            data_path = cache._rename_to_data(uuid, path)
             rec = ArchiveRecord(data_path, data_path / _Archive.VERSION_FILE,
                                 uuid, cls.CURRENT_FORMAT_VERSION,
                                 qiime2.__version__)
-            ref = cls(data_path, process_alias, Format(rec), cache)
+            ref = cls(data_path, data_path, Format(rec), cache)
             return ref
         # We really just want to kill these paths if anything at all goes wrong
         # Exceptions including keyboard interrupts are re-raised
         except:  # noqa: E722
             cls._destroy_temp_path(uuid)
-            if 'process_alias' in vars():
-                cls._destroy_temp_path(process_alias)
+            if 'data_path' in vars():
+                cls._destroy_temp_path(data_path)
             raise
 
     def __init__(self, path, process_alias, fmt, cache):
