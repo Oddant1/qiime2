@@ -51,9 +51,7 @@ import flufl.lock
 import qiime2
 from .path import ArchivePath
 from qiime2.sdk.result import Result
-from qiime2.core.util import (is_uuid4, set_permissions, touch_under_path,
-                              load_action_yaml, READ_ONLY_FILE, READ_ONLY_DIR,
-                              USER_GROUP_RWX)
+from qiime2.core.util import is_uuid4, touch_under_path, load_action_yaml)
 from qiime2.core.archive.archiver import Archiver
 from qiime2.core.type import HashableInvocation, IndexedCollectionElement
 
@@ -469,8 +467,6 @@ class Cache:
                 # We own the temp_cache_path, so we can recreate it if there
                 # was something wrong with it
                 if self.path == temp_cache_path:
-                    set_permissions(self.path, USER_GROUP_RWX,
-                                    USER_GROUP_RWX, skip_root=True)
                     self._remove_cache_contents()
                     self._create_cache_contents()
                     warnings.warn(
@@ -832,8 +828,6 @@ class Cache:
 
                 if data not in referenced_data:
                     target = self.data / data
-
-                    set_permissions(target, None, USER_GROUP_RWX)
                     shutil.rmtree(target)
 
     def _check_dangling_reference(self, data_path, key_path):
@@ -1170,8 +1164,6 @@ class Cache:
                     shutil.copytree(
                         ref._archiver.path, self.data, dirs_exist_ok=True)
 
-                set_permissions(destination, READ_ONLY_FILE, READ_ONLY_DIR)
-
     def _rename_to_data(self, uuid, src):
         """Takes some data in src and renames it into the cache's data dir. It
         then ensures there are symlinks for this data in the process pool and
@@ -1201,7 +1193,6 @@ class Cache:
             # Rename errors if the destination already exists
             if not os.path.exists(dest):
                 os.rename(src, dest)
-                set_permissions(dest, READ_ONLY_FILE, READ_ONLY_DIR)
 
             # Create a new alias whether we renamed or not because this is
             # still loading a new reference to the data even if the data is
