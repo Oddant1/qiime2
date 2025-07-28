@@ -1606,8 +1606,6 @@ class Pool:
         # the same thing to a named pool several times.
         with self.cache.lock:
             if not os.path.lexists(dest):
-                print(os.path.exists(src))
-                print(os.path.exists(dest))
                 os.symlink(src, dest)
 
     def load(self, ref):
