@@ -51,7 +51,7 @@ import flufl.lock
 import qiime2
 from .path import ArchivePath
 from qiime2.sdk.result import Result
-from qiime2.core.util import is_uuid4, touch_under_path, load_action_yaml)
+from qiime2.core.util import is_uuid4, touch_under_path, load_action_yaml
 from qiime2.core.archive.archiver import Archiver
 from qiime2.core.type import HashableInvocation, IndexedCollectionElement
 
