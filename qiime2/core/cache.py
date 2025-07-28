@@ -1825,6 +1825,7 @@ class Pool:
                 # would be better to create an action that produces the
                 # artifact rather than using make_artifact
                 if 'type' in action and action['type'] == 'import':
+                    os.remove(self.path / alias)
                     continue
 
                 plugin_action = action['plugin'] + ':' + action['action']
