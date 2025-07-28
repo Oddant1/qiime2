@@ -1214,30 +1214,6 @@ class Cache:
         shutil.rmtree(alias)
         return process_alias, dest
 
-    def _alias(self, uuid):
-        """Creates an alias and a symlink for the artifact with the given uuid
-        in both the cache's process pool and its named pool if it has one.
-
-        Parameters
-        ----------
-        uuid : str or uuid4
-            The uuid of the artifact we are aliasing.
-
-        Returns
-        -------
-        str
-            The alias we created for the artifact.
-        """
-        with self.lock:
-            process_alias = self.process_pool._alias(uuid)
-            self.process_pool._make_symlink(uuid, process_alias)
-
-            # Named pool links are not aliased
-            if self.named_pool is not None:
-                self.named_pool._make_symlink(uuid, uuid)
-
-        return process_alias
-
     def _deallocate(self, symlink):
         """Removes a specific symlink from the process pool. This happens when
         an archiver goes out of scope. We remove that archiver's reference to
@@ -1570,46 +1546,6 @@ class Pool:
 
         self.cache._copy_to_data(ref)
         return self.load(ref)
-
-    def _alias(self, uuid):
-        """We may want to create multiple references to a single artifact in a
-        process pool, but we cannot create multiple symlinks with the same
-        name, so we take the uuid and add a random number to the end of it and
-        use uuid.random_number as the name of the symlink. This means when you
-        look in a process pool you may see the same uuid multiple times with
-        different random numbers appended. This means there are multiple
-        references to the artifact with that uuid in the process poole because
-        it was loaded multiple times in the process.
-
-        Parameters
-        ----------
-        uuid : str or uuid4
-            The uuid we are creating an alias for.
-
-        Returns
-        -------
-        str
-            The aliased uuid.
-
-        """
-        MAX_RETRIES = 5
-
-        uuid = str(uuid)
-        with self.cache.lock:
-            for _ in range(MAX_RETRIES):
-                alias = uuid + '.' + str(randint(0, maxsize))
-                path = self.path / alias
-
-                # os.path.exists returns false on broken symlinks
-                if not os.path.exists(path) and not os.path.islink(path):
-                    break
-            else:
-                raise ValueError(f'Too many collisions ({MAX_RETRIES}) '
-                                 'occurred while trying to save artifact '
-                                 f'<{uuid}> to process pool {self.path}. It '
-                                 'is likely you have attempted to load the '
-                                 'same artifact a very large number of times.')
-        return alias
 
     def _allocate(self, uuid):
         """Allocate an empty directory under the process pool to extract to.
