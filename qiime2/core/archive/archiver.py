@@ -14,6 +14,7 @@ import zipfile
 import importlib
 import os
 import io
+import shutil
 
 import qiime2
 import qiime2.core.cite as cite
@@ -294,6 +295,7 @@ class Archiver:
         path = cache.process_pool._allocate(uuid)
         return path, cache
 
+    # TODO: I think we may want to remove this method entirely
     @classmethod
     def _destroy_temp_path(cls, process_alias):
         from qiime2.core.cache import get_cache
@@ -379,19 +381,17 @@ class Archiver:
                 cls._futuristic_archive_error(filepath, archive)
 
             archive.mount(path)
-            process_alias, data_path = \
-                cache._rename_to_data(archive.uuid, path)
+            data_path = cache._rename_to_data(archive.uuid, path)
+            shutil.rmtree(path)
             rec = ArchiveRecord(
                 data_path, data_path / archive.VERSION_FILE, archive.uuid,
                 archive.version, archive.framework_version)
-            ref = cls(data_path, process_alias, Format(rec), cache)
+            ref = cls(data_path, archive.uuid, Format(rec), cache)
             return ref
         # We really just want to kill these paths if anything at all goes wrong
         # Exceptions including keyboard interrupts are re-raised
         except:  # noqa: E722
             cls._destroy_temp_path(archive.uuid)
-            if 'process_alias' in vars():
-                cls._destroy_temp_path(process_alias)
             raise
 
     @classmethod
@@ -423,18 +423,16 @@ class Archiver:
             Format.write(rec, type, format, data_initializer,
                          provenance_capture)
 
-            process_alias, data_path = cache._rename_to_data(uuid, path)
+            data_path = cache._rename_to_data(uuid, path)
             rec = ArchiveRecord(data_path, data_path / _Archive.VERSION_FILE,
                                 uuid, cls.CURRENT_FORMAT_VERSION,
                                 qiime2.__version__)
-            ref = cls(data_path, process_alias, Format(rec), cache)
+            ref = cls(data_path, uuid, Format(rec), cache)
             return ref
         # We really just want to kill these paths if anything at all goes wrong
         # Exceptions including keyboard interrupts are re-raised
         except:  # noqa: E722
             cls._destroy_temp_path(uuid)
-            if 'process_alias' in vars():
-                cls._destroy_temp_path(process_alias)
             raise
 
     def __init__(self, path, process_alias, fmt, cache):

@@ -42,8 +42,6 @@ import weakref
 import tempfile
 import warnings
 import threading
-from sys import maxsize
-from random import randint
 from datetime import timedelta
 
 import flufl.lock
@@ -1203,25 +1201,22 @@ class Cache:
                 os.rename(src, dest)
                 set_permissions(dest, READ_ONLY_FILE, READ_ONLY_DIR)
 
-            # Create a new alias whether we renamed or not because this is
-            # still loading a new reference to the data even if the data is
-            # already there
-            process_alias = self._alias(uuid)
+            self.make_symlinks(uuid)
 
         # Remove the aliased directory above the one we renamed. We need to do
         # this whether we renamed or not because we aren't renaming this
         # directory but the one beneath it
         shutil.rmtree(alias)
-        return process_alias, dest
+        return dest
 
-    def _alias(self, uuid):
-        """Creates an alias and a symlink for the artifact with the given uuid
-        in both the cache's process pool and its named pool if it has one.
+    def make_symlinks(self, uuid):
+        """Creates a symlink for the artifact with the given uuid in both the
+        cache's process pool and its named pool if it has one.
 
         Parameters
         ----------
         uuid : str or uuid4
-            The uuid of the artifact we are aliasing.
+            The uuid of the artifact we are symlinking.
 
         Returns
         -------
@@ -1229,14 +1224,10 @@ class Cache:
             The alias we created for the artifact.
         """
         with self.lock:
-            process_alias = self.process_pool._alias(uuid)
-            self.process_pool._make_symlink(uuid, process_alias)
+            self.process_pool._make_symlink(uuid)
 
-            # Named pool links are not aliased
             if self.named_pool is not None:
-                self.named_pool._make_symlink(uuid, uuid)
-
-        return process_alias
+                self.named_pool._make_symlink(uuid)
 
     def _deallocate(self, symlink):
         """Removes a specific symlink from the process pool. This happens when
@@ -1561,60 +1552,16 @@ class Pool:
         >>> test_dir.cleanup()
         """
         uuid = str(ref.uuid)
-        if self.path == self.cache.process_pool.path:
-            alias = self._alias(uuid)
-        else:
-            alias = uuid
 
-        self._make_symlink(uuid, alias)
+        self._make_symlink(uuid)
 
         self.cache._copy_to_data(ref)
         return self.load(ref)
 
-    def _alias(self, uuid):
-        """We may want to create multiple references to a single artifact in a
-        process pool, but we cannot create multiple symlinks with the same
-        name, so we take the uuid and add a random number to the end of it and
-        use uuid.random_number as the name of the symlink. This means when you
-        look in a process pool you may see the same uuid multiple times with
-        different random numbers appended. This means there are multiple
-        references to the artifact with that uuid in the process poole because
-        it was loaded multiple times in the process.
-
-        Parameters
-        ----------
-        uuid : str or uuid4
-            The uuid we are creating an alias for.
-
-        Returns
-        -------
-        str
-            The aliased uuid.
-
-        """
-        MAX_RETRIES = 5
-
-        uuid = str(uuid)
-        with self.cache.lock:
-            for _ in range(MAX_RETRIES):
-                alias = uuid + '.' + str(randint(0, maxsize))
-                path = self.path / alias
-
-                # os.path.exists returns false on broken symlinks
-                if not os.path.exists(path) and not os.path.islink(path):
-                    break
-            else:
-                raise ValueError(f'Too many collisions ({MAX_RETRIES}) '
-                                 'occurred while trying to save artifact '
-                                 f'<{uuid}> to process pool {self.path}. It '
-                                 'is likely you have attempted to load the '
-                                 'same artifact a very large number of times.')
-        return alias
-
     def _allocate(self, uuid):
         """Allocate an empty directory under the process pool to extract to.
-        This directory is of the form alias / uuid and provides a per thread
-        mount location for artifacts.
+        This directory is of the form self.path / uuid and provides a mount
+        location for artifacts.
 
         Parameters
         ----------
@@ -1636,32 +1583,31 @@ class Pool:
         # contain part of the artifact) when another thread/process tries to
         # access it.
         with self.cache.lock:
-            alias = self._alias(uuid)
-            allocated_path = self.path / alias / uuid
+            allocated_path = self.path / uuid
             os.makedirs(allocated_path)
 
         return allocated_path
 
-    def _make_symlink(self, uuid, alias):
-        """Symlinks self.path / alias to self.cache.data / uuid. This creates a
+    def _make_symlink(self, uuid):
+        """Symlinks self.path / uuid to self.cache.data / uuid. This creates a
         reference to the artifact with the given uuid in the cache.
 
         Parameters
         ----------
         uuid : str or uuid4
             The uuid of the artifact we are creating a symlink reference for.
-        alias : str
-            The alias we are using as the actual name of the symlink.
         """
         uuid = str(uuid)
         src = self.cache.data / uuid
-        dest = self.path / alias
+        dest = self.path / uuid
 
         # Symlink will error if the location we are creating the link at
         # already exists. This could happen legitimately from trying to save
         # the same thing to a named pool several times.
         with self.cache.lock:
             if not os.path.lexists(dest):
+                print(os.path.exists(src))
+                print(os.path.exists(dest))
                 os.symlink(src, dest)
 
     def load(self, ref):
@@ -1811,8 +1757,7 @@ class Pool:
                 # Make sure the process that indexed this artifact will still
                 # have access to it if it is otherwise removed from the cache
                 # by retaining a reference to it in our process pool
-                alias = self.cache.process_pool._alias(_uuid)
-                self.cache.process_pool._make_symlink(_uuid, alias)
+                self.cache.process_pool._make_symlink(_uuid)
 
                 # Get action.yaml from this artifact's provenance
                 path = self.cache.data / _uuid
