@@ -379,25 +379,23 @@ class Archiver:
                 cls._futuristic_archive_error(filepath, archive)
 
             archive.mount(path)
-            process_alias, data_path = \
-                cache._rename_to_data(archive.uuid, path)
+            data_path = cache._rename_to_data(archive.uuid, path)
             rec = ArchiveRecord(
                 data_path, data_path / archive.VERSION_FILE, archive.uuid,
                 archive.version, archive.framework_version)
-            ref = cls(data_path, process_alias, Format(rec), cache)
+            ref = cls(data_path, data_path, Format(rec), cache)
             return ref
         # We really just want to kill these paths if anything at all goes wrong
         # Exceptions including keyboard interrupts are re-raised
         except:  # noqa: E722
             cls._destroy_temp_path(archive.uuid)
-            if 'process_alias' in vars():
-                cls._destroy_temp_path(process_alias)
+            if 'data_path' in vars():
+                cls._destroy_temp_path(data_path)
             raise
 
     @classmethod
     def load_raw(cls, filepath, cache):
         archive = cls.get_archive(filepath)
-        process_alias = cache._alias(str(archive.uuid))
 
         Format = cls.get_format_class(archive.version)
         if Format is None:
@@ -406,7 +404,7 @@ class Archiver:
         path = pathlib.Path(filepath)
 
         rec = archive.mount(path)
-        ref = cls(path, process_alias, Format(rec), cache)
+        ref = cls(path, archive.uuid, Format(rec), cache)
 
         return ref
 

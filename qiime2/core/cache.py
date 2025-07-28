@@ -1206,13 +1206,12 @@ class Cache:
             # Create a new alias whether we renamed or not because this is
             # still loading a new reference to the data even if the data is
             # already there
-            process_alias = self._alias(uuid)
 
         # Remove the aliased directory above the one we renamed. We need to do
         # this whether we renamed or not because we aren't renaming this
         # directory but the one beneath it
         shutil.rmtree(alias)
-        return process_alias, dest
+        return dest
 
     def _deallocate(self, symlink):
         """Removes a specific symlink from the process pool. This happens when
@@ -1537,12 +1536,8 @@ class Pool:
         >>> test_dir.cleanup()
         """
         uuid = str(ref.uuid)
-        if self.path == self.cache.process_pool.path:
-            alias = self._alias(uuid)
-        else:
-            alias = uuid
 
-        self._make_symlink(uuid, alias)
+        self._make_symlink(uuid, uuid)
 
         self.cache._copy_to_data(ref)
         return self.load(ref)
@@ -1747,8 +1742,7 @@ class Pool:
                 # Make sure the process that indexed this artifact will still
                 # have access to it if it is otherwise removed from the cache
                 # by retaining a reference to it in our process pool
-                alias = self.cache.process_pool._alias(_uuid)
-                self.cache.process_pool._make_symlink(_uuid, alias)
+                self.cache.process_pool._make_symlink(_uuid, _uuid)
 
                 # Get action.yaml from this artifact's provenance
                 path = self.cache.data / _uuid
@@ -1761,7 +1755,7 @@ class Pool:
                 # would be better to create an action that produces the
                 # artifact rather than using make_artifact
                 if 'type' in action and action['type'] == 'import':
-                    os.remove(self.path / alias)
+                    os.remove(self.path / _uuid)
                     continue
 
                 plugin_action = action['plugin'] + ':' + action['action']
