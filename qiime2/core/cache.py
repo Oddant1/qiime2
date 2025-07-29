@@ -1588,7 +1588,7 @@ class Pool:
         with self.cache.lock:
             allocated_path = self.path / uuid
             if not os.path.exists(allocated_path):
-                os.makedirs(allocated_path)
+                os.mkdir(allocated_path)
                 created = True
             else:
                 created = False
