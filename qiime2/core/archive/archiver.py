@@ -408,11 +408,11 @@ class Archiver:
         path, cache = cls._make_temp_path(uuid)
 
         rec = _Archive.setup(uuid, path, cls.CURRENT_FORMAT_VERSION,
-                                qiime2.__version__)
+                             qiime2.__version__)
 
         Format = cls.get_format_class(cls.CURRENT_FORMAT_VERSION)
         Format.write(rec, type, format, data_initializer,
-                        provenance_capture)
+                     provenance_capture)
 
         data_path = cache._rename_to_data(uuid, path)
         rec = ArchiveRecord(data_path, data_path / _Archive.VERSION_FILE,
