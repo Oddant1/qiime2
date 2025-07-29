@@ -395,7 +395,6 @@ class Archiver:
                     cls._destroy_temp_path(archive.uuid)
                 raise
 
-
     @classmethod
     def load_raw(cls, filepath, cache):
         archive = cls.get_archive(filepath)
@@ -420,11 +419,11 @@ class Archiver:
         with cache.lock:
             try:
                 rec = _Archive.setup(uuid, path, cls.CURRENT_FORMAT_VERSION,
-                                    qiime2.__version__)
+                                     qiime2.__version__)
 
                 Format = cls.get_format_class(cls.CURRENT_FORMAT_VERSION)
                 Format.write(rec, type, format, data_initializer,
-                            provenance_capture)
+                             provenance_capture)
 
                 data_path = cache._rename_to_data(uuid, path)
                 rec = ArchiveRecord(data_path,
