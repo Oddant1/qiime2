@@ -291,8 +291,8 @@ class Archiver:
         from qiime2.core.cache import get_cache
 
         cache = get_cache()
-        path = cache.process_pool._allocate(uuid)
-        return path, cache
+        path, created = cache.process_pool._allocate(uuid)
+        return path, cache, created
 
     # TODO: I think we may want to remove this method entirely
     @classmethod
@@ -372,19 +372,29 @@ class Archiver:
     @classmethod
     def load(cls, filepath):
         archive = cls.get_archive(filepath)
-        path, cache = cls._make_temp_path(archive.uuid)
+        path, cache, created = cls._make_temp_path(archive.uuid)
 
-        Format = cls.get_format_class(archive.version)
-        if Format is None:
-            cls._futuristic_archive_error(filepath, archive)
+        with cache.lock:
+            try:
+                Format = cls.get_format_class(archive.version)
+                if Format is None:
+                    cls._futuristic_archive_error(filepath, archive)
 
-        archive.mount(path)
-        data_path = cache._rename_to_data(archive.uuid, path)
-        rec = ArchiveRecord(
-            data_path, data_path / archive.VERSION_FILE, archive.uuid,
-            archive.version, archive.framework_version)
-        ref = cls(data_path, archive.uuid, Format(rec), cache)
-        return ref
+                archive.mount(path)
+                data_path = cache._rename_to_data(archive.uuid, path)
+                rec = ArchiveRecord(
+                    data_path, data_path / archive.VERSION_FILE, archive.uuid,
+                    archive.version, archive.framework_version)
+                ref = cls(data_path, archive.uuid, Format(rec), cache)
+                return ref
+            # If we created the path, we really just want to kill it if
+            # anything at all goes wrong. Exceptions including keyboard
+            # interrupts are re-raised
+            except:  # noqa: E722
+                if created:
+                    cls._destroy_temp_path(archive.uuid)
+                raise
+
 
     @classmethod
     def load_raw(cls, filepath, cache):
@@ -405,21 +415,31 @@ class Archiver:
     @classmethod
     def from_data(cls, type, format, data_initializer, provenance_capture):
         uuid = _uuid.uuid4()
-        path, cache = cls._make_temp_path(uuid)
+        path, cache, created = cls._make_temp_path(uuid)
 
-        rec = _Archive.setup(uuid, path, cls.CURRENT_FORMAT_VERSION,
-                             qiime2.__version__)
+        with cache.lock:
+            try:
+                rec = _Archive.setup(uuid, path, cls.CURRENT_FORMAT_VERSION,
+                                    qiime2.__version__)
 
-        Format = cls.get_format_class(cls.CURRENT_FORMAT_VERSION)
-        Format.write(rec, type, format, data_initializer,
-                     provenance_capture)
+                Format = cls.get_format_class(cls.CURRENT_FORMAT_VERSION)
+                Format.write(rec, type, format, data_initializer,
+                            provenance_capture)
 
-        data_path = cache._rename_to_data(uuid, path)
-        rec = ArchiveRecord(data_path, data_path / _Archive.VERSION_FILE,
-                            uuid, cls.CURRENT_FORMAT_VERSION,
-                            qiime2.__version__)
-        ref = cls(data_path, uuid, Format(rec), cache)
-        return ref
+                data_path = cache._rename_to_data(uuid, path)
+                rec = ArchiveRecord(data_path,
+                                    data_path / _Archive.VERSION_FILE,
+                                    uuid, cls.CURRENT_FORMAT_VERSION,
+                                    qiime2.__version__)
+                ref = cls(data_path, uuid, Format(rec), cache)
+                return ref
+            # If we created the path, we really just want to kill it if
+            # anything at all goes wrong. Exceptions including keyboard
+            # interrupts are re-raised
+            except:  # noqa: E722
+                if created:
+                    cls._destroy_temp_path(uuid)
+                raise
 
     def __init__(self, path, process_alias, fmt, cache):
         self.path = path

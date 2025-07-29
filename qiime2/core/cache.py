@@ -1567,6 +1567,9 @@ class Pool:
         -------
         pathlib.Path
             The path we allocated to extract the artifact into.
+        boolean
+            True if this method call created the allocated path. False if the
+            allocated path already existed
         """
         uuid = str(uuid)
 
@@ -1578,9 +1581,13 @@ class Pool:
         # when another thread/process tries to access it.
         with self.cache.lock:
             allocated_path = self.path / uuid
-            os.makedirs(allocated_path, exist_ok=True)
+            if not os.path.exists(allocated_path):
+                os.makedirs(allocated_path)
+                created = True
+            else:
+                created = False
 
-        return allocated_path
+        return allocated_path, created
 
     def _make_symlink(self, uuid):
         """Symlinks self.path / uuid to self.cache.data / uuid. This creates a
