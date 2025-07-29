@@ -292,7 +292,7 @@ class Archiver:
 
         cache = get_cache()
         path, created = cache.process_pool._allocate(uuid)
-        return path, cache, created
+        return cache, path, created
 
     # TODO: I think we may want to remove this method entirely
     @classmethod
@@ -372,7 +372,7 @@ class Archiver:
     @classmethod
     def load(cls, filepath):
         archive = cls.get_archive(filepath)
-        path, cache, created = cls._make_temp_path(archive.uuid)
+        cache, path, created = cls._make_temp_path(archive.uuid)
 
         with cache.lock:
             try:
@@ -414,7 +414,7 @@ class Archiver:
     @classmethod
     def from_data(cls, type, format, data_initializer, provenance_capture):
         uuid = _uuid.uuid4()
-        path, cache, created = cls._make_temp_path(uuid)
+        cache, path, created = cls._make_temp_path(uuid)
 
         with cache.lock:
             try:
