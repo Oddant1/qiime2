@@ -820,6 +820,12 @@ class Cache:
                 if time.time() - create_time >= self.process_pool_lifespan:
                     shutil.rmtree(self.processes / process_pool)
                 else:
+                    # NOTE: This split is a result of the fact that older
+                    # versions of QIIME 2 created entries in process pools that
+                    # were <uuid>.<random_string> because we had reason to
+                    # keep multiple references to one artifact in one process.
+                    # The split needs to stay around for backwards
+                    # compatibility
                     for data in os.listdir(self.processes / process_pool):
                         referenced_data.add(data.split('.')[0])
 
