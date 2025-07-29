@@ -14,7 +14,6 @@ import zipfile
 import importlib
 import os
 import io
-import shutil
 
 import qiime2
 import qiime2.core.cite as cite
@@ -381,7 +380,6 @@ class Archiver:
 
         archive.mount(path)
         data_path = cache._rename_to_data(archive.uuid, path)
-        shutil.rmtree(path)
         rec = ArchiveRecord(
             data_path, data_path / archive.VERSION_FILE, archive.uuid,
             archive.version, archive.framework_version)
@@ -391,7 +389,7 @@ class Archiver:
     @classmethod
     def load_raw(cls, filepath, cache):
         archive = cls.get_archive(filepath)
-        process_alias = cache._alias(str(archive.uuid))
+        cache.make_symlinks(str(archive.uuid))
 
         Format = cls.get_format_class(archive.version)
         if Format is None:
@@ -400,7 +398,7 @@ class Archiver:
         path = pathlib.Path(filepath)
 
         rec = archive.mount(path)
-        ref = cls(path, process_alias, Format(rec), cache)
+        ref = cls(path, archive.uuid, Format(rec), cache)
 
         return ref
 
