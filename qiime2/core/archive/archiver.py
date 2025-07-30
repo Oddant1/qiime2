@@ -284,15 +284,12 @@ class Archiver:
     }
 
     @classmethod
-    def _make_temp_path(cls, uuid):
+    def _make_temp_path(cls, cache, uuid):
         """Allocates a place in the cache for the file to be temporarily
         written. Returns this location and the cache in use.
         """
-        from qiime2.core.cache import get_cache
-
-        cache = get_cache()
         path, created = cache.process_pool._allocate(uuid)
-        return cache, path, created
+        return path, created
 
     # TODO: I think we may want to remove this method entirely
     @classmethod
@@ -371,10 +368,13 @@ class Archiver:
 
     @classmethod
     def load(cls, filepath):
+        from qiime2.core.cache import get_cache
+
         archive = cls.get_archive(filepath)
-        cache, path, created = cls._make_temp_path(archive.uuid)
+        cache = get_cache()
 
         with cache.lock:
+            path, created = cls._make_temp_path(cache, archive.uuid)
             try:
                 Format = cls.get_format_class(archive.version)
                 if Format is None:
@@ -413,10 +413,13 @@ class Archiver:
 
     @classmethod
     def from_data(cls, type, format, data_initializer, provenance_capture):
+        from qiime2.core.cache import get_cache
+
         uuid = _uuid.uuid4()
-        cache, path, created = cls._make_temp_path(uuid)
+        cache = get_cache()
 
         with cache.lock:
+            path, created = cls._make_temp_path(cache, uuid)
             try:
                 rec = _Archive.setup(uuid, path, cls.CURRENT_FORMAT_VERSION,
                                      qiime2.__version__)
