@@ -1218,11 +1218,6 @@ class Cache:
         ----------
         uuid : str or uuid4
             The uuid of the artifact we are symlinking.
-
-        Returns
-        -------
-        str
-            The alias we created for the artifact.
         """
         with self.lock:
             self.process_pool._make_symlink(uuid)
