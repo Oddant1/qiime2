@@ -1192,8 +1192,6 @@ class Cache:
 
         Returns
         -------
-        str
-            The alias we created for the artifact in the cache's process pool.
         pathlib.Path
             The location we renamed the data into.
         """
