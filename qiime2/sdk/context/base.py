@@ -5,6 +5,7 @@
 #
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
+import warnings
 
 from qiime2.core.type.util import is_collection_type
 from qiime2.core.type import HashableInvocation
@@ -20,6 +21,8 @@ def _validate_collection(collection_order):
         elem.total == collection_order[0].total
         for elem in collection_order]) \
             or len(collection_order) != collection_order[0].total:
+        warnings.warn("Incomplete collection found when recycling, "
+                      "collection will be remade")
         return False
 
     return True
