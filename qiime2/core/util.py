@@ -427,9 +427,12 @@ def touch_under_path(path):
                 pass
 
 
-def load_action_yaml(path):
+def load_action_yaml(path, nested=None):
     """Takes a path to an unzipped Artifact and loads its action.yaml with
     yaml.safe_load
+
+    If nested!=None we are loading the provenance of an artifact with
+    uuid=nested that is in the artifact path points to's "artifacts" directory
     """
     # TODO: Make these actually do something useful at least for the tags
     # that are relevant to what we need out of provenance (this is partially
@@ -456,7 +459,12 @@ def load_action_yaml(path):
     yaml.constructor.SafeConstructor.add_constructor('!metadata',
                                                      metadata_constructor)
 
-    prov_path = path / 'provenance' / 'action'
+    if nested is not None:
+        path = path / 'provenance' / 'artifacts' / str(nested)
+        prov_path = path / 'action'
+    else:
+        prov_path = path / 'provenance' / 'action'
+
     action_path = prov_path / 'action.yaml'
 
     with open(action_path) as fh:
