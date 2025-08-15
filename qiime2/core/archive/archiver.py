@@ -446,8 +446,8 @@ class Archiver:
         self.path = path
         self.process_alias = process_alias
         self._fmt = fmt
-        self._destructor = weakref.finalize(self, cache._deallocate,
-                                            str(self.process_alias))
+        # self._destructor = weakref.finalize(self, cache._deallocate,
+        #                                     str(self.process_alias))
 
     @property
     def uuid(self):
