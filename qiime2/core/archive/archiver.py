@@ -291,7 +291,6 @@ class Archiver:
         path, created = cache.process_pool._allocate(uuid)
         return path, created
 
-    # TODO: I think we may want to remove this method entirely
     @classmethod
     def _destroy_temp_path(cls, process_alias):
         from qiime2.core.cache import get_cache
