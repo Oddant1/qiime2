@@ -30,6 +30,7 @@ attempt to use as a cache should have been created as a cache by QIIME 2.
 """
 import re
 import os
+import gc
 import stat
 import yaml
 import time
@@ -43,6 +44,9 @@ import tempfile
 import warnings
 import threading
 from datetime import timedelta
+from queue import Empty
+import multiprocessing as mp
+
 
 import flufl.lock
 
@@ -261,6 +265,52 @@ def monitor_thread(cache_dir, is_done):
         time.sleep(60 * 60 * 6)
 
 
+def gc_thread(process_pool_path, queue, is_done, lock):
+    references = {}
+    time.sleep(10)
+
+    while not is_done.is_set():
+        with lock:
+            while True:
+                try:
+                    msg = queue.get(block=False)
+                    uuid, direction = msg
+                    uuid = str(uuid)
+
+                    if direction == "+":
+                        if uuid not in references:
+                            references[uuid] = 0
+
+                        references[uuid] += 1
+                    else:
+                        if uuid not in references:
+                            raise ValueError(
+                                "Decrementing non-existent reference")
+
+                        references[uuid] -= 1
+
+                    with open('/home/anthony/src/qiime2/qiime2/test.txt', 'a') as fh:
+                        fh.write(f'{uuid}\n')
+                        fh.write(f'{direction}\n')
+                        fh.write(f'{references[uuid]}\n')
+                        if references[uuid] == 0:
+                            target = process_pool_path / uuid
+                            fh.write(f'Deallocating {target}\n')
+
+                            if target.exists():
+                                os.remove(target)
+
+                except Empty:
+                    with open('/home/anthony/src/qiime2/qiime2/test.txt', 'a') as fh:
+                        fh.write(f'BREAKING\n')
+                    break
+
+            time.sleep(10)
+
+    with open('/home/anthony/src/qiime2/qiime2/test.txt', 'a') as fh:
+        fh.write(f'QUITTING\n')
+
+
 # This is very important to our trademark
 tm = object
 
@@ -283,6 +333,7 @@ class MEGALock(tm):
         """ We acquire the thread lock first because the flufl lock isn't
         thread-safe which is why we need both locks in the first place
         """
+        gc.disable()
         if self.re_entries == 0:
             self.thread_lock.acquire()
 
@@ -290,6 +341,7 @@ class MEGALock(tm):
                 self.flufl_lock.lock()
             except Exception:
                 self.thread_lock.release()
+                gc.enable()
                 raise
 
         self.re_entries += 1
@@ -301,6 +353,8 @@ class MEGALock(tm):
         if self.re_entries == 0:
             self.flufl_lock.unlock()
             self.thread_lock.release()
+
+        gc.enable()
 
     def __getstate__(self):
         lockless_dict = self.__dict__.copy()
@@ -493,7 +547,7 @@ class Cache:
 
         # Start thread that pokes things in the cache to ensure they aren't
         # culled for being too old (only if we are in a temp cache)
-        if path == temp_cache_path:
+        if self.path == temp_cache_path:
             self._thread_is_done = threading.Event()
             self._thread_destructor = \
                 weakref.finalize(self, self._thread_is_done.set)
@@ -503,6 +557,17 @@ class Cache:
                 daemon=True)
 
             self._thread.start()
+
+        # Start thread for gc reference counting
+        self.queue = mp.Queue()
+        self._gc_thread_is_done = threading.Event()
+        self._gc_thread_destructor = \
+            weakref.finalize(self, self._gc_thread_is_done.set)
+        self._gc_thread = threading.Thread(
+            target=gc_thread, args=(
+                self.process_pool.path, self.queue, self._gc_thread_is_done,
+                self.lock), daemon=True)
+        self._gc_thread.start()
 
     def __enter__(self):
         """Tell QIIME 2 to use this cache in its current invocation (see
@@ -535,6 +600,10 @@ class Cache:
             del threadless_dict['_thread_is_done']
             del threadless_dict['_thread_destructor']
             del threadless_dict['_thread']
+
+        del threadless_dict['_gc_thread_is_done']
+        del threadless_dict['_gc_thread_destructor']
+        del threadless_dict['_gc_thread']
 
         return threadless_dict
 
@@ -1238,10 +1307,10 @@ class Cache:
         # NOTE: Beware locking inside of this method. This method is called by
         # Python's garbage collector and that seems to cause deadlocks when
         # acquiring the thread lock
-        target = self.process_pool.path / symlink
 
-        if target.exists():
-            os.remove(target)
+        self.queue.put([symlink, '-'])
+        # print(f'PUT: {[symlink, "-"]}')
+
 
     def get_tmp_path(self):
         """Creates a tmp dir inside of the current process pool and returns a
@@ -1396,6 +1465,7 @@ class Pool:
         """
         # The pool keeps track of the cache it belongs to
         self.cache = cache
+        self.is_process_pool = False
 
         # If they are creating a named pool, we already have this info
         if name:
@@ -1406,6 +1476,7 @@ class Pool:
         # directory. The name follows the scheme
         # <process-id>-<process-start-time>@<user>
         else:
+            self.is_process_pool = True
             self.name = self._get_process_pool_name()
             self.path = cache.processes / self.name
 
@@ -1607,6 +1678,10 @@ class Pool:
         with self.cache.lock:
             if not os.path.lexists(dest):
                 os.symlink(src, dest)
+
+            if self.is_process_pool:
+                self.cache.queue.put([uuid, '+'])
+                # print(f'PUT: {[uuid, "+"]}')
 
     def load(self, ref):
         """Loads a reference to an element in the pool.
