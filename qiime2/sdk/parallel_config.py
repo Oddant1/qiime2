@@ -240,7 +240,7 @@ def load_config_from_dict(config_dict):
 
     processed_parallel_config_dict = _process_config(parallel_config_dict)
 
-    with ChangeDebugLevel('debug' in parallel_config_dict):
+    with ChangeDebugLevel(debug_set='debug' in parallel_config_dict):
         if processed_parallel_config_dict != {}:
             parallel_config = parsl.Config(**processed_parallel_config_dict)
         else:
