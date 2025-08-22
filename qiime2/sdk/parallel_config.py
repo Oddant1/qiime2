@@ -16,6 +16,15 @@ import importlib
 import parsl
 import tomlkit
 
+import logging
+
+# Emit log lines to the screen
+parsl.set_stream_logger()
+
+# Write log to file, specify level of detail for logs
+parsl.set_file_logger('./runinfo2', level=logging.INFO)
+
+
 # Stores info about the currently loaded parallel config
 PARALLEL_CONFIG = threading.local()
 PARALLEL_CONFIG.dfk = None
