@@ -19,10 +19,10 @@ import tomlkit
 import logging
 
 # Emit log lines to the screen
-parsl.set_stream_logger()
+# parsl.set_stream_logger(level=logging.INFO)
 
-# Write log to file, specify level of detail for logs
-parsl.set_file_logger('./runinfo2', level=logging.INFO)
+# # Write log to file, specify level of detail for logs
+# parsl.set_file_logger('./runinfo2', level=logging.INFO)
 
 
 # Stores info about the currently loaded parallel config
@@ -90,6 +90,21 @@ module_paths = {
     'provider': PARSL_PROVIDER,
     'providers': PARSL_PROVIDER
 }
+
+
+class ChangeDebugLevel:
+    def __init__(self, debug_set):
+        self.debug_set = debug_set
+
+    def __enter__(self):
+        if self.debug_set:
+            self.DEBUG = logging.DEBUG
+            logging.DEBUG = logging.INFO
+
+    def __exit__(self, *args):
+        if self.debug_set:
+            logging.DEBUG = self.DEBUG
+
 
 
 def get_vendored_config():
@@ -232,10 +247,15 @@ def load_config_from_dict(config_dict):
 
     processed_parallel_config_dict = _process_config(parallel_config_dict)
 
-    if processed_parallel_config_dict != {}:
-        parallel_config = parsl.Config(**processed_parallel_config_dict)
-    else:
-        parallel_config = None
+    if 'debug' not in parallel_config_dict:
+        DEBUG = logging.DEBUG
+        logging.DEBUG = logging.INFO
+
+    with ChangeDebugLevel('debug' in parallel_config_dict):
+        if processed_parallel_config_dict != {}:
+            parallel_config = parsl.Config(**processed_parallel_config_dict)
+        else:
+            parallel_config = None
 
     return parallel_config, mapping
 
