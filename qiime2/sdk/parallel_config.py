@@ -18,12 +18,6 @@ import tomlkit
 
 import logging
 
-# Emit log lines to the screen
-# parsl.set_stream_logger(level=logging.INFO)
-
-# # Write log to file, specify level of detail for logs
-# parsl.set_file_logger('./runinfo2', level=logging.INFO)
-
 
 # Stores info about the currently loaded parallel config
 PARALLEL_CONFIG = threading.local()
@@ -104,7 +98,6 @@ class ChangeDebugLevel:
     def __exit__(self, *args):
         if self.debug_set:
             logging.DEBUG = self.DEBUG
-
 
 
 def get_vendored_config():
@@ -246,10 +239,6 @@ def load_config_from_dict(config_dict):
                             "{'plugin': {'action': 'executor'}}")
 
     processed_parallel_config_dict = _process_config(parallel_config_dict)
-
-    if 'debug' not in parallel_config_dict:
-        DEBUG = logging.DEBUG
-        logging.DEBUG = logging.INFO
 
     with ChangeDebugLevel('debug' in parallel_config_dict):
         if processed_parallel_config_dict != {}:

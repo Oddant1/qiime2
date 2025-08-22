@@ -313,7 +313,7 @@ class TestCache(unittest.TestCase):
 
         # Make sure Python's garbage collector gets the process pool symlinks
         # to the artifact that was keyed on baz and the one in the qux pool
-        # gc.collect()
+        gc.collect()
         self.cache.garbage_collection()
 
         # Assert cache looks how we want post gc
