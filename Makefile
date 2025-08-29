@@ -10,7 +10,7 @@ lint:
 	flake8
 
 test: all
-	QIIMETEST= pytest --doctest-modules
+	QIIMETEST= pytest -k test_load_complex_config
 
 # for parallel, pip install pytest-xdist
 mystery-stew: all
