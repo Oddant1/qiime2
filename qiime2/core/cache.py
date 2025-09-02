@@ -267,7 +267,6 @@ def monitor_thread(cache_dir, is_done):
 
 def gc_thread(process_pool_path, queue, is_done, lock):
     references = {}
-    time.sleep(10)
 
     while not is_done.is_set():
         with lock:
@@ -289,26 +288,14 @@ def gc_thread(process_pool_path, queue, is_done, lock):
 
                         references[uuid] -= 1
 
-                    with open('/home/anthony/src/qiime2/qiime2/test.txt', 'a') as fh:
-                        fh.write(f'{uuid}\n')
-                        fh.write(f'{direction}\n')
-                        fh.write(f'{references[uuid]}\n')
-                        if references[uuid] == 0:
-                            target = process_pool_path / uuid
-                            fh.write(f'Deallocating {target}\n')
+                    if references[uuid] == 0:
+                        target = process_pool_path / uuid
 
-                            if target.exists():
-                                os.remove(target)
+                        if target.exists():
+                            os.remove(target)
 
                 except Empty:
-                    with open('/home/anthony/src/qiime2/qiime2/test.txt', 'a') as fh:
-                        fh.write(f'BREAKING\n')
                     break
-
-            time.sleep(10)
-
-    with open('/home/anthony/src/qiime2/qiime2/test.txt', 'a') as fh:
-        fh.write(f'QUITTING\n')
 
 
 # This is very important to our trademark
