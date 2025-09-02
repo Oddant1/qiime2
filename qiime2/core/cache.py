@@ -546,13 +546,14 @@ class Cache:
             self._thread.start()
 
         # Start thread for gc reference counting
-        self.queue = mp.Queue()
+        global queue
+        queue = mp.Queue()
         self._gc_thread_is_done = threading.Event()
         self._gc_thread_destructor = \
             weakref.finalize(self, self._gc_thread_is_done.set)
         self._gc_thread = threading.Thread(
             target=gc_thread, args=(
-                self.process_pool.path, self.queue, self._gc_thread_is_done,
+                self.process_pool.path, queue, self._gc_thread_is_done,
                 self.lock), daemon=True)
         self._gc_thread.start()
 
@@ -1295,9 +1296,8 @@ class Cache:
         # Python's garbage collector and that seems to cause deadlocks when
         # acquiring the thread lock
 
-        self.queue.put([symlink, '-'])
-        # print(f'PUT: {[symlink, "-"]}')
-
+        global queue
+        queue.put([symlink, '-'])
 
     def get_tmp_path(self):
         """Creates a tmp dir inside of the current process pool and returns a
@@ -1667,8 +1667,8 @@ class Pool:
                 os.symlink(src, dest)
 
             if self.is_process_pool:
-                self.cache.queue.put([uuid, '+'])
-                # print(f'PUT: {[uuid, "+"]}')
+                global queue
+                queue.put([uuid, '+'])
 
     def load(self, ref):
         """Loads a reference to an element in the pool.

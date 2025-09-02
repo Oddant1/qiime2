@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------------
 
 import concurrent.futures
+from multiprocessing import set_start_method
 
 from .base import Context
 
@@ -37,6 +38,10 @@ class AsynchronousContext(Context):
         # function's signature.
         args = args[1:]
 
+        try:
+            set_start_method('fork')
+        except:
+            pass
         pool = concurrent.futures.ProcessPoolExecutor(max_workers=1)
         future = pool.submit(_subprocess_apply, self, args, kwargs)
         # TODO: pool.shutdown(wait=False) caused the child process to
