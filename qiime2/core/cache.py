@@ -265,7 +265,8 @@ def monitor_thread(cache_dir, is_done):
         time.sleep(60 * 60 * 6)
 
 
-def gc_thread(process_pool_path, queue, is_done, lock):
+def gc_thread(process_pool_path, is_done, lock):
+    global queue
     references = {}
 
     while not is_done.is_set():
@@ -296,6 +297,7 @@ def gc_thread(process_pool_path, queue, is_done, lock):
 
                 except Empty:
                     break
+
 
 
 # This is very important to our trademark
@@ -547,14 +549,18 @@ class Cache:
 
         # Start thread for gc reference counting
         global queue
+
+        if not mp.get_start_method() == 'fork':
+            mp.set_start_method('fork')
+
         queue = mp.Queue()
         self._gc_thread_is_done = threading.Event()
         self._gc_thread_destructor = \
             weakref.finalize(self, self._gc_thread_is_done.set)
         self._gc_thread = threading.Thread(
             target=gc_thread, args=(
-                self.process_pool.path, queue, self._gc_thread_is_done,
-                self.lock), daemon=True)
+                self.process_pool.path, self._gc_thread_is_done, self.lock),
+                daemon=True)
         self._gc_thread.start()
 
     def __enter__(self):
