@@ -147,6 +147,8 @@ class TestCache(unittest.TestCase):
     def tearDown(self):
         """Remove our cache and all that from last test
         """
+        del self.cache
+        gc.collect()
         self.test_dir.cleanup()
 
     def test_is_cache(self):

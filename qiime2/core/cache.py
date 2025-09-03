@@ -266,38 +266,45 @@ def monitor_thread(cache_dir, is_done):
 
 
 def gc_thread(process_pool_path, is_done, lock):
-    global queue
+    global references
     references = {}
 
     while not is_done.is_set():
-        with lock:
-            while True:
-                try:
-                    msg = queue.get(block=False)
-                    uuid, direction = msg
-                    uuid = str(uuid)
+        consume_queue(process_pool_path, lock)
+        time.sleep(10)
 
-                    if direction == "+":
-                        if uuid not in references:
-                            references[uuid] = 0
 
-                        references[uuid] += 1
-                    else:
-                        if uuid not in references:
-                            raise ValueError(
-                                "Decrementing non-existent reference")
+def consume_queue(process_pool_path, lock):
+    global queue
+    global references
 
+    with lock:
+        while True:
+            try:
+                msg = queue.get(block=False)
+                uuid, direction = msg
+                uuid = str(uuid)
+
+                if direction == "+":
+                    if uuid not in references:
+                        references[uuid] = 0
+
+                    references[uuid] += 1
+                else:
+                    if uuid in references:
                         references[uuid] -= 1
 
-                    if references[uuid] == 0:
-                        target = process_pool_path / uuid
+                if references[uuid] == 0:
+                    target = process_pool_path / uuid
 
-                        if target.exists():
-                            os.remove(target)
+                    if target.exists():
+                        with open('/home/anthony/src/qiime2/qiime2/trash.txt', 'a') as fh:
+                            fh.write(f'{target}\n')
 
-                except Empty:
-                    break
+                        os.remove(target)
 
+            except Empty:
+                break
 
 
 # This is very important to our trademark
@@ -559,8 +566,7 @@ class Cache:
             weakref.finalize(self, self._gc_thread_is_done.set)
         self._gc_thread = threading.Thread(
             target=gc_thread, args=(
-                self.process_pool.path, self._gc_thread_is_done, self.lock),
-                daemon=True)
+                self.process_pool.path, self._gc_thread_is_done, self.lock))
         self._gc_thread.start()
 
     def __enter__(self):
@@ -843,6 +849,8 @@ class Cache:
         # or processes writing refs that we don't see leading to us deleting
         # their data
         with self.lock:
+            consume_queue(self.process_pool.path, self.lock)
+
             for key in self.get_keys():
                 loaded_key = self.read_key(key)
 
