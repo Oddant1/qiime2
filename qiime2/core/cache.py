@@ -275,9 +275,6 @@ def gc_thread(process_pool_path, is_done, lock):
 
 
 def consume_queue(process_pool_path, lock):
-    global queue
-    global references
-
     with lock:
         while True:
             try:
@@ -296,12 +293,7 @@ def consume_queue(process_pool_path, lock):
 
                 if references[uuid] == 0:
                     target = process_pool_path / uuid
-
-                    if target.exists():
-                        with open('/home/anthony/src/qiime2/qiime2/trash.txt', 'a') as fh:
-                            fh.write(f'{target}\n')
-
-                        os.remove(target)
+                    os.remove(target)
 
             except Empty:
                 break
@@ -1310,7 +1302,6 @@ class Cache:
         # Python's garbage collector and that seems to cause deadlocks when
         # acquiring the thread lock
 
-        global queue
         queue.put([symlink, '-'])
 
     def get_tmp_path(self):
@@ -1681,7 +1672,6 @@ class Pool:
                 os.symlink(src, dest)
 
             if self.is_process_pool:
-                global queue
                 queue.put([uuid, '+'])
 
     def load(self, ref):
