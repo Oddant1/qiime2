@@ -275,28 +275,48 @@ def gc_thread(process_pool_path, is_done, lock):
 
 
 def consume_queue(process_pool_path, lock):
-    with lock:
-        while True:
-            try:
-                msg = queue.get(block=False)
-                uuid, direction = msg
-                uuid = str(uuid)
+    try:
+        with lock:
+            while True:
+                try:
+                    msg = queue.get(block=False)
+                    uuid, direction = msg
+                    uuid = str(uuid)
 
-                if direction == "+":
-                    if uuid not in references:
-                        references[uuid] = 0
+                    if direction == "+":
+                        if uuid not in references:
+                            references[uuid] = 0
 
-                    references[uuid] += 1
-                else:
-                    if uuid in references:
-                        references[uuid] -= 1
+                        references[uuid] += 1
+                    else:
+                        if uuid in references:
+                            references[uuid] -= 1
+                        else:
+                            references[uuid] = 0
 
-                if references[uuid] == 0:
-                    target = process_pool_path / uuid
-                    os.remove(target)
+                    if references[uuid] == 0:
+                        target = process_pool_path / uuid
 
-            except Empty:
-                break
+                        # We don't really care if the thing we're trying to
+                        # remove was already removed by something else. We
+                        # wanted it gone anyway. No reason to complain
+                        try:
+                            os.remove(target)
+                        except FileNotFoundError:
+                            pass
+
+                except Empty:
+                    break
+    except FileNotFoundError as e:
+        if 'LOCK' in str(e):
+            pass
+        else:
+            raise e
+    except OSError as e:
+        if 'handle is closed' in str(e):
+            pass
+        else:
+            raise e
 
 
 # This is very important to our trademark
@@ -322,25 +342,38 @@ class MEGALock(tm):
         thread-safe which is why we need both locks in the first place
         """
         gc.disable()
-        if self.re_entries == 0:
-            self.thread_lock.acquire()
 
-            try:
-                self.flufl_lock.lock()
-            except Exception:
-                self.thread_lock.release()
-                gc.enable()
-                raise
+        try:
+            if self.re_entries == 0:
+                self.thread_lock.acquire()
+
+                try:
+                    self.flufl_lock.lock()
+                except Exception:
+                    self.thread_lock.release()
+                    raise
+        except Exception:
+            gc.enable()
+            raise
 
         self.re_entries += 1
 
     def __exit__(self, *args):
-        if self.re_entries > 0:
-            self.re_entries -= 1
+        try:
+            if self.re_entries > 0:
+                self.re_entries -= 1
 
-        if self.re_entries == 0:
-            self.flufl_lock.unlock()
-            self.thread_lock.release()
+            if self.re_entries == 0:
+                try:
+                    self.flufl_lock.unlock()
+                except Exception:
+                    self.thread_lock.release()
+                    raise
+
+                self.thread_lock.release()
+        except Exception:
+            gc.enable()
+            raise
 
         gc.enable()
 
@@ -558,7 +591,8 @@ class Cache:
             weakref.finalize(self, self._gc_thread_is_done.set)
         self._gc_thread = threading.Thread(
             target=gc_thread, args=(
-                self.process_pool.path, self._gc_thread_is_done, self.lock))
+                self.process_pool.path, self._gc_thread_is_done, self.lock),
+            daemon=True)
         self._gc_thread.start()
 
     def __enter__(self):

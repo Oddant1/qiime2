@@ -147,8 +147,7 @@ class TestCache(unittest.TestCase):
     def tearDown(self):
         """Remove our cache and all that from last test
         """
-        del self.cache
-        gc.collect()
+        self.cache._gc_thread_is_done.set()
         self.test_dir.cleanup()
 
     def test_is_cache(self):
@@ -552,7 +551,7 @@ class TestCache(unittest.TestCase):
 
         atexit.unregister(_exit_cleanup)
         atexit.register(_on_exit_validate, cache, expected)
-        atexit.register(_exit_cleanup)
+        # atexit.register(_exit_cleanup)
 
     @pytest.mark.skipif(os.geteuid() == 0, reason="super user always wins")
     def test_surreptitiously_write_artifact(self):
