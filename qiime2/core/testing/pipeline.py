@@ -98,7 +98,7 @@ def resumable_pipeline(ctx, int_list, int_dict, fail=False):
         list_uuids = [str(result.uuid) for result in list_return.values()]
         dict_uuids = [str(result.uuid) for result in dict_return.values()]
 
-        raise ValueError(f'{list_uuids}_{dict_uuids}')
+        raise PipelineError([list_uuids, dict_uuids])
 
     return list_return, dict_return
 
