@@ -712,3 +712,28 @@ class TestPipelineResumption(unittest.TestCase):
                     self.pipeline.parallel(fail=True)._result()
 
                 self.pipeline.parallel()._result()
+
+    def test_incomplete_collection(self):
+        pipeline = self.plugin.pipelines['resumable_pipeline']
+        int_list = list(self.ints1.values())
+
+        with self.pool:
+            with self.assertRaises(PipelineError) as e:
+                pipeline(int_list, self.ints1, fail=True)
+
+            int_list_uuids, int_dict_uuids = e.exception.uuids
+            # Nuke an element of the list
+            os.remove(os.path.join(self.pool.path, int_list_uuids[0]))
+
+            # We now expect to get this warning and recreate the list because
+            # it is incomplete
+            with self.assertWarnsRegex(Warning, 'Incomplete collection'):
+                int_list_ret, int_dict_ret = pipeline(int_list, self.ints1)
+
+            complete_int_list_uuids = _load_alias_uuids(int_list_ret)
+            complete_int_dict_uuids = _load_alias_uuids(int_dict_ret)
+
+            # Assert that the list uuids are not equal because we recreated it
+            self.assertNotEqual(int_list_uuids, complete_int_list_uuids)
+            # The dict should have been recycled
+            self.assertEqual(int_dict_uuids, complete_int_dict_uuids)
