@@ -1030,8 +1030,15 @@ class Usage:
         import urllib.request
         import urllib.error
 
+        headers = {
+            'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+            'AppleWebKit/537.36 (KHTML, like Gecko) '
+            'Chrome/100.0.4896.88 Safari/537.36'}
+
         try:
-            data = urllib.request.urlopen(url)
+            request = urllib.request.Request(url, headers=headers)
+            data = urllib.request.urlopen(request)
         except urllib.error.URLError as ex:
             raise ValueError(
                 'Could not obtain URL: %s\n Exception: %s' %
