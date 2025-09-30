@@ -401,6 +401,11 @@ class PipelineSignature:
                     self._transform_and_add_input_to_prov(
                         provenance, name, spec, arg)
             else:
+                if spec.qiime_type.name == 'Capture':
+                    proxy = qtype.CaptureProxy(
+                        name, arg, spec.qiime_type, provenance)
+                    callable_args[name] = proxy
+
                 provenance.add_parameter(name, spec.qiime_type, arg)
 
         return callable_args

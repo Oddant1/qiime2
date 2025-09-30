@@ -742,6 +742,10 @@ class TestMethod(unittest.TestCase):
         self.assertEqual(view_ints2_ret, ints2_expected)
         self.assertEqual(view_int1_ret, int1_expected)
 
+    def test_random_seed_method(self):
+        random_seed_method = self.plugin.methods['random_seed_method']
+        random_seed_method()
+
 
 exp_merge_calldoc = """\
 Merge mappings

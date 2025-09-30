@@ -10,7 +10,7 @@ from .collection import List, Set, Collection
 from .semantic import SemanticType, Properties
 from .primitive import (Str, Int, Float, Metadata, Bool, MetadataColumn,
                         Categorical, Numeric, Range, Start, End, Choices,
-                        Jobs, Threads)
+                        Jobs, Threads, Capture, CaptureProxy)
 from .visualization import Visualization
 from .signature import (PipelineSignature, MethodSignature,
                         VisualizerSignature, IndexedCollectionElement,
@@ -35,7 +35,7 @@ __all__ = [
     # Primitive Types
     'Str', 'Int', 'Float', 'Bool', 'Metadata', 'MetadataColumn',
     'Categorical', 'Numeric', 'Range', 'Start', 'End', 'Choices',
-    'Jobs', 'Threads',
+    'Jobs', 'Threads', 'Capture', 'CaptureProxy',
     # Visualization Type
     'Visualization',
     # Signatures

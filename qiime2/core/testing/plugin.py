@@ -10,7 +10,7 @@ from importlib import import_module
 
 from qiime2.plugin import (Plugin, Bool, Int, Str, Choices, Range, List, Set,
                            Collection, Visualization, Metadata, MetadataColumn,
-                           Categorical, Numeric, TypeMatch)
+                           Categorical, Numeric, TypeMatch, Capture)
 
 from .format import (
     IntSequenceFormat,
@@ -47,6 +47,7 @@ from .method import (concatenate_ints, split_ints, merge_mappings,
                      docstring_order_method, variadic_input_method,
                      unioned_primitives, type_match_list_and_set, union_inputs,
                      list_of_ints, dict_of_ints, returns_int, varied_method,
+                     random_seed_method,
                      collection_inner_union, collection_outer_union,
                      dict_params, list_params, _underscore_method)
 from .visualizer import (most_common_viz, mapping_viz, params_only_viz,
@@ -1108,6 +1109,17 @@ dummy_plugin.methods.register_function(
     name='Takes and returns a combination of colletions and non collections',
     description='Takes and returns a combination of colletions and non'
                 ' collections'
+)
+
+dummy_plugin.methods.register_function(
+    function=random_seed_method,
+    inputs={},
+    parameters={
+       'random_seed': Capture[Int]
+    },
+    outputs=[('seed', SingleInt)],
+    name='',
+    description=''
 )
 
 dummy_plugin.methods.register_function(

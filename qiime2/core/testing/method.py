@@ -5,9 +5,13 @@
 #
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
+
+import sys
+import random
 from typing import Union
 
 import qiime2
+import qiime2.core.type as qtype
 
 
 # Artifacts and parameters.
@@ -181,6 +185,14 @@ def varied_method(ints1: int, ints2: list, int1: int = None,
     assert isinstance(int1, int)
     assert isinstance(string, str)
     return ints1, ints2, int1
+
+
+def random_seed_method(random_seed: qtype.CaptureProxy = None) -> int:
+    if random_seed.value is None:
+        random_int = random.randrange(sys.maxsize)
+        random_seed.set_value(random_int)
+
+    return random_seed.value
 
 
 def _underscore_method() -> int:
