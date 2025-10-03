@@ -469,6 +469,9 @@ class Result(IResult):
                                       ' found. The annotation UUID will be'
                                       ' prepended to the name of the new'
                                       ' annotation.')
+                        # It should not be possible for this to collide because
+                        # we only get here if this annotation.id isn't present
+                        # on the artifact.
                         other_annotation.name = \
                             f'{other_annotation.name}-{other_annotation.id}'
                         self.add_annotation(other_annotation)
