@@ -1179,7 +1179,6 @@ class Cache:
 
                 set_permissions(destination, READ_ONLY_FILE, READ_ONLY_DIR)
             else:
-                # Check for annotation whatever
                 existing = Result._from_archiver(Archiver.load_raw(destination, self))
                 existing.merge_annotations(ref)
 
@@ -1217,7 +1216,6 @@ class Cache:
                 os.rename(src, dest)
                 set_permissions(dest, READ_ONLY_FILE, READ_ONLY_DIR)
             else:
-                # Check for annotation whatever
                 existing = Result._from_archiver(Archiver.load_raw(dest, self))
                 new = Result._from_archiver(Archiver.load_raw(src, self))
                 existing.merge_annotations(new)
