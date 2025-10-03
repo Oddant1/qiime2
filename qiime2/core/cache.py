@@ -907,8 +907,8 @@ class Cache:
                 if key in self.get_keys():
                     self.remove(key)
                 raise
-            else:
-                return self.load(key)
+
+            return self.load(key)
 
     def save_collection(self, ref_collection, key):
         """Saves a Collection to a pool in the cache with the given key. This
