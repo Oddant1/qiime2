@@ -101,6 +101,7 @@ class Annotation():
                 annotation.annotation_type = meta_yaml['type']
                 annotation.created_at = meta_yaml['created_at']
 
+        annotation._filepath = filepath
         return annotation
 
     # We never expect this to be hit as the base class for Annotations
@@ -332,11 +333,11 @@ class Note(Annotation):
 
         note_path = os.path.join(annotation_uuid_dirname, 'note.txt')
 
-        if self._filepath:
+        if self.contents:
+            contents = self.contents.encode('utf-8')
+        else:
             with open(self._filepath, 'rb') as fh:
                 contents = fh.read()
-        else:
-            contents = self.contents.encode('utf-8')
 
         # validation for max size and parsability
         max_size = 10 * 1024 * 1024

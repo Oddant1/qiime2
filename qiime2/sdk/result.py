@@ -362,6 +362,7 @@ class Result(IResult):
                 'they are attached to.'
             )
 
+        print(annotation.contents)
         annotation._write(annotations_dir=self._archiver.annotations_dir,
                           root_result_uuid=str(self.uuid),
                           referenced_result_uuid=str(self.uuid))
@@ -454,6 +455,27 @@ class Result(IResult):
 
         shutil.rmtree(annotation_disk_dir)
         del annotations[name]
+
+    def merge_annotations(self, other):
+        print(self._archiver.path)
+        print(other._archiver.path)
+        annotation_uuids = [annotation.id for annotation in self._annotations.values()]
+
+        for other_annotation in other._annotations.values():
+            if other_annotation.id not in annotation_uuids:
+                try:
+                    self.add_annotation(other_annotation)
+                except ValueError as e:
+                    if 'Duplicate name' in str(e):
+                        warnings.warn(f'Duplicate name {other_annotation.name}'
+                                      ' found. The annotation UUID will be'
+                                      ' prepended to the name of the new'
+                                      ' annotation.')
+                        other_annotation.name = \
+                            f'{other_annotation.name}-{other_annotation.id}'
+                        self.add_annotation(other_annotation)
+                    else:
+                        raise e
 
 
 class Artifact(Result):

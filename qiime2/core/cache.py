@@ -900,10 +900,15 @@ class Cache:
         # process is running garbage collection it doesn't see our un-keyed
         # data and remove it leaving us with a dangling reference and no data
         with self.lock:
-            self._register_key(key, str(ref.uuid))
-            self._copy_to_data(ref)
-
-        return self.load(key)
+            try:
+                self._register_key(key, str(ref.uuid))
+                self._copy_to_data(ref)
+            except:
+                if key in self.get_keys():
+                    self.remove(key)
+                raise
+            else:
+                return self.load(key)
 
     def save_collection(self, ref_collection, key):
         """Saves a Collection to a pool in the cache with the given key. This
@@ -979,6 +984,7 @@ class Cache:
                 with open(self.keys / key) as fh:
                     return yaml.safe_load(fh)
             except FileNotFoundError as e:
+                print("READING")
                 raise KeyError(f"The cache '{self.path}' does not contain the "
                                f"key '{key}'") from e
 
@@ -1172,7 +1178,14 @@ class Cache:
                         ref._archiver.path, self.data, dirs_exist_ok=True)
 
                 set_permissions(destination, READ_ONLY_FILE, READ_ONLY_DIR)
+            else:
+                # Check for annotation whatever
+                existing = Result._from_archiver(Archiver.load_raw(destination, self))
+                existing.merge_annotations(ref)
 
+    # TODO: If multiple instances of the same artifact are put into the cache
+    # with different annotations, we merge the annotations. If there are
+    # namespace collisions, throw a warning and append UUID to end of name?
     def _rename_to_data(self, uuid, src):
         """Takes some data in src and renames it into the cache's data dir. It
         then ensures there are symlinks for this data in the process pool and
@@ -1203,6 +1216,11 @@ class Cache:
             if not os.path.exists(dest):
                 os.rename(src, dest)
                 set_permissions(dest, READ_ONLY_FILE, READ_ONLY_DIR)
+            else:
+                # Check for annotation whatever
+                existing = Result._from_archiver(Archiver.load_raw(dest, self))
+                new = Result._from_archiver(Archiver.load_raw(src, self))
+                existing.merge_annotations(new)
 
             # Create a new alias whether we renamed or not because this is
             # still loading a new reference to the data even if the data is
