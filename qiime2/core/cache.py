@@ -984,7 +984,6 @@ class Cache:
                 with open(self.keys / key) as fh:
                     return yaml.safe_load(fh)
             except FileNotFoundError as e:
-                print("READING")
                 raise KeyError(f"The cache '{self.path}' does not contain the "
                                f"key '{key}'") from e
 
