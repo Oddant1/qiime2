@@ -903,7 +903,7 @@ class Cache:
             try:
                 self._register_key(key, str(ref.uuid))
                 self._copy_to_data(ref)
-            except:
+            except:  # noqa: E722
                 if key in self.get_keys():
                     self.remove(key)
                 raise
@@ -1178,7 +1178,8 @@ class Cache:
 
                 set_permissions(destination, READ_ONLY_FILE, READ_ONLY_DIR)
             else:
-                existing = Result._from_archiver(Archiver.load_raw(destination, self))
+                existing = \
+                    Result._from_archiver(Archiver.load_raw(destination, self))
                 existing.merge_annotations(ref)
 
     # TODO: If multiple instances of the same artifact are put into the cache

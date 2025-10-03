@@ -456,7 +456,8 @@ class Result(IResult):
         del annotations[name]
 
     def merge_annotations(self, other):
-        annotation_uuids = [annotation.id for annotation in self._annotations.values()]
+        annotation_uuids = \
+            [annotation.id for annotation in self._annotations.values()]
 
         for other_annotation in other._annotations.values():
             if other_annotation.id not in annotation_uuids:
