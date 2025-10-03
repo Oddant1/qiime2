@@ -1182,9 +1182,6 @@ class Cache:
                     Result._from_archiver(Archiver.load_raw(destination, self))
                 existing.merge_annotations(ref)
 
-    # TODO: If multiple instances of the same artifact are put into the cache
-    # with different annotations, we merge the annotations. If there are
-    # namespace collisions, throw a warning and append UUID to end of name?
     def _rename_to_data(self, uuid, src):
         """Takes some data in src and renames it into the cache's data dir. It
         then ensures there are symlinks for this data in the process pool and
