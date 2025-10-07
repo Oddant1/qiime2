@@ -641,18 +641,20 @@ class _Capture(_PrimitiveTemplateBase):
 
 class CaptureProxy:
     def __init__(self, name, value, type, provenance):
+        self.set = False
         self.name = name
         self.value = value
         self.type = type
         self.provenance = provenance
 
     def set_value(self, value):
-        if self.value is not None:
+        if self.set:
             raise ValueError(f'Value already set to {self.value}')
 
         if value in self.type:
             self.provenance.parameters[self.name] = value
             self.value = value
+            self.set = True
         else:
             raise TypeError(
                 f'Value {value} not compatible with type {self.type}')
