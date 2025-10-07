@@ -639,7 +639,7 @@ class _Capture(_PrimitiveTemplateBase):
         pass
 
 
-class CaptureProxy:
+class CaptureHolder:
     def __init__(self, name, value, type, provenance):
         self.set = False
         self.name = name
