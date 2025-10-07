@@ -22,6 +22,7 @@ from qiime2.core.testing.method import (concatenate_ints, merge_mappings,
 from qiime2.core.testing.type import (
     IntSequence1, IntSequence2, SingleInt, Mapping)
 from qiime2.core.testing.util import get_dummy_plugin
+from qiime2.core.util import load_action_yaml
 
 
 # TODO refactor these tests along with Visualizer tests to remove duplication.
@@ -742,9 +743,39 @@ class TestMethod(unittest.TestCase):
         self.assertEqual(view_ints2_ret, ints2_expected)
         self.assertEqual(view_int1_ret, int1_expected)
 
-    def test_random_seed_method(self):
+    def test_unset_random_seed_method(self):
         random_seed_method = self.plugin.methods['random_seed_method']
-        random_seed_method()
+        int1, = random_seed_method()
+
+        # The method just returns the value of its random_seed parameter
+        returned_seed = int1.view(int)
+
+        # Get parameter value from provenance
+        action_yaml = load_action_yaml(int1._archiver.path)
+        prov_seed = action_yaml['action']['parameters'][0]['random_seed']
+
+        self.assertEqual(returned_seed, prov_seed)
+
+    def test_set_random_seed_method(self):
+        random_seed_method = self.plugin.methods['random_seed_method']
+        int1, = random_seed_method(0)
+
+        # The method just returns the value of its random_seed parameter
+        returned_seed = int1.view(int)
+        self.assertEqual(returned_seed, 0)
+
+        # Get parameter value from provenance
+        action_yaml = load_action_yaml(int1._archiver.path)
+        prov_seed = action_yaml['action']['parameters'][0]['random_seed']
+
+        self.assertEqual(returned_seed, prov_seed)
+
+    def test_set_random_seed_method_bad_value(self):
+        random_seed_method = self.plugin.methods['random_seed_method']
+        with self.assertRaisesRegex(
+                TypeError,
+                "\'random_seed\'.*1\.0.*Capture\[Int\]"):  # noqa: W605
+            int1, = random_seed_method(1.0)
 
 
 exp_merge_calldoc = """\
