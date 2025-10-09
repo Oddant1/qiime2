@@ -1118,8 +1118,11 @@ dummy_plugin.methods.register_function(
        'random_seed': Capture[Int]
     },
     outputs=[('seed', SingleInt)],
-    name='',
-    description=''
+    name='Takes a random seed',
+    description='Takes an integer as a random seed and returns that same'
+                ' integer. If no integer is provided, it generates one at'
+                ' random and captures that randomly generated integer in'
+                ' provenance.'
 )
 
 dummy_plugin.methods.register_function(
