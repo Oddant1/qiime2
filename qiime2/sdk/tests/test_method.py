@@ -777,6 +777,12 @@ class TestMethod(unittest.TestCase):
                 "\'random_seed\'.*1\.0.*Capture\[Int\]"):  # noqa: W605
             int1, = random_seed_method(1.0)
 
+    def test_set_random_seed_twice(self):
+        random_seed_method = \
+            self.plugin.methods['random_seed_method_set_twice']
+        with self.assertRaisesRegex(ValueError, 'Value already set'):
+            random_seed_method()
+
 
 exp_merge_calldoc = """\
 Merge mappings

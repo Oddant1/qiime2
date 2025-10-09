@@ -119,7 +119,8 @@ class TestPlugin(unittest.TestCase):
                           'collection_inner_union', 'collection_outer_union',
                           'dict_params', 'list_params', 'varied_method',
                           '_underscore_method', 'return_four_ints',
-                          'return_many_ints', 'random_seed_method'
+                          'return_many_ints', 'random_seed_method',
+                          'random_seed_method_set_twice'
                           })
         for action in actions.values():
             self.assertIsInstance(action, qiime2.sdk.Action)
@@ -157,7 +158,7 @@ class TestPlugin(unittest.TestCase):
                           'collection_outer_union', 'dict_params',
                           'list_params', 'varied_method', '_underscore_method',
                           'return_four_ints', 'return_many_ints',
-                          'random_seed_method',
+                          'random_seed_method', 'random_seed_method_set_twice'
                           })
         for method in methods.values():
             self.assertIsInstance(method, qiime2.sdk.Method)

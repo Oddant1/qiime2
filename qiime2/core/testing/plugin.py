@@ -47,7 +47,7 @@ from .method import (concatenate_ints, split_ints, merge_mappings,
                      docstring_order_method, variadic_input_method,
                      unioned_primitives, type_match_list_and_set, union_inputs,
                      list_of_ints, dict_of_ints, returns_int, varied_method,
-                     random_seed_method,
+                     random_seed_method, random_seed_method_set_twice,
                      collection_inner_union, collection_outer_union,
                      dict_params, list_params, _underscore_method)
 from .visualizer import (most_common_viz, mapping_viz, params_only_viz,
@@ -1123,6 +1123,18 @@ dummy_plugin.methods.register_function(
                 ' integer. If no integer is provided, it generates one at'
                 ' random and captures that randomly generated integer in'
                 ' provenance.'
+)
+
+dummy_plugin.methods.register_function(
+    function=random_seed_method_set_twice,
+    inputs={},
+    parameters={
+       'random_seed': Capture[Int]
+    },
+    outputs=[('seed', SingleInt)],
+    name='Sets the value on the Capture twice.',
+    description='Sets the value on the Capture object twice. This will always'
+                ' raise an error.'
 )
 
 dummy_plugin.methods.register_function(
