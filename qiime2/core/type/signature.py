@@ -402,9 +402,9 @@ class PipelineSignature:
                         provenance, name, spec, arg)
             else:
                 if spec.qiime_type.name == 'Capture':
-                    proxy = qtype.CaptureHolder(
+                    capture = qtype.CaptureHolder(
                         name, arg, spec.qiime_type, provenance)
-                    callable_args[name] = proxy
+                    callable_args[name] = capture
 
                 provenance.add_parameter(name, spec.qiime_type, arg)
 
