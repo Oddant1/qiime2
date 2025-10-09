@@ -832,7 +832,16 @@ class Cache:
 
                 if data not in referenced_data:
                     target = self.data / data
-                    shutil.rmtree(target)
+                    try:
+                        shutil.rmtree(target)
+                    # We may not have permissions because old versions of
+                    # QIIME 2 set entries in data to read-only. If we encounter
+                    # that then set write permissions here and try again.
+                    except PermissionError as e:
+                        if e.errno == 13:
+                            set_permissions(target, None, USER_GROUP_RWX)
+                            shutil.rmtree(target)
+                        raise e
 
     def _check_dangling_reference(self, data_path, key_path):
         """ If the data specified does not exist then we have a dangling
