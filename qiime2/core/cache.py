@@ -837,6 +837,12 @@ class Cache:
                     # We may not have permissions because old versions of
                     # QIIME 2 set entries in data to read-only. If we encounter
                     # that then set write permissions here and try again.
+                    #
+                    # This try-except will induce a slight performance overhead
+                    # in Python versions pre 3.11, but much less than running
+                    # set_permissions every time. In Python 3.11 and on,
+                    # try-except introduces no performance penalty if an
+                    # exception is not raised.
                     except PermissionError as e:
                         if e.errno == 13:
                             set_permissions(target, None, USER_GROUP_RWX)
