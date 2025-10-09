@@ -841,7 +841,8 @@ class Cache:
                         if e.errno == 13:
                             set_permissions(target, None, USER_GROUP_RWX)
                             shutil.rmtree(target)
-                        raise e
+                        else:
+                            raise e
 
     def _check_dangling_reference(self, data_path, key_path):
         """ If the data specified does not exist then we have a dangling
