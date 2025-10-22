@@ -52,8 +52,7 @@ import qiime2
 from .path import ArchivePath
 from qiime2.sdk.result import Result
 from qiime2.core.util import (is_uuid4, set_permissions, touch_under_path,
-                              load_action_yaml, READ_ONLY_FILE, READ_ONLY_DIR,
-                              USER_GROUP_RWX)
+                              load_action_yaml, USER_GROUP_RWX)
 from qiime2.core.archive.archiver import Archiver
 from qiime2.core.type import HashableInvocation, IndexedCollectionElement
 
@@ -496,7 +495,7 @@ class Cache:
 
         # Start thread that pokes things in the cache to ensure they aren't
         # culled for being too old (only if we are in a temp cache)
-        if path == temp_cache_path:
+        if self.path == temp_cache_path:
             self._thread_is_done = threading.Event()
             self._thread_destructor = \
                 weakref.finalize(self, self._thread_is_done.set)
@@ -833,9 +832,23 @@ class Cache:
 
                 if data not in referenced_data:
                     target = self.data / data
-
-                    set_permissions(target, None, USER_GROUP_RWX)
-                    shutil.rmtree(target)
+                    try:
+                        shutil.rmtree(target)
+                    # We may not have permissions because old versions of
+                    # QIIME 2 set entries in data to read-only. If we encounter
+                    # that then set write permissions here and try again.
+                    #
+                    # This try-except will induce a slight performance overhead
+                    # in Python versions pre 3.11, but much less than running
+                    # set_permissions every time. In Python 3.11 and on,
+                    # try-except introduces no performance penalty if an
+                    # exception is not raised.
+                    except PermissionError as e:
+                        if e.errno == 13:
+                            set_permissions(target, None, USER_GROUP_RWX)
+                            shutil.rmtree(target)
+                        else:
+                            raise e
 
     def _check_dangling_reference(self, data_path, key_path):
         """ If the data specified does not exist then we have a dangling
@@ -1175,8 +1188,6 @@ class Cache:
                 else:
                     shutil.copytree(
                         ref._archiver.path, self.data, dirs_exist_ok=True)
-
-                set_permissions(destination, READ_ONLY_FILE, READ_ONLY_DIR)
             else:
                 existing = \
                     Result._from_archiver(Archiver.load_raw(destination, self))
@@ -1211,7 +1222,6 @@ class Cache:
             # Rename errors if the destination already exists
             if not os.path.exists(dest):
                 os.rename(src, dest)
-                set_permissions(dest, READ_ONLY_FILE, READ_ONLY_DIR)
             else:
                 existing = Result._from_archiver(Archiver.load_raw(dest, self))
                 new = Result._from_archiver(Archiver.load_raw(src, self))
