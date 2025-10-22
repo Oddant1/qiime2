@@ -702,7 +702,7 @@ class ParserV0(ArchiveParser):
         with ZipFile(archive) as zf:
             if cfg.perform_checksum_validation:
                 provenance_is_valid, checksum_diff = \
-                    self._validate_checksums(zf)
+                    self._validate_checksums(archive, zf)
             else:
                 provenance_is_valid = ValidationCode.VALIDATION_OPTOUT
                 checksum_diff = None
@@ -764,7 +764,9 @@ class ParserV0(ArchiveParser):
         return _ResultMetadata(zf, root_md_fp)
 
     def _validate_checksums(
-            self, zf: ZipFile
+            self,
+            archive: str,
+            zf: ZipFile
     ) -> Tuple[ValidationCode, Optional[ChecksumDiff]]:
         '''
         Return the ValidationCode and ChecksumDiff for an archive. Because
@@ -774,6 +776,8 @@ class ParserV0(ArchiveParser):
 
         Parameters
         ----------
+        archive : str
+            A path to the artifact to be parsed.
         zf : ZipFile
             The zipfile object representing the archive. Ignored here but
             needed in signature for inheritance.
@@ -947,7 +951,7 @@ class ParserV2(ParserV1):
         with ZipFile(archive) as zf:
             if cfg.perform_checksum_validation:
                 provenance_is_valid, checksum_diff = \
-                    self._validate_checksums(zf)
+                    self._validate_checksums(archive, zf)
             else:
                 provenance_is_valid = ValidationCode.VALIDATION_OPTOUT
                 checksum_diff = None
@@ -1053,13 +1057,17 @@ class ParserV5(ParserV4):
     expected_files_all_nodes = ParserV4.expected_files_all_nodes
 
     def _validate_checksums(
-            self, zf: ZipFile
+            self,
+            archive: str,
+            zf: ZipFile
     ) -> Tuple[ValidationCode, Optional[ChecksumDiff]]:
         '''
         Checksum support added for v5, so perform checksum validation.
 
         Parameters
         ----------
+        archive : str
+            A path to the artifact to be parsed.
         zf : ZipFile
             The zipfile object representation of the parsed archive.
 
@@ -1079,7 +1087,7 @@ class ParserV5(ParserV4):
         than in pre-V5 archive parsers, the ChecksumDiff should only be
         intepreted in conjuction with the ValidationCode.
         '''
-        return validate_checksums(zf)
+        return validate_checksums(archive, zf)
 
 
 class ParserV6(ParserV5):

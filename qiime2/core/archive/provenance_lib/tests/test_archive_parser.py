@@ -117,7 +117,8 @@ class ParserVxTests(unittest.TestCase):
         for artifact in self.das.all_artifact_versions:
             parser = ArchiveParser.get_parser(artifact.filepath)
             with zipfile.ZipFile(artifact.filepath) as zf:
-                is_valid, diff = parser._validate_checksums(zf)
+                is_valid, diff = parser._validate_checksums(
+                    artifact.filepath, zf)
                 if artifact.archive_version < 5:
                     self.assertEqual(is_valid,
                                      ValidationCode.PREDATES_CHECKSUMS)

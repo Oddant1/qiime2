@@ -38,7 +38,7 @@ class ValidateChecksumTests(unittest.TestCase):
         int_seq.save(fp)
 
         with zipfile.ZipFile(fp) as zf:
-            is_valid, diff = validate_checksums(zf)
+            is_valid, diff = validate_checksums(fp, zf)
         self.assertEqual(is_valid, ValidationCode.VALID)
         self.assertEqual(diff, ChecksumDiff({}, {}, {}))
 
@@ -73,7 +73,7 @@ class ValidateChecksumTests(unittest.TestCase):
             write_zip_archive(fp, tempdir)
 
         with zipfile.ZipFile(fp) as zf:
-            is_valid, diff = validate_checksums(zf)
+            is_valid, diff = validate_checksums(fp, zf)
 
         self.assertEqual(is_valid, ValidationCode.INVALID)
         self.assertEqual(list(diff.added.keys()), ['tamper.txt'])
@@ -97,7 +97,7 @@ class ValidateChecksumTests(unittest.TestCase):
             write_zip_archive(fp, tempdir)
 
         with zipfile.ZipFile(fp) as zf:
-            is_valid, diff = validate_checksums(zf)
+            is_valid, diff = validate_checksums(fp, zf)
 
         self.assertEqual(is_valid, ValidationCode.INVALID)
         self.assertEqual(diff, None)
