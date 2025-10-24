@@ -457,6 +457,29 @@ class Result(IResult):
         shutil.rmtree(annotation_disk_dir)
         del annotations[name]
 
+    def merge_annotations(self, other):
+        annotation_uuids = \
+            [str(annotation.id) for annotation in self._annotations.values()]
+
+        for other_annotation in other._annotations.values():
+            if str(other_annotation.id) not in annotation_uuids:
+                try:
+                    self.add_annotation(other_annotation)
+                except ValueError as e:
+                    if 'Duplicate name' in str(e):
+                        warnings.warn(f'Duplicate name {other_annotation.name}'
+                                      ' found. The annotation UUID will be'
+                                      ' prepended to the name of the new'
+                                      ' annotation.')
+                        # It should not be possible for this to collide because
+                        # we only get here if this annotation.id isn't present
+                        # on the artifact.
+                        other_annotation.name = \
+                            f'{other_annotation.name}-{other_annotation.id}'
+                        self.add_annotation(other_annotation)
+                    else:
+                        raise e
+
 
 class Artifact(Result):
     extension = '.qza'

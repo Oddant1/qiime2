@@ -913,10 +913,15 @@ class Cache:
         # process is running garbage collection it doesn't see our un-keyed
         # data and remove it leaving us with a dangling reference and no data
         with self.lock:
-            self._register_key(key, str(ref.uuid))
-            self._copy_to_data(ref)
+            try:
+                self._register_key(key, str(ref.uuid))
+                self._copy_to_data(ref)
+            except:  # noqa: E722
+                if key in self.get_keys():
+                    self.remove(key)
+                raise
 
-        return self.load(key)
+            return self.load(key)
 
     def save_collection(self, ref_collection, key):
         """Saves a Collection to a pool in the cache with the given key. This
@@ -1183,6 +1188,10 @@ class Cache:
                 else:
                     shutil.copytree(
                         ref._archiver.path, self.data, dirs_exist_ok=True)
+            else:
+                existing = \
+                    Result._from_archiver(Archiver.load_raw(destination, self))
+                existing.merge_annotations(ref)
 
     def _rename_to_data(self, uuid, src):
         """Takes some data in src and renames it into the cache's data dir. It
@@ -1213,6 +1222,10 @@ class Cache:
             # Rename errors if the destination already exists
             if not os.path.exists(dest):
                 os.rename(src, dest)
+            else:
+                existing = Result._from_archiver(Archiver.load_raw(dest, self))
+                new = Result._from_archiver(Archiver.load_raw(src, self))
+                existing.merge_annotations(new)
 
             # Create a new alias whether we renamed or not because this is
             # still loading a new reference to the data even if the data is
