@@ -61,7 +61,9 @@ _VERSION_MATCHER = (
 )
 
 
-def parse_version(zf: ZipFile) -> Tuple[str, str]:
+def parse_version(
+    zf: ZipFile, nested_artifact: pathlib.Path | None = None
+) -> Tuple[str, str]:
     '''
     Finds and parses the VERSION file inside of an archive.
 
@@ -69,14 +71,23 @@ def parse_version(zf: ZipFile) -> Tuple[str, str]:
     ----------
     zf : ZipFile
         The zipfile object of an archive.
+    nested_artifact : pathlib.Path | None
+        A relative path from the root of `zf` to a nested artifact of which
+        the version is desired.
 
     Returns
     -------
     tuple of (str, str)
         The archive version and framework version of the archive.
     '''
-    uuid = get_root_uuid(zf)
-    version_fp = pathlib.Path(uuid) / 'VERSION'
+    root_uuid = get_root_uuid(zf)
+
+    if nested_artifact is not None:
+        version_fp = pathlib.Path(root_uuid) / nested_artifact / 'VERSION'
+        uuid = nested_artifact.parts[-1]
+    else:
+        version_fp = pathlib.Path(root_uuid) / 'VERSION'
+        uuid = root_uuid
 
     try:
         with zf.open(str(version_fp)) as v_fp:
