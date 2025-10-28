@@ -12,6 +12,8 @@ import hashlib
 import stat
 import os
 import io
+import re
+import sys
 import collections
 import uuid as _uuid
 import yaml
@@ -19,7 +21,6 @@ import zipfile
 import pathlib
 import shutil
 import subprocess
-import re
 
 import decorator
 
@@ -28,6 +29,18 @@ READ_ONLY_DIR = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH | stat.S_IRUSR \
     | stat.S_IRGRP | stat.S_IROTH
 USER_GROUP_RWX = stat.S_IRWXU | stat.S_IRWXG
 OTHER_NO_WRITE = stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH
+# public key algorithm identifiers
+# https://datatracker.ietf.org/doc/html/rfc4880#section-9.1
+_PUBKEY_ALG = {
+    '1': 'RSA',
+    '2': 'RSA',
+    '3': 'RSA',
+    '16': 'ElGamal',
+    '17': 'DSA',
+    '18': 'ECDH',
+    '19': 'ECDSA',
+    '22': 'EdDSA'
+}
 
 
 def get_view_name(view):
@@ -471,6 +484,172 @@ def create_collection_name(*, name, key, idx, size):
         standardized way. Assumes 0 based indexing.
     """
     return [name, key, f'{idx + 1}/{size}']
+
+
+# annotation helpers
+# helper for parsing user name/email for keypair identification
+def _parse_uid(uid_str):
+    email_regex = re.compile(r'.*<([^>]+)>')
+    uid_match = email_regex.match(uid_str or "")
+    if uid_match:
+        email = uid_match.group(1)
+        name = uid_str[: uid_str.index('<')].strip()
+        return name or None, email or None
+    return (uid_str.strip() or None, None)
+
+
+# Apparently this is helpful on Unix to GPG to find the correct terminal
+def unix_gpg_terminal_helper(env):
+    try:
+        if sys.stdin and sys.stdin.isatty():
+            env.setdefault('GPG_TTY', os.ttyname(sys.stdin.fileno()))
+    except Exception:
+        pass
+    return env
+
+
+# helper for normalizing fingerprint formatting
+def normalize_fingerprint(s):
+    return re.sub(r'\s+', '', (s or '')).upper()
+
+
+# helper for locating root_fp for a given Result
+def find_root_fp(annotations_dir, root_result_uuid):
+    p = pathlib.Path(annotations_dir)
+    parts = p.parts
+    try:
+        idx = parts.index(root_result_uuid)
+    except ValueError:
+        raise ValueError('Could not locate result UUID '
+                         f'"{root_result_uuid}" in path: {p}')
+
+    return pathlib.Path(*parts[:idx + 1])
+
+
+# helper for calculating the root level checksum digest
+def sha512_file_hex(path):
+    hex = hashlib.sha512()
+    with open(path, 'rb') as fh:
+        for chunk in iter(lambda: fh.read(1024*1024), b""):
+            hex.update(chunk)
+    return hex.hexdigest()
+
+
+# helper for pulling keypair info from a given fingerprint
+def gpg_find_key(fingerprint_raw):
+    fingerprint = normalize_fingerprint(fingerprint_raw)
+
+    if not re.fullmatch(r'[0-9A-F]{40}|[0-9A-F]{64}', fingerprint):
+        raise ValueError('Expected a full GPG fingerprint (40 or 64 chars).')
+
+    cmd = [
+        'gpg',
+        '--list-keys',
+        '--with-colons',
+        '--fingerprint',
+        '--keyid-format=long',
+        fingerprint_raw
+    ]
+
+    try:
+        output = subprocess.check_output(cmd, text=True)
+    except FileNotFoundError as e:
+        raise RuntimeError('`gpg` not found on `PATH`.') from e
+    except subprocess.CalledProcessError:
+        raise RuntimeError(
+            'No matching key found for the provided fingerprint')
+
+    key_info = {
+        'fingerprint': None,
+        'algorithm': None,
+        'length': None,
+        'curve': None,
+        'uids': [],
+        'chosen_uid': None
+    }
+
+    # format for the output of `gpg --list-keys`
+    # pub:...:<len>:<algo>:<keyid>:...
+    # fpr:::::::::<PRIMARY-FINGERPRINT>::    -> fingerprint for the primary key
+    # uid:::::::<Name <email>>:              -> UID(s) for the primary key
+    # uid:::::::<Other Name <other@example>>:
+    # sub:...:                               -> subkey (not the primary)
+    # fpr:::::::::<SUBKEY-FINGERPRINT>::     -> fingerprint for the subkey
+    # ...
+
+    # this state flag tells us whether or not we're in the primary key block
+    in_primary = False
+
+    for line in output.splitlines():
+        parts = line.split(':')
+        tag = parts[0]
+
+        # public key tag; the primary key info that matches
+        # the fingerprint will be here
+        if tag == 'pub':
+            in_primary = True
+            # length and algorithm are always present on pub lines
+            # so don't need to check truthiness on these
+            length = parts[2] if len(parts) > 2 else '0'
+            algorithm_num = parts[3] if len(parts) > 3 else ''
+            # curve is optional and only set for ECC keys (ECDSA/ECDH/EdDSA)
+            # when not applicable, gpg leaves this empty - hence the need
+            # to check truthiness on this field
+            curve = parts[15] if len(parts) > 15 and parts[15] else None
+            key_info['length'] = int(length) if str(length).isdigit() else 0
+            key_info['algorithm'] = \
+                _PUBKEY_ALG.get(algorithm_num, f'ALG-{algorithm_num}')
+            key_info['curve'] = curve
+        # subkey fingerprint (if applicable)
+
+        elif in_primary and tag == 'fpr':
+            # confirm primary fingerprint matches the input fingerprint
+            normalized_fingerprint = \
+                normalize_fingerprint(parts[9] if len(parts) > 9 else '')
+            if fingerprint and normalized_fingerprint != fingerprint:
+                # If gpg listed a different key somehow, skip it
+                continue
+            # this ensures we don't overwrite the primary with a subkey
+            if key_info['fingerprint'] is None:
+                key_info['fingerprint'] = normalized_fingerprint
+
+        # fill in name/email from given uid
+        elif in_primary and tag == 'uid':
+            raw = parts[9] if len(parts) > 9 else ''
+            name, email = _parse_uid(raw)
+            key_info['uids'].append({'raw': raw, 'name': name, 'email': email})
+
+        # If we ever saw a new 'pub' after the first, we could break once
+        # fingerprint is confirmed. But gpg with a full fingerprint should
+        # return a single primary key.
+
+    # confirmation that the listed key's fingerprint matches input
+    if key_info['fingerprint'] is None:
+        raise RuntimeError('Could not confirm primary key fingerprint '
+                           'from `gpg` output.')
+
+    # choose a default UID (first one if present)
+    key_info['chosen_uid'] = (
+        key_info['uids'][0] if key_info['uids']
+        else {'raw': None, 'name': None, 'email': None}
+    )
+
+    return key_info
+
+
+# helper for formatting keypair algorithm in metadata.yaml
+def format_algorithm(key_info):
+    algorithm = key_info.get('algorithm')
+    curve = (key_info.get('curve') or '').lower()
+    length = key_info.get('length') or 0
+    if algorithm == 'EdDSA' and curve == 'ed25519':
+        return 'Ed25519'
+    elif algorithm in {'ECDSA', 'ECDH'} and key_info.get('curve'):
+        return f'{algorithm}/{key_info["curve"]}'
+    elif algorithm in {'RSA', 'DSA'} and length:
+        return f'{algorithm}-{length}'
+    else:
+        return algorithm or 'unknown'
 
 
 def replace_bytes_in_directory(directory, old_bytes, new_bytes, extensions,

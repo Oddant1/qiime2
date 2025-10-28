@@ -7,9 +7,11 @@
 # ----------------------------------------------------------------------------
 
 import os
+import re
 import shutil
 import warnings
 import tempfile
+import subprocess
 import collections
 import distutils.dir_util
 import pathlib
@@ -28,7 +30,9 @@ import qiime2.core.util as util
 import qiime2.core.exceptions as exceptions
 
 from qiime2.sdk.iresult import IResult
-from qiime2.core.annotate import Annotation
+from qiime2.core.annotate import (Annotation, ANNOTATION_TYPE_DICT)
+from qiime2.core.util import (sha512_file_hex, gpg_find_key,
+                              normalize_fingerprint, unix_gpg_terminal_helper)
 
 # Note: Result, Artifact, and Visualization classes are in this file to avoid
 # circular dependencies between Result and its subclasses. Result is tightly
@@ -329,6 +333,17 @@ class Result(IResult):
                 'formats of 7.0 and above.'
             )
 
+    def _iter_checksums(self, checksums_fp):
+        checksum_line_regex = re.compile(r"^([0-9a-f]{128})\s\s(.+)$")
+        with checksums_fp.open('r', encoding='utf-8') as fh:
+            for line in fh:
+                line = line.rstrip('\n')
+                if not line:
+                    continue
+                match = checksum_line_regex.match(line)
+                if match:
+                    yield (match.group(1), match.group(2))
+
     def add_annotation(self, annotation):
         """
         Add an Annotation onto a Result object.
@@ -338,7 +353,7 @@ class Result(IResult):
         Parameters
         ----------
         annotation
-            An instantiated Annotation subclass (Note, etc).
+            An instantiated Annotation subclass (Note, Signature, etc).
 
         Raises
         ------
@@ -385,6 +400,11 @@ class Result(IResult):
                 fh.write(util.to_checksum_format(*item))
                 fh.write('\n')
 
+        # this ensures additional attrs on Signature (signer name/email)
+        # are present when running Result.verify
+        loaded_annotation = Annotation.load(str(annotation_dir))
+        self._annotations[loaded_annotation.name] = loaded_annotation
+
     def get_annotation(self, name):
         """Retrieve an Annotation given by `name` from the Result object.
 
@@ -411,14 +431,22 @@ class Result(IResult):
 
         raise KeyError(f'No Annotation with name: "{name}" was found.')
 
-    # TODO: add support to filter by type
-    # once additional annotation types are added in 7.1
-    def iter_annotations(self):
+    def iter_annotations(self, filter_by_type=None):
         """Constructs an iterable containing all Annotations associated with
         the Result object.
         """
         self._validate_annotation_support()
-        yield from self._annotations.values()
+
+        if filter_by_type is None:
+            yield from self._annotations.values()
+        elif filter_by_type not in ANNOTATION_TYPE_DICT:
+            raise ValueError(f'Unknown annotation type: "{filter_by_type}". '
+                             'Supported annotation types are: '
+                             f'{ANNOTATION_TYPE_DICT.keys()}')
+        else:
+            for annotation in self._annotations.values():
+                if getattr(annotation, 'annotation_type') == filter_by_type:
+                    yield annotation
 
     def remove_annotation(self, name):
         """
@@ -479,6 +507,101 @@ class Result(IResult):
                         self.add_annotation(other_annotation)
                     else:
                         raise e
+
+    def verify(self, signature_name):
+        """
+        Verify a Signature annotation by name on the provided Result.
+
+        Parameters
+        ----------
+        signature_name
+            Name of the Signature Annotation to verify.
+
+        Notes
+        -----
+        The following checks are performed:
+            - fingerprint match in local GPG keyring
+            - sha512sum for root level checksums file matches checksum_digest
+            - gpg detached signature verification
+            - sha512sum checks for each file in signature-level checksums file
+        """
+        # first make sure the Result isn't malformed & the Signature exists
+        self.validate()
+        signature = self.get_annotation(signature_name)
+
+        annotation_dir = \
+            pathlib.Path(self._archiver.annotations_dir) / str(signature.id)
+
+        root_fp = self._archiver.root_dir
+        root_checksums_fp = root_fp / 'checksums.sha512'
+        sig_checksums_fp = annotation_dir / 'checksums.sha512'
+        signature_fp = annotation_dir / 'signature.gpg'
+
+        try:
+            fingerprint = getattr(signature, 'fingerprint')
+
+            if not fingerprint:
+                raise ValueError('Signature is missing fingerprint.')
+
+            found_fingerprint = gpg_find_key(fingerprint)
+            if not (normalize_fingerprint(found_fingerprint['fingerprint']) ==
+                    normalize_fingerprint(signature.fingerprint)):
+                raise ValueError('Found fingerprint does not match '
+                                 'fingerprint associated with Signature.')
+
+        except Exception as e:
+            raise ValueError(f'Signer key not found in local GPG keyring: {e}')
+
+        root_checksum_digest = sha512_file_hex(root_checksums_fp)
+        if not root_checksum_digest == getattr(signature, 'checksum_digest'):
+            raise ValueError(
+                'Root checksums.sha512 does not match digest in metadata.yaml')
+
+        try:
+            env = os.environ.copy()
+            unix_gpg_terminal_helper(env)
+
+            subprocess.run(
+                ['gpg', '--verify',
+                 str(signature_fp),
+                 str(root_checksums_fp)],
+                check=True, env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+        except FileNotFoundError:
+            raise FileNotFoundError('`gpg` not found on PATH.')
+
+        except subprocess.CalledProcessError as e:
+            msg = (e.stderr or '').strip()
+            if len(msg) > 500:
+                msg = msg[:500] + '...'
+            raise subprocess.CalledProcessError(
+                f'`gpg --verify` failed (rc={e.returncode}): {msg}')
+
+        missing, mismatched = [], []
+        for exp_digest, relpath in self._iter_checksums(sig_checksums_fp):
+            fp = annotation_dir / relpath
+            if not fp.exists():
+                missing.append(relpath)
+                continue
+            obs_digest = sha512_file_hex(fp)
+            if obs_digest != exp_digest:
+                mismatched.append({
+                    'path': relpath,
+                    'expected': exp_digest,
+                    'actual': obs_digest
+                })
+        if missing:
+            raise ValueError('The following expected files were not found: '
+                             f'{missing}')
+        if mismatched:
+            raise ValueError('The following unexpected files were found: '
+                             f'{mismatched}')
+
+        return f'Signature `{signature_name}` verified successfully.'
 
 
 class Artifact(Result):
