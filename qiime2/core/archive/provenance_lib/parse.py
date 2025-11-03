@@ -303,7 +303,7 @@ class EmptyParser(Parser):
     Creates empty ProvDAGs.
     Disregards Config, because it's not meaningful in this context.
     '''
-    accepted_data_types = 'None'
+    accepted_data_types = ['None']
 
     @classmethod
     def get_parser(cls, artifact_data: Any) -> Parser:
@@ -458,7 +458,7 @@ class ProvDAGParser(Parser):
 
     Disregards Config, because it's not meaningful in this context.
     '''
-    accepted_data_types = 'ProvDAG'
+    accepted_data_types = ['ProvDAG']
 
     @classmethod
     def get_parser(cls, artifact_data: Any) -> Parser:
@@ -569,9 +569,9 @@ def select_parser(payload: Any) -> Parser:
         EmptyParser
     ]
 
-    accepted_data_types = [
-        parser.accepted_data_types for parser in _PARSER_TYPE_REGISTRY
-    ]
+    accepted_data_types = []
+    for parser in _PARSER_TYPE_REGISTRY:
+        accepted_data_types.extend(parser.accepted_data_types)
 
     optional_parser = None
     errors = []

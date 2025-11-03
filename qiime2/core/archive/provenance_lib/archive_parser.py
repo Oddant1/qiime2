@@ -27,6 +27,7 @@ from ._checksum_validator import (
 )
 from .util import get_root_uuid, get_nonroot_uuid, parse_version
 from ..provenance import MetadataInfo
+from qiime2.sdk import Result
 
 
 @dataclass
@@ -579,7 +580,7 @@ class _ResultMetadata:
 
 
 class Parser(metaclass=abc.ABCMeta):
-    accepted_data_types: str
+    accepted_data_types = ['str', 'Result']
 
     @classmethod
     @abc.abstractmethod

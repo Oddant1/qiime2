@@ -22,7 +22,7 @@ from .parse import ProvDAG
 from .usage_drivers import build_header, build_footer
 from ..provenance import MetadataInfo
 
-from qiime2.sdk import PluginManager
+from qiime2.sdk import PluginManager, Result
 from qiime2.sdk.usage import Usage, UsageVariable
 from qiime2.sdk.util import camel_to_snake
 
@@ -500,6 +500,8 @@ def replay_provenance(
     '''
     if type(payload) is ProvDAG:
         parse_metadata = payload.cfg.parse_study_metadata
+    elif type(payload) is str and not os.path.isdir(payload):
+        payload = Result.load(payload)
 
     if not parse_metadata:
         if use_recorded_metadata:
