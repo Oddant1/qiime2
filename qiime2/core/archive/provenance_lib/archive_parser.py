@@ -580,8 +580,6 @@ class _ResultMetadata:
 
 
 class Parser(metaclass=abc.ABCMeta):
-    accepted_data_types = ['str', 'Result']
-
     @classmethod
     @abc.abstractmethod
     def get_parser(cls, artifact_data: Any) -> 'Parser':
@@ -601,8 +599,6 @@ class Parser(metaclass=abc.ABCMeta):
 
 
 class ArchiveParser(Parser):
-    accepted_data_types = 'a path to a file (a string) or a file-like object'
-
     @classmethod
     def get_parser(cls, artifact: Union[str, pathlib.PosixPath]) -> Parser:
         '''
@@ -619,16 +615,7 @@ class ArchiveParser(Parser):
             An ArchiveParser object for the version of the artifact. One of
             ParserV[0-7].
         '''
-        if isinstance(artifact, pathlib.PosixPath):
-            artifact = str(artifact)
-        if not isinstance(artifact, str):
-            raise TypeError(
-                'ArchiveParser expects a string or pathlib.PosixPath path to '
-                f'an archive, not an object of type {str(type(artifact))}.'
-            )
-        if os.path.isdir(artifact):
-            raise ValueError('ArchiveParser expects a file, not a directory.')
-
+        # TODO: Change this to interact with a loaded result not a filepath
         try:
             with ZipFile(artifact, 'r') as zf:
                 archive_version, _ = parse_version(zf)

@@ -19,6 +19,8 @@ from .archive_parser import (
     Config, ParserResults, ProvNode, Parser, ArchiveParser
 )
 
+from qiime2.sdk import Result
+
 
 class ProvDAG:
     '''
@@ -562,37 +564,59 @@ def select_parser(payload: Any) -> Parser:
     UnparseableDataError
         If no appropriate parser could be found for the payload.
     '''
-    _PARSER_TYPE_REGISTRY = [
-        ArchiveParser,
-        DirectoryParser,
-        ProvDAGParser,
-        EmptyParser
-    ]
-
-    accepted_data_types = []
-    for parser in _PARSER_TYPE_REGISTRY:
-        accepted_data_types.extend(parser.accepted_data_types)
-
-    optional_parser = None
-    errors = []
-    for parser in _PARSER_TYPE_REGISTRY:
-        try:
-            optional_parser = parser.get_parser(payload)
-            if optional_parser is not None:
-                return optional_parser
-        except Exception as e:
-            errors.append(e)
+    PARSER_TYPE_MAP = {
+        'Result': ArchiveParser,
+        'Artifact': ArchiveParser,
+        'Visualization': ArchiveParser,
+        'str': DirectoryParser,
+        'ProvDAG': ProvDAGParser,
+        'None': EmptyParser
+    }
 
     err_msg = (
         f'Input data {payload} is not supported.\n'
         'Parsers are available for the following data types: '
-        f'{accepted_data_types}.\n'
-        'The following errors were caught while trying to identify a parser '
-        'that can_handle this input data:\n'
+        f'{PARSER_TYPE_MAP.keys()}.\n'
     )
-    for e in errors:
-        err_msg += str(type(e)) + str(e) + '\n'
+
+    try:
+        payload = _load_payload(payload)
+        parser_type = PARSER_TYPE_MAP.get(payload.__class__.__name__)
+        if parser_type is not None:
+            parser = parser_type.get_parser(payload)
+            return parser
+    except Exception as e:
+        err_msg += (
+            'The following error was caught while trying to identify a '
+            'parser that can_handle this input data:\n'
+            f'{str(e)}'
+        )
+
     raise UnparseableDataError(err_msg)
+
+
+def _load_payload(payload):
+    '''
+    Ensures Paths are converted into strings and then attempts to load non
+    directory paths as a Result
+
+    Parameters
+    ----------
+    payload : Any
+        The payload to load.
+
+    Returns
+    -------
+    Parser
+        The payload loaded if needed.
+    '''
+    if isinstance(payload, Path):
+        payload = str(payload)
+
+    if isinstance(payload, str) and not os.path.isdir(payload):
+        payload = Result.load(payload)
+
+    return payload
 
 
 class UnparseableDataError(Exception):

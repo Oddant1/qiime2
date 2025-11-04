@@ -500,8 +500,6 @@ def replay_provenance(
     '''
     if type(payload) is ProvDAG:
         parse_metadata = payload.cfg.parse_study_metadata
-    elif type(payload) is str and not os.path.isdir(payload):
-        payload = Result.load(payload)
 
     if not parse_metadata:
         if use_recorded_metadata:
