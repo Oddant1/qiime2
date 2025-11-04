@@ -11,49 +11,11 @@ import re
 import warnings
 
 from typing import Tuple
-from zipfile import ZipFile
-
-
-def get_root_uuid(zf: ZipFile) -> str:
-    '''
-    Returns the root UUID of a QIIME 2 Archive.
-
-    Parameters
-    ----------
-    zf : ZipFile
-        The zipfile object of an archive.
-
-    Returns
-    -------
-    str
-        The uuid of the root artifact in the archive.
-    '''
-    return pathlib.Path(zf.namelist()[0]).parts[0]
-
-
-def get_nonroot_uuid(fp: pathlib.Path) -> str:
-    '''
-    For non-root provenance files, get the Result's uuid from its path.
-
-    Parameters
-    ----------
-    fp : pathlib.Path
-        The path to a file in a non-root artifact inside an archive, relative
-        to archive root.
-
-    Returns
-    -------
-    str
-        The uuid of the non-root artifact.
-    '''
-    if fp.name == 'action.yaml':
-        return fp.parts[-3]
-    return fp.parts[-2]
 
 
 _VERSION_MATCHER = (
     r'QIIME 2\n'
-    # allows for 0-6 as ints and 7.0+ as floats
+ # allows for 0-6 as ints and 7.0+ as floats
     r'archive: (?:[0-6]|[7-9]\.[0-9]+|[1-9][0-9]+\.[0-9]+)$\n'
     r'framework: '
     r'(?:20[0-9]{2}|2)\.(?:[1-9][0-2]?|0)\.[0-9](?:\.dev[0-9]?)?'
@@ -62,41 +24,39 @@ _VERSION_MATCHER = (
 
 
 def parse_version(
-    zf: ZipFile, nested_artifact: pathlib.Path | None = None
+    result: Result, nested_artifact: pathlib.Path | None = None
 ) -> Tuple[str, str]:
     '''
     Finds and parses the VERSION file inside of an archive.
 
     Parameters
     ----------
-    zf : ZipFile
-        The zipfile object of an archive.
+    result : Result
+        The Result we are getting the version of
     nested_artifact : pathlib.Path | None
-        A relative path from the root of `zf` to a nested artifact of which
-        the version is desired.
+        A relative path from the root of the Result's archiver
 
     Returns
     -------
     tuple of (str, str)
         The archive version and framework version of the archive.
     '''
-    root_uuid = get_root_uuid(zf)
+    uuid = result.uuid
 
     if nested_artifact is not None:
-        version_fp = pathlib.Path(root_uuid) / nested_artifact / 'VERSION'
-        uuid = nested_artifact.parts[-1]
+        version_fp = result._archiver.provenance_dir / nested_artifact / 'VERSION'
+        result = nested_artifact
     else:
-        version_fp = pathlib.Path(root_uuid) / 'VERSION'
-        uuid = root_uuid
+        version_fp = result._archiver.path / 'VERSION'
 
     try:
-        with zf.open(str(version_fp)) as v_fp:
+        with open(str(version_fp)) as v_fp:
             version_contents = str(v_fp.read().strip(), 'utf-8')
     except KeyError:
         raise ValueError(
             f'Malformed Archive: VERSION file for node {uuid} misplaced '
-            f'or nonexistent.\nArchive {zf.filename} may be corrupt or '
-            'provenance may be false.'
+            f'or nonexistent.\nArchive {result._archiver.path} may be corrupt '
+            'or provenance may be false.'
         )
 
     if not re.match(_VERSION_MATCHER, version_contents, re.MULTILINE):
@@ -107,7 +67,8 @@ def parse_version(
             _VERSION_MATCHER.encode('utf-8'), 'unicode-escape'
         )
         raise ValueError(
-            f'Malformed Archive: VERSION file out of spec in {zf.filename}.\n'
+            f'Malformed Archive: VERSION file out of spec in '
+            f'{result._archiver.path}.\n'
             f'Should match this regular expression:\n{version_match_repr}\n'
             f'Actually looks like:\n{version_contents}\n'
         )

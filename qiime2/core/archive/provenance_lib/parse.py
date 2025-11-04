@@ -305,13 +305,6 @@ class EmptyParser(Parser):
     Creates empty ProvDAGs.
     Disregards Config, because it's not meaningful in this context.
     '''
-    @classmethod
-    def get_parser(cls, artifact_data: Any) -> Parser:
-        if artifact_data is None:
-            return EmptyParser()
-        else:
-            raise TypeError(f' in EmptyParser: {artifact_data} is not None.')
-
     def parse_prov(self, cfg: Config, data: None) -> ParserResults:
         '''
         Returns a static ParserResults with empty parsed_artifact_uuids,
@@ -326,40 +319,6 @@ class EmptyParser(Parser):
 
 
 class DirectoryParser(Parser):
-    @classmethod
-    def get_parser(cls, artifact_data: Any) -> Parser:
-        '''
-        Return a DirectoryParser if appropriate.
-
-        Parameters
-        ----------
-        artifact_data : Any
-            Ideally a path to a directory containing one or more archives, but
-            may be a different type during searches for other Parsers.
-
-        Raises
-        ------
-        TypeError
-            If something other than a str or path-like object is input.
-        ValueError
-            If the path does not point to a directory.
-        '''
-        try:
-            is_dir = os.path.isdir(artifact_data)
-        except TypeError:
-            t = type(artifact_data)
-            raise TypeError(
-                f' in DirectoryParser: expects a directory, not a {t}.'
-            )
-
-        if not is_dir:
-            raise ValueError(
-                f' in DirectoryParser: {artifact_data} '
-                'is not a valid directory.'
-            )
-
-        return DirectoryParser()
-
     def parse_prov(self, cfg: Config, data: str) -> ParserResults:
         '''
         Iterates over the directory's .qza and .qzv files, parsing them if
@@ -455,34 +414,6 @@ class ProvDAGParser(Parser):
 
     Disregards Config, because it's not meaningful in this context.
     '''
-    @classmethod
-    def get_parser(cls, artifact_data: Any) -> Parser:
-        '''
-        Returns ProvDAGParser if appropriate.
-
-        Parameters
-        ----------
-        artifact_data : Any
-            Hopefully a ProvDAG but may be a different type during searches for
-            the proper Parser.
-
-        Returns
-        -------
-        ProvDAGParser
-            An instance of ProvDAGParser if artifact_data is a ProvDAG.
-
-        Raises
-        ------
-        TypeError
-            If artifact_data is not a ProvDAG.
-        '''
-        if isinstance(artifact_data, ProvDAG):
-            return ProvDAGParser()
-        else:
-            raise TypeError(
-                f' in ProvDAGParser: {artifact_data} is not a ProvDAG.'
-            )
-
     def parse_prov(self, cfg: Config, dag: ProvDAG) -> ParserResults:
         '''
         Parses a ProvDAG returning a ParserResults by deep copying existing
@@ -557,6 +488,7 @@ def select_parser(payload: Any) -> Parser:
     UnparseableDataError
         If no appropriate parser could be found for the payload.
     '''
+    # TODO: Don't think we care about these being classes anymore
     PARSER_TYPE_MAP = {
         'Result': ArchiveParser,
         'Artifact': ArchiveParser,
@@ -574,9 +506,8 @@ def select_parser(payload: Any) -> Parser:
 
     try:
         payload = _load_payload(payload)
-        parser_type = PARSER_TYPE_MAP.get(payload.__class__.__name__)
-        if parser_type is not None:
-            parser = parser_type.get_parser(payload)
+        parser = PARSER_TYPE_MAP.get(payload.__class__.__name__)()
+        if parser is not None:
             return parser
     except Exception as e:
         err_msg += (

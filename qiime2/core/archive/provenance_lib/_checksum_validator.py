@@ -6,15 +6,11 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 from enum import IntEnum
-import pathlib
 import warnings
 from typing import Optional, Tuple
-from zipfile import ZipFile
 
-from qiime2.core.util import checksum_directory_zip, from_checksum_format
+from qiime2.sdk import Result
 from qiime2.core.archive.archiver import ChecksumDiff
-
-from .util import get_root_uuid, parse_version
 
 
 class ValidationCode(IntEnum):
@@ -56,7 +52,7 @@ class ValidationCode(IntEnum):
 
 
 def validate_checksums(
-    zf: ZipFile
+    result: Result
 ) -> Tuple[ValidationCode, Optional[ChecksumDiff]]:
     '''
     Uses diff_checksums to validate the archive's provenance,
@@ -75,26 +71,15 @@ def validate_checksums(
         set ChecksumDiff to None and ValidationCode to INVALID and return.
 
     '''
-    checksum_diff: Optional[ChecksumDiff]
+    if not hasattr(result._archiver, 'CHECKSUM_FILE'):
+        return ValidationCode.PREDATES_CHECKSUMS, ChecksumDiff({}, {}, {})
+
+    checksum_diff = result._archiver.validate_checksums()
     provenance_is_valid = ValidationCode.VALID
-    checksum_ext = _parse_checksum_ext(zf)
 
-    for fp in zf.namelist():
-        if f'checksums.{checksum_ext}' in fp:
-            break
-    else:
-        warnings.warn(
-            f'The checksums.{checksum_ext} file is missing from the archive. '
-            'Archive may be corrupt or provenance may be false.',
-            UserWarning
-        )
-        return ValidationCode.INVALID, None
-
-    checksum_diff = diff_checksums(zf)
     if checksum_diff != ChecksumDiff({}, {}, {}):
-        root_uuid = get_root_uuid(zf)
         warnings.warn(
-            f'Checksums are invalid for Archive {root_uuid}\n'
+            f'Checksums are invalid for Archive {result.uuid}\n'
             'Archive may be corrupt or provenance may be false.\n'
             f'Files added since archive creation: {checksum_diff.added}\n'
             'Files removed since archive creation: '
@@ -106,65 +91,3 @@ def validate_checksums(
         provenance_is_valid = ValidationCode.INVALID
 
     return provenance_is_valid, checksum_diff
-
-
-def diff_checksums(zf: ZipFile) -> ChecksumDiff:
-    '''
-    Calculates checksums for all files in an archive
-    (except checksums.md5 or checksums.sha512,
-    depending on the archive version).
-    Compares these against the checksums stored in
-    checksums.md5/checksums.sha512, returning a summary ChecksumDiff.
-
-    Parameters
-    ----------
-    zf : ZipFile
-        The zipfile object of the archive.
-
-    Returns
-    -------
-    ChecksumDiff
-        A tuple of three dicts, one each for added, removed, and changed
-        files. Keys are filepaths. For the added and removed dicts
-        values are the checksum of the added or removed file. For the changed
-        dict values are a tuple of (expected checksum, observed checksum).
-
-    '''
-    archive_version, _ = parse_version(zf)
-    # TODO: don't think this is ever called
-    if float(archive_version) < 5.0:
-        return ChecksumDiff({}, {}, {})
-
-    checksum_ext = _parse_checksum_ext(zf)
-
-    root_dir = pathlib.Path(get_root_uuid(zf))
-    checksum_fp = str(root_dir / f'checksums.{checksum_ext}')
-    obs = checksum_directory_zip(zf, checksum_type=checksum_ext)
-
-    exp = {}
-    for line in zf.open(checksum_fp):
-        fp, checksum = from_checksum_format(str(line, 'utf-8'))
-        exp[fp] = checksum
-
-    obs_fps = set(obs)
-    exp_fps = set(exp)
-
-    added = {fp: obs[fp] for fp in obs_fps - exp_fps}
-    removed = {fp: exp[fp] for fp in exp_fps - obs_fps}
-    changed = {
-        fp: (exp[fp], obs[fp]) for fp in exp_fps & obs_fps
-        if exp[fp] != obs[fp]
-    }
-
-    return ChecksumDiff(added=added, removed=removed, changed=changed)
-
-
-def _parse_checksum_ext(zf):
-    archive_version, _ = parse_version(zf)
-
-    if float(archive_version) >= 5.0 and float(archive_version) < 7.0:
-        checksum_ext = 'md5'
-    elif float(archive_version) >= 7.0:
-        checksum_ext = 'sha512'
-
-    return checksum_ext
