@@ -10,13 +10,14 @@ import os
 import pandas as pd
 import pathlib
 import tempfile
+import warnings
 import yaml
 from zipfile import ZipFile
 
 from dataclasses import dataclass
 from datetime import timedelta
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import bibtexparser as bp
 import networkx as nx
@@ -624,7 +625,7 @@ class ArchiveParser(Parser):
             checksum_diff = None
 
         # We don't actually have a straightforward way to parse the version
-        # file
+        # file other than this lol
         archive_version, _ = parse_version()
 
         if archive_version == '0' or archive_version == '1':
@@ -634,10 +635,18 @@ class ArchiveParser(Parser):
             # are pretending that it was introduced in V2 because of
             # difficulties untangling provenance without output names. V1
             # archives are treated as having no provenance, like V0 archive
-            return self._parse_pre_prov(result)
+            graph= self._parse_pre_prov(result)
         else:
             # Is archiver version >=2
-            return self._parse_prov(result)
+            graph = self._parse_prov(result)
+
+        return ParserResults(
+            {result.uuid},
+            graph,
+            provenance_is_valid,
+            checksum_diff
+        )
+
 
     def _parse_pre_prov(self, result):
         '''
@@ -671,42 +680,16 @@ class ArchiveParser(Parser):
             networkx graph, the provenance-is-valid flag, and the
             checksum diff.
         '''
-        with ZipFile(archive) as zf:
-            if cfg.perform_checksum_validation:
-                provenance_is_valid, checksum_diff = \
-                    self._validate_checksums(zf)
-            else:
-                provenance_is_valid = ValidationCode.VALIDATION_OPTOUT
-                checksum_diff = None
-
-            root_uuid = get_root_uuid(zf)
-            warnings.warn(
-                f'Artifact {root_uuid} was created prior to provenance '
-                'tracking. Provenance data will be incomplete.',
-                UserWarning
-            )
-
-            exp_node_fps = []
-            for fp in self.expected_files_all_nodes:
-                exp_node_fps.append(pathlib.Path(root_uuid) / fp)
-
-            prov_fps = self._get_provenance_fps(zf)
-            self._assert_expected_files_present(
-                zf, exp_node_fps, prov_fps
-            )
-            # we have confirmed that all expected fps for this node exist
-            node_fps = exp_node_fps
-
-            nodes = {}
-            nodes[root_uuid] = ProvNode(cfg, zf, node_fps)
-            graph = self._digraph_from_archive_contents(nodes)
-
-        return ParserResults(
-            {root_uuid},
-            graph,
-            provenance_is_valid,
-            checksum_diff
+        warnings.warn(
+            f'Artifact {result.uuid} was created prior to provenance '
+            'tracking. Provenance data will be incomplete.',
+            UserWarning
         )
+
+        nodes = {result.uuid: ProvNode(cfg, zf, node_fps)}
+        graph = self._digraph_from_archive_contents(nodes)
+
+        return graph
 
     def _parse_prov(self, result):
         '''
@@ -790,12 +773,7 @@ class ArchiveParser(Parser):
 
         graph = self._digraph_from_archive_contents(archive_contents)
 
-        return ParserResults(
-            {root_uuid},
-            graph,
-            provenance_is_valid,
-            checksum_diff
-        )
+        return graph
 
     def _digraph_from_archive_contents(
         self, archive_contents: Dict[str, 'ProvNode']
