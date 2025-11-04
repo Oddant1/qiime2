@@ -641,23 +641,23 @@ class _Capture(_PrimitiveTemplateBase):
 
 class CaptureHolder:
     def __init__(self, name, value, type, provenance):
-        self.set = False
-        self.name = name
-        self.value = value
-        self.type = type
-        self.provenance = provenance
+        self._set = False
+        self._name = name
+        self._value = value
+        self._type = type
+        self._provenance = provenance
 
     def set_value(self, value):
-        if self.set:
-            raise ValueError(f'Value already set to {self.value}')
+        if self._set:
+            raise ValueError(f'Value already set to {self._value}')
 
-        if value in self.type:
-            self.provenance.parameters[self.name] = value
-            self.value = value
-            self.set = True
+        if value in self._type:
+            self._provenance.parameters[self._name] = value
+            self._value = value
+            self._set = True
         else:
             raise TypeError(
-                f'Value {value} not compatible with type {self.type}')
+                f'Value {value} not compatible with type {self._type}')
 
 
 Int = _Int()
