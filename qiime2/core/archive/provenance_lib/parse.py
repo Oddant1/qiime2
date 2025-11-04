@@ -305,8 +305,6 @@ class EmptyParser(Parser):
     Creates empty ProvDAGs.
     Disregards Config, because it's not meaningful in this context.
     '''
-    accepted_data_types = ['None']
-
     @classmethod
     def get_parser(cls, artifact_data: Any) -> Parser:
         if artifact_data is None:
@@ -328,9 +326,6 @@ class EmptyParser(Parser):
 
 
 class DirectoryParser(Parser):
-    accepted_data_types = \
-        'filepath to a directory containing .qza/.qzv archives'
-
     @classmethod
     def get_parser(cls, artifact_data: Any) -> Parser:
         '''
@@ -460,8 +455,6 @@ class ProvDAGParser(Parser):
 
     Disregards Config, because it's not meaningful in this context.
     '''
-    accepted_data_types = ['ProvDAG']
-
     @classmethod
     def get_parser(cls, artifact_data: Any) -> Parser:
         '''
