@@ -12,6 +12,8 @@ import warnings
 
 from typing import Tuple
 
+from qiime2.sdk import Result
+
 
 _VERSION_MATCHER = (
     r'QIIME 2\n'
@@ -24,7 +26,7 @@ _VERSION_MATCHER = (
 
 
 def parse_version(
-    result: Result, nested_artifact: pathlib.Path | None = None
+    result: Result, nested_artifact: str | None = None
 ) -> Tuple[str, str]:
     '''
     Finds and parses the VERSION file inside of an archive.
@@ -33,8 +35,8 @@ def parse_version(
     ----------
     result : Result
         The Result we are getting the version of
-    nested_artifact : pathlib.Path | None
-        A relative path from the root of the Result's archiver
+    nested_artifact : str | None
+        the uuid of the nested result
 
     Returns
     -------
