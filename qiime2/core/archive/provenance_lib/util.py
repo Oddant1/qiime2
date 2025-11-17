@@ -11,8 +11,45 @@ import re
 import warnings
 
 from typing import Tuple
+from zipfile import ZipFile
 
 from qiime2.sdk import Result
+
+def get_root_uuid(zf: ZipFile) -> str:
+    '''
+    Returns the root UUID of a QIIME 2 Archive.
+
+    Parameters
+    ----------
+    zf : ZipFile
+        The zipfile object of an archive.
+
+    Returns
+    -------
+    str
+        The uuid of the root artifact in the archive.
+    '''
+    return pathlib.Path(zf.namelist()[0]).parts[0]
+
+
+def get_nonroot_uuid(fp: pathlib.Path) -> str:
+    '''
+    For non-root provenance files, get the Result's uuid from its path.
+
+    Parameters
+    ----------
+    fp : pathlib.Path
+        The path to a file in a non-root artifact inside an archive, relative
+        to archive root.
+
+    Returns
+    -------
+    str
+        The uuid of the non-root artifact.
+    '''
+    if fp.name == 'action.yaml':
+        return fp.parts[-3]
+    return fp.parts[-2]
 
 
 _VERSION_MATCHER = (
@@ -26,7 +63,7 @@ _VERSION_MATCHER = (
 
 
 def parse_version(
-    result: Result, nested_artifact: str | None = None
+    result: Result | str, nested_artifact: str | None = None
 ) -> Tuple[str, str]:
     '''
     Finds and parses the VERSION file inside of an archive.
@@ -43,17 +80,20 @@ def parse_version(
     tuple of (str, str)
         The archive version and framework version of the archive.
     '''
+    if not isinstance(result, Result):
+        result = Result.load(result)
+
     uuid = result.uuid
 
     if nested_artifact is not None:
-        version_fp = result._archiver.provenance_dir / nested_artifact / 'VERSION'
+        version_fp = result._archiver.provenance_dir/ 'artifacts' / nested_artifact / 'VERSION'
         result = nested_artifact
     else:
         version_fp = result._archiver.path / 'VERSION'
 
     try:
         with open(str(version_fp)) as v_fp:
-            version_contents = str(v_fp.read().strip(), 'utf-8')
+            version_contents = v_fp.read().strip()
     except KeyError:
         raise ValueError(
             f'Malformed Archive: VERSION file for node {uuid} misplaced '

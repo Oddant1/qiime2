@@ -380,8 +380,8 @@ class ProvDAGTests(unittest.TestCase):
                         ProvDAG(altered_archive)
 
     def test_v0_archive(self):
-        dag = self.das.table_v0.dag
-        uuid = self.das.table_v0.uuid
+        dag = self.das.concated_ints_v0.dag
+        uuid = self.das.concated_ints_v0.uuid
 
         self.assertEqual(
             dag.provenance_is_valid, ValidationCode.PREDATES_CHECKSUMS
@@ -590,10 +590,10 @@ class ProvDAGTests(unittest.TestCase):
 
     def test_union_v0_v1_archives(self):
         unioned_dag = ProvDAG.union(
-            [self.das.table_v0.dag, self.das.concated_ints_v2.dag]
+            [self.das.concated_ints_v0.dag, self.das.concated_ints_v2.dag]
         )
 
-        self.assertIn(f'{self.das.table_v0.uuid}', repr(unioned_dag))
+        self.assertIn(f'{self.das.concated_ints_v0.uuid}', repr(unioned_dag))
         self.assertIn(f'{self.das.concated_ints_v2.uuid}', repr(unioned_dag))
 
         self.assertEqual(
@@ -605,7 +605,7 @@ class ProvDAGTests(unittest.TestCase):
         )
 
         self.assertFalse(
-            unioned_dag.node_has_provenance(self.das.table_v0.uuid)
+            unioned_dag.node_has_provenance(self.das.concated_ints_v0.uuid)
         )
         self.assertTrue(
             unioned_dag.node_has_provenance(self.das.concated_ints_v2.uuid)

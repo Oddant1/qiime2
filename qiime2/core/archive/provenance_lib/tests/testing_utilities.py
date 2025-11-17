@@ -159,10 +159,7 @@ class DummyArtifacts:
         make artifacts of non-current versions on the fly
         '''
         for version in range(0, 7):
-            if version == 0:
-                dirname = 'table-v0'
-            else:
-                dirname = f'concated-ints-v{version}'
+            dirname = f'concated-ints-v{version}'
 
             versioned_artifact_dir = os.path.join(self.datadir, dirname)
             temp_zf_path = os.path.join(self.tempdir, 'temp.zip')
@@ -171,12 +168,8 @@ class DummyArtifacts:
             filename = f'{dirname}.qza'
             fp = os.path.join(self.tempdir, filename)
 
-            if version == 0:
-                shutil.copy(temp_zf_path, fp)
-                a = None
-            else:
-                a = Artifact.load(temp_zf_path)
-                a.save(fp)
+            a = Artifact.load(temp_zf_path)
+            a.save(fp)
 
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', category=UserWarning)
@@ -223,7 +216,7 @@ class DummyArtifacts:
     @property
     def all_artifact_versions(self):
         return (
-            self.table_v0, self.concated_ints_v1, self.concated_ints_v2,
+            self.concated_ints_v0, self.concated_ints_v1, self.concated_ints_v2,
             self.concated_ints_v3, self.concated_ints_v4,
             self.concated_ints_v5, self.concated_ints_v6
         )

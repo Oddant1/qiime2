@@ -406,11 +406,11 @@ class BuildUsageExamplesTests(unittest.TestCase):
             self, n_p_builder, imp_builder, act_builder
     ):
         ns = ReplayNamespaces()
-        uuid = self.das.table_v0.uuid
+        uuid = self.das.concated_ints_v0.uuid
         with self.assertWarnsRegex(
                 UserWarning, f'(:?)Art.*{uuid}.*prior.*incomplete'
         ):
-            dag = ProvDAG(self.das.table_v0.filepath)
+            dag = ProvDAG(self.das.concated_ints_v0.filepath)
 
         cfg = ReplayConfig(
             use=ReplayPythonUsage(), use_recorded_metadata=False
@@ -431,11 +431,11 @@ class BuildUsageExamplesTests(unittest.TestCase):
     ):
         mixed_dir = os.path.join(self.tempdir, 'mixed-dir')
         os.mkdir(mixed_dir)
-        shutil.copy(self.das.table_v0.filepath, mixed_dir)
+        shutil.copy(self.das.concated_ints_v0.filepath, mixed_dir)
         shutil.copy(self.das.concated_ints_v6.filepath, mixed_dir)
 
         ns = ReplayNamespaces()
-        v0_uuid = self.das.table_v0.uuid
+        v0_uuid = self.das.concated_ints_v0.uuid
         with self.assertWarnsRegex(
                 UserWarning, f'(:?)Art.*{v0_uuid}.*prior.*incomplete'
         ):
@@ -504,8 +504,8 @@ class MiscHelperFnTests(unittest.TestCase):
         self.assertEqual(duplicate, 'dummy_plugin_action_jackson_1')
 
     def test_dump_recorded_md_file_no_md(self):
-        uuid = self.das.table_v0.uuid
-        dag = self.das.table_v0.dag
+        uuid = self.das.concated_ints_v0.uuid
+        dag = self.das.concated_ints_v0.dag
 
         cfg = ReplayConfig(use=ReplayPythonUsage())
         provnode = dag.get_node_data(uuid)
@@ -552,8 +552,8 @@ class GroupByActionTests(unittest.TestCase):
 
     def test_gba_no_provenance(self):
         ns = ReplayNamespaces()
-        dag = self.das.table_v0.dag
-        uuid = self.das.table_v0.uuid
+        dag = self.das.concated_ints_v0.dag
+        uuid = self.das.concated_ints_v0.uuid
 
         sorted_nodes = nx.topological_sort(dag.collapsed_view)
         action_collections = group_by_action(dag, sorted_nodes, ns)
@@ -563,11 +563,11 @@ class GroupByActionTests(unittest.TestCase):
     def test_gba_some_nodes_missing_provenance(self):
         mixed_dir = os.path.join(self.tempdir, 'mixed-dir')
         os.mkdir(mixed_dir)
-        shutil.copy(self.das.table_v0.filepath, mixed_dir)
+        shutil.copy(self.das.concated_ints_v0.filepath, mixed_dir)
         shutil.copy(self.das.concated_ints_v6.filepath, mixed_dir)
 
         ns = ReplayNamespaces()
-        v0_uuid = self.das.table_v0.uuid
+        v0_uuid = self.das.concated_ints_v0.uuid
         with self.assertWarnsRegex(
                 UserWarning, f'(:?)Art.*{v0_uuid}.*prior.*incomplete'
         ):
@@ -808,8 +808,8 @@ class BuildNoProvenanceUsageTests(CustomAssertions):
         cfg = ReplayConfig(
             use=ReplayPythonUsage(), use_recorded_metadata=False
         )
-        uuid = self.das.table_v0.uuid
-        dag = self.das.table_v0.dag
+        uuid = self.das.concated_ints_v0.uuid
+        dag = self.das.concated_ints_v0.dag
         v0_node = dag.get_node_data(uuid)
         build_no_provenance_node_usage(v0_node, uuid, ns, cfg)
 
@@ -858,8 +858,8 @@ class BuildNoProvenanceUsageTests(CustomAssertions):
         )
 
         # This function doesn't actually know about the DAG, so no need to join
-        uuid = self.das.table_v0.uuid
-        dag = self.das.table_v0.dag
+        uuid = self.das.concated_ints_v0.uuid
+        dag = self.das.concated_ints_v0.dag
         v0_node = dag.get_node_data(uuid)
 
         dummy_node_uuid = uuid + '-dummy'
@@ -1449,7 +1449,7 @@ class CitationsTests(unittest.TestCase):
         self.assertEqual(keys, exp_keys)
 
     def test_collect_citations_no_prov(self):
-        dag = self.das.table_v0.dag
+        dag = self.das.concated_ints_v0.dag
 
         exp_keys = set()
         citations = collect_citations(dag)
@@ -1476,7 +1476,7 @@ class CitationsTests(unittest.TestCase):
                     self.assertIn(key, written)
 
     def test_replay_citations_no_prov(self):
-        dag = self.das.table_v0.dag
+        dag = self.das.concated_ints_v0.dag
         exp = "No citations were registered"
         with tempfile.TemporaryDirectory() as tempdir:
             out_fp = os.path.join(tempdir, 'citations.bib')

@@ -29,6 +29,8 @@ from ..archive_parser import (
 from ...provenance import MetadataInfo
 
 from qiime2.core.testing.util import ReallyEqualMixin
+from qiime2.core.testing.type import (IntSequence1, IntSequence2, SingleInt,
+                                      Mapping)
 
 
 class ParserVxTests(unittest.TestCase):
@@ -41,6 +43,11 @@ class ParserVxTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.das.free()
 
+    def test_some_stuff(self):
+        from qiime2 import Artifact
+        art = Artifact.import_data(IntSequence1, [0, 42, 43])
+        ArchiveParser.parse_prov(art)
+
     def test_parse_root_md(self):
         for artifact in self.das.all_artifact_versions:
             fp = artifact.filepath
@@ -49,13 +56,8 @@ class ParserVxTests(unittest.TestCase):
             with zipfile.ZipFile(fp) as zf:
                 root_md = parser._parse_root_md(zf, uuid)
                 self.assertEqual(root_md.uuid, uuid)
-                if artifact == self.das.table_v0:
-                    self.assertEqual(root_md.format, 'BIOMV210DirFmt')
-                    self.assertEqual(root_md.type, 'FeatureTable[Frequency]')
-                else:
-                    self.assertEqual(root_md.format,
-                                     'IntSequenceDirectoryFormat')
-                    self.assertEqual(root_md.type, 'IntSequence1')
+                self.assertEqual(root_md.format, 'IntSequenceDirectoryFormat')
+                self.assertEqual(root_md.type, 'IntSequence1')
 
     def test_parse_root_md_no_md_yaml(self):
         for artifact in self.das.all_artifact_versions:

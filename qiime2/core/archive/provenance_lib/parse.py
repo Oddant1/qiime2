@@ -301,6 +301,10 @@ class ProvDAG:
 
 # TODO: can this get nuked?
 class EmptyParser(Parser):
+    @classmethod
+    def get_parser(cls, artifact_data: None):
+        return cls()
+
     '''
     Creates empty ProvDAGs.
     Disregards Config, because it's not meaningful in this context.
@@ -319,6 +323,10 @@ class EmptyParser(Parser):
 
 
 class DirectoryParser(Parser):
+    @classmethod
+    def get_parser(cls, artifact_data):
+        return cls()
+
     def parse_prov(self, cfg: Config, data: str) -> ParserResults:
         '''
         Iterates over the directory's .qza and .qzv files, parsing them if
@@ -408,6 +416,10 @@ def archive_not_parsed(root_uuid: str, dag: ProvDAG) -> bool:
 
 
 class ProvDAGParser(Parser):
+    @classmethod
+    def get_parser(cls, artifact_data):
+        return cls()
+
     '''
     Effectively a ProvDAG copy constructor, this "parses" a ProvDAG, loading
     its data into a new ProvDAG.
@@ -488,7 +500,6 @@ def select_parser(payload: Any) -> Parser:
     UnparseableDataError
         If no appropriate parser could be found for the payload.
     '''
-    # TODO: Don't think we care about these being classes anymore
     PARSER_TYPE_MAP = {
         'Result': ArchiveParser,
         'Artifact': ArchiveParser,
@@ -506,7 +517,8 @@ def select_parser(payload: Any) -> Parser:
 
     try:
         payload = _load_payload(payload)
-        parser = PARSER_TYPE_MAP.get(payload.__class__.__name__)()
+        parser = \
+            PARSER_TYPE_MAP.get(payload.__class__.__name__).get_parser(payload)
         if parser is not None:
             return parser
     except Exception as e:
