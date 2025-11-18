@@ -13,6 +13,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 import unittest
 import zipfile
+import copy
 
 import pytest
 
@@ -26,6 +27,8 @@ from ..archive_parser import (
 from ...provenance import MetadataInfo
 
 from qiime2.core.testing.util import ReallyEqualMixin
+from qiime2.core.testing.type import IntSequence1
+from qiime2.core.testing.format import IntSequenceDirectoryFormat
 
 
 class ParserVxTests(unittest.TestCase):
@@ -374,59 +377,50 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
         with zipfile.ZipFile(cls.das.concated_ints_with_md.filepath) as zf:
             root_node_id = cls.das.concated_ints_with_md.uuid
             all_filenames = zf.namelist()
-            dag = cls.das.concated_ints_with_md.dag
-            for node in dag.nodes:
-                md_path = os.path.join(
-                    root_node_id, 'provenance', 'artifacts', node, 'action',
-                    'metadata.tsv'
-                )
-                if md_path in all_filenames:
-                    md_node_id = node
-                else:
-                    non_md_node_id = node
 
-            # build a nonroot node without study metadata
-            node_fps = [
-                pathlib.Path(fp) for fp in all_filenames if
-                non_md_node_id in fp and
-                ('metadata.yaml' in fp or 'action.yaml' in fp
-                 or 'VERSION' in fp)
-            ]
-            cls.nonroot_non_md_node = ProvNode(cfg, zf, node_fps)
+        dag = cls.das.concated_ints_with_md.dag
+        for node in dag.nodes:
+            md_path = os.path.join(
+                root_node_id, 'provenance', 'artifacts', node, 'action',
+                'metadata.tsv'
+            )
+            if md_path in all_filenames:
+                md_node_id = node
+            else:
+                non_md_node_id = node
 
-            # build a nonroot node with study metadata
-            all_filenames = zf.namelist()
-            node_fps = [
-                pathlib.Path(fp) for fp in all_filenames if
-                md_node_id in fp and
-                ('metadata.yaml' in fp or 'action.yaml' in fp
-                 or 'VERSION' in fp)
-            ]
-            cls.nonroot_md_node = ProvNode(cfg, zf, node_fps)
+        # build a nonroot node without study metadata
+        cls.nonroot_non_md_node = ProvNode(
+            cfg, cls.das.concated_ints_with_md.artifact,
+            uuid=non_md_node_id
+        )
 
-            # build a root node and parse study metadata files
-            root_md_fnames = filter(is_root_provnode_data, all_filenames)
-            root_md_fps = [pathlib.Path(fp) for fp in root_md_fnames]
-            cfg = Config(parse_study_metadata=True)
-            cls.root_node_parse_md = ProvNode(cfg, zf, root_md_fps)
+        # build a nonroot node with study metadata
+        cls.nonroot_md_node = ProvNode(
+            cfg, cls.das.concated_ints_with_md.artifact, uuid=md_node_id
+        )
 
-            # build a root node and don't parse study metadata files
-            cfg = Config(parse_study_metadata=False)
-            cls.root_node_dont_parse_md = ProvNode(cfg, zf, root_md_fps)
+        # build a root node and parse study metadata files
+        cfg = Config(parse_study_metadata=True)
+        cls.root_node_parse_md = ProvNode(
+            cfg, cls.das.concated_ints_with_md.artifact
+        )
+
+        # build a root node and don't parse study metadata files
+        cfg = Config(parse_study_metadata=False)
+        cls.root_node_dont_parse_md = ProvNode(
+            cfg, cls.das.concated_ints_with_md.artifact
+        )
 
         # build a node with a collection as input
-        with zipfile.ZipFile(cls.das.int_from_collection.filepath) as zf:
-            all_filenames = zf.namelist()
-            root_md_fnames = filter(is_root_provnode_data, all_filenames)
-            root_md_fps = [pathlib.Path(fp) for fp in root_md_fnames]
-            cls.input_collection_node = ProvNode(cfg, zf, root_md_fps)
+        cls.input_collection_node = ProvNode(
+            cfg, cls.das.int_from_collection.artifact
+        )
 
         # build a node with an optional input that defaults to None
-        with zipfile.ZipFile(cls.das.int_seq_optional_input.filepath) as zf:
-            all_filenames = zf.namelist()
-            root_md_fnames = filter(is_root_provnode_data, all_filenames)
-            root_md_fps = [pathlib.Path(fp) for fp in root_md_fnames]
-            cls.optional_input_node = ProvNode(cfg, zf, root_md_fps)
+        cls.optional_input_node = ProvNode(
+            cfg, cls.das.int_seq_optional_input.artifact
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -452,19 +446,14 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
         for node, archive_version in zip(
             self.nodes, [str(i) for i in range(7)]
         ):
-            if archive_version == '0':
-                self.assertEqual(self.nodes[node].format, 'BIOMV210DirFmt')
-                self.assertEqual(self.nodes[node].type,
-                                 'FeatureTable[Frequency]')
+            self.assertEqual(
+                self.nodes[node].format, IntSequenceDirectoryFormat
+            )
+            self.assertEqual(self.nodes[node].type, IntSequence1)
+            if archive_version == '0' or archive_version == '1':
                 self.assertEqual(self.nodes[node].has_provenance, False)
             else:
-                self.assertEqual(self.nodes[node].format,
-                                 'IntSequenceDirectoryFormat')
-                self.assertEqual(self.nodes[node].type, 'IntSequence1')
-                if archive_version == '1':
-                    self.assertEqual(self.nodes[node].has_provenance, False)
-                else:
-                    self.assertEqual(self.nodes[node].has_provenance, True)
+                self.assertEqual(self.nodes[node].has_provenance, True)
 
             self.assertEqual(self.nodes[node].archive_version, archive_version)
             self.assertEqual(
@@ -511,7 +500,8 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
                              f'(?s)UUID:\t\t{uuid}.*Type.*Data Format')
 
     def test_get_metadata_from_action(self):
-        find_md = self.root_node_parse_md._get_metadata_from_Action
+        new_node = copy.deepcopy(self.root_node_parse_md)
+        find_md = new_node._get_metadata_from_Action
 
         # create dummy hash '0', not relevant here
         md = MetadataInfo(
@@ -520,7 +510,9 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
         action_details = {
             'parameters': [{'metadata': md}]
         }
-        all_md, artifacts_as_md = find_md(action_details)
+        new_node.action._action_details = action_details
+
+        all_md, artifacts_as_md = find_md()
         all_exp = {'metadata': 'metadata.tsv'}
         a_as_md_exp = [{
             'artifact_passed_as_metadata':
@@ -530,15 +522,19 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
         self.assertEqual(artifacts_as_md, a_as_md_exp)
 
     def test_get_metadata_from_action_with_no_params(self):
-        find_md = self.nodes['5']._get_metadata_from_Action
-        action_details = \
-            {'parameters': []}
-        all_md, artifacts_as_md = find_md(action_details)
+        new_node = copy.deepcopy(self.nodes['5'])
+        find_md = new_node._get_metadata_from_Action
+        action_details = {'parameters': []}
+        new_node.action._action_details = action_details
+
+        all_md, artifacts_as_md = find_md()
         self.assertEqual(all_md, {})
         self.assertEqual(artifacts_as_md, [])
 
         action_details = {'non-parameters-key': 'here is a thing'}
-        all_md, artifacts_as_md = find_md(action_details)
+        new_node.action._action_details = action_details
+
+        all_md, artifacts_as_md = find_md()
         self.assertEqual(all_md, {})
         self.assertEqual(artifacts_as_md, [])
 
@@ -604,16 +600,7 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
         self.assertEqual(len(actual_parent_names), 2)
 
     def test_parents_for_import_node(self):
-        uuid = self.das.single_int.uuid
-        with zipfile.ZipFile(self.das.single_int.filepath) as zf:
-            required_fps = ('VERSION', 'metadata.yaml', 'action.yaml')
-            import_node_fps = [
-                pathlib.Path(fp) for fp in zf.namelist()
-                if uuid in fp
-                and any(map(lambda x: x in fp, required_fps))
-            ]
-            import_node = ProvNode(Config(), zf, import_node_fps)
-
+        import_node = ProvNode(Config(), self.das.single_int.artifact)
         self.assertEqual(import_node._parents, [])
 
     def test_parents_collection_of_inputs(self):
