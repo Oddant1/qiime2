@@ -206,8 +206,8 @@ class ProvNode:
         uuid: str | None = None
     ):
         '''
-        Constructs a ProvNode from a zipfile and the collected
-        provenance-relevant filepaths for a single result within it.
+        Constructs a ProvNode from a Result and the uuid of a Result within
+        its provenance if relevant
         '''
         # TODO: If uuid is set then we need to dig into the prov of the result.
         # TODO: Probably set up the expected files again
@@ -232,6 +232,8 @@ class ProvNode:
         self._archive_version = archive_version
         self._framework_version = framework_version
         self._uuid = str(uuid) if uuid else str(result.uuid)
+        metadata_path = result._archiver.path / 'metadata.yaml' if not uuid else result._archiver.path / 'provenance' / 'artifacts' / str(uuid) / 'metadata.yaml'
+        self._result_md = _ResultMetadata(metadata_path)
 
         if self.has_provenance:
             all_metadata_fps, self._artifacts_passed_as_md = \
@@ -296,11 +298,9 @@ class ProvNode:
 
         Parameters
         ----------
-        zf : ZipFile
-            The zipfile object of the archive.
         metadata_fps : dict
             A dict of parameter names to metadata filenames for metadata
-            paramters.
+            parameters.
 
         Returns
         -------
@@ -569,8 +569,9 @@ class _Citations:
 class _ResultMetadata:
     '''Basic metadata about a single QIIME2 Result from metadata.yaml.'''
 
-    def __init__(self, zf: ZipFile, md_fp: str):
-        _md_dict = yaml.safe_load(zf.read(md_fp))
+    def __init__(self, md_fp: str):
+        with open(md_fp) as md_fh:
+            _md_dict = yaml.safe_load(md_fh)
         self.uuid = _md_dict['uuid']
         self.type = _md_dict['type']
         self.format = _md_dict['format']
@@ -736,7 +737,7 @@ class ParserV0(ArchiveParser):
         )
 
     def _validate_checksums(
-            self, zf: ZipFile
+            self, result: Result
     ) -> Tuple[ValidationCode, Optional[ChecksumDiff]]:
         '''
         Return the ValidationCode and ChecksumDiff for an archive. Because
@@ -746,8 +747,8 @@ class ParserV0(ArchiveParser):
 
         Parameters
         ----------
-        zf : ZipFile
-            The zipfile object representing the archive. Ignored here but
+        result : Result
+            The Result we are validating. Ignored here but
             needed in signature for inheritance.
 
         Returns
@@ -886,15 +887,15 @@ class ParserV5(ParserV4):
     expected_files_all_nodes = ParserV4.expected_files_all_nodes
 
     def _validate_checksums(
-            self, zf: ZipFile
+            self, result: Result
     ) -> Tuple[ValidationCode, Optional[ChecksumDiff]]:
         '''
         Checksum support added for v5, so perform checksum validation.
 
         Parameters
         ----------
-        zf : ZipFile
-            The zipfile object representation of the parsed archive.
+        result : Result
+            The Result we are validating.
 
         Returns
         -------
@@ -912,7 +913,7 @@ class ParserV5(ParserV4):
         than in pre-V5 archive parsers, the ChecksumDiff should only be
         intepreted in conjuction with the ValidationCode.
         '''
-        return validate_checksums(zf)
+        return validate_checksums(result)
 
 
 class ParserV6(ParserV5):

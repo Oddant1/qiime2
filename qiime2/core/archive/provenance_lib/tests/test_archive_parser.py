@@ -191,9 +191,8 @@ class ResultMetadataTests(unittest.TestCase):
         cls.tempdir = cls.das.tempdir
 
         cls.uuid = cls.das.concated_ints.uuid
-        md_fp = f'{cls.uuid}/provenance/metadata.yaml'
-        with zipfile.ZipFile(cls.das.concated_ints.filepath) as zf:
-            cls.root_md = _ResultMetadata(zf, md_fp)
+        md_fp = cls.das.concated_ints.artifact._archiver.path / 'metadata.yaml'
+        cls.root_md = _ResultMetadata(md_fp)
 
     @classmethod
     def tearDownClass(cls):
