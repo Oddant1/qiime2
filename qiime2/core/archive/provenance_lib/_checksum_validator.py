@@ -71,7 +71,7 @@ def validate_checksums(
         set ChecksumDiff to None and ValidationCode to INVALID and return.
 
     '''
-    if not hasattr(result._archiver, 'CHECKSUM_FILE'):
+    if not hasattr(result._archiver, 'validate_checksums'):
         return ValidationCode.PREDATES_CHECKSUMS, ChecksumDiff({}, {}, {})
 
     checksum_diff = result._archiver.validate_checksums()
