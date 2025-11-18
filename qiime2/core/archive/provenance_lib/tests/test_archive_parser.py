@@ -11,16 +11,13 @@ import networkx as nx
 import pathlib
 from unittest.mock import MagicMock
 import pandas as pd
-import tempfile
 import unittest
 import zipfile
 
 import pytest
 
 from .._checksum_validator import ChecksumDiff, ValidationCode
-from .testing_utilities import (
-    DummyArtifacts, is_root_provnode_data, write_zip_archive
-)
+from .testing_utilities import DummyArtifacts, is_root_provnode_data
 from ..archive_parser import (
     ProvNode, Config, _Action, _Citations, _ResultMetadata, ParserResults,
     ArchiveParser, ParserV0, ParserV1, ParserV2, ParserV3, ParserV4, ParserV5,
@@ -29,8 +26,6 @@ from ..archive_parser import (
 from ...provenance import MetadataInfo
 
 from qiime2.core.testing.util import ReallyEqualMixin
-from qiime2.core.testing.type import (IntSequence1, IntSequence2, SingleInt,
-                                      Mapping)
 
 
 class ParserVxTests(unittest.TestCase):
