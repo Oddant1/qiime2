@@ -15,42 +15,6 @@ from zipfile import ZipFile
 
 from qiime2.sdk import Result
 
-def get_root_uuid(zf: ZipFile) -> str:
-    '''
-    Returns the root UUID of a QIIME 2 Archive.
-
-    Parameters
-    ----------
-    zf : ZipFile
-        The zipfile object of an archive.
-
-    Returns
-    -------
-    str
-        The uuid of the root artifact in the archive.
-    '''
-    return pathlib.Path(zf.namelist()[0]).parts[0]
-
-
-def get_nonroot_uuid(fp: pathlib.Path) -> str:
-    '''
-    For non-root provenance files, get the Result's uuid from its path.
-
-    Parameters
-    ----------
-    fp : pathlib.Path
-        The path to a file in a non-root artifact inside an archive, relative
-        to archive root.
-
-    Returns
-    -------
-    str
-        The uuid of the non-root artifact.
-    '''
-    if fp.name == 'action.yaml':
-        return fp.parts[-3]
-    return fp.parts[-2]
-
 
 _VERSION_MATCHER = (
     r'QIIME 2\n'
