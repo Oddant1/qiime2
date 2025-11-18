@@ -656,6 +656,11 @@ class ArchiveParser(Parser):
 
         return dag
 
+    def parse_prov(cls, cfg: Config, data: Any) -> ParserResults:
+        raise NotImplementedError(
+            'Use a subclass that usefully defines parse_prov for some format.'
+        )
+
 
 class ParserV0(ArchiveParser):
     '''
@@ -702,6 +707,7 @@ class ParserV0(ArchiveParser):
         if not isinstance(result, Result):
             result = Result.load(result)
 
+        uuid = str(result.uuid)
         if cfg.perform_checksum_validation:
             provenance_is_valid, checksum_diff = self._validate_checksums(result)
         else:
@@ -709,7 +715,7 @@ class ParserV0(ArchiveParser):
             checksum_diff = None
 
         warnings.warn(
-            f'Artifact {result.uuid} was created prior to provenance '
+            f'Artifact {uuid} was created prior to provenance '
             'tracking. Provenance data will be incomplete.',
             UserWarning
         )
@@ -717,13 +723,13 @@ class ParserV0(ArchiveParser):
         archive_version, framework_version = parse_version(result)
 
         nodes = {
-            result.uuid: ProvNode(
+            uuid: ProvNode(
                 cfg, result, archive_version, framework_version)
         }
         graph = self._digraph_from_archive_contents(nodes)
 
         return ParserResults(
-            {result.uuid},
+            {uuid},
             graph,
             provenance_is_valid,
             checksum_diff
@@ -802,6 +808,7 @@ class ParserV2(ParserV1):
         if not isinstance(result, Result):
             result = Result.load(result)
 
+        uuid = str(result.uuid)
         if cfg.perform_checksum_validation:
             provenance_is_valid, checksum_diff = self._validate_checksums(result)
         else:
@@ -812,7 +819,7 @@ class ParserV2(ParserV1):
 
         # make a provnode for each UUID
         archive_contents = {
-            result.uuid: ProvNode(
+            uuid: ProvNode(
                 cfg, result, archive_version, framework_version)
         }
 
@@ -845,7 +852,7 @@ class ParserV2(ParserV1):
         graph = self._digraph_from_archive_contents(archive_contents)
 
         return ParserResults(
-            {result.uuid},
+            {uuid},
             graph,
             provenance_is_valid,
             checksum_diff
