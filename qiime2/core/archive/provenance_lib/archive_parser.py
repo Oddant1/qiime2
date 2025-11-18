@@ -199,11 +199,10 @@ class ProvNode:
 
         # TODO: Maybe make sure both are set or both are None
         if archive_version is None or framework_version is None:
-            self.archive_version, self.framework_version = \
-                parse_version(result, uuid)
-        else:
-            self._archive_version = archive_version
-            self._framework_version = framework_version
+            archive_version, framework_version = parse_version(result, uuid)
+
+        self._archive_version = archive_version
+        self._framework_version = framework_version
 
         self._uuid = uuid if uuid else str(result.uuid)
         if uuid is None:
