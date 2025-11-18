@@ -196,31 +196,33 @@ class ProvNode:
         Constructs a ProvNode from a Result and the uuid of a Result within
         its provenance if relevant
         '''
-        # TODO: If uuid is set then we need to dig into the prov of the result.
-        # TODO: Probably set up the expected files again
-
-        # for fp in node_fps:
-        #     if fp.name == 'VERSION':
-        #         self._archive_version, self._framework_version = \
-        #             parse_version(zf)
-        #     elif fp.name == 'metadata.yaml':
-        #         self._result_md = _ResultMetadata(zf, str(fp))
-        #     elif fp.name == 'action.yaml':
-        #         self.action = _Action(zf, str(fp))
-        #     elif fp.name == 'citations.bib':
-        #         self._citations = _Citations(zf, str(fp))
-        #     elif fp.name == 'checksums.md5':
-        #         # Handled in ProvDAG
-        #         pass
         self.cfg = cfg
-        if archive_version != '0' and archive_version != '1':
-            self.action = _Action(result, uuid)
+
         self._result = result
         self._archive_version = archive_version
         self._framework_version = framework_version
         self._uuid = str(uuid) if uuid else str(result.uuid)
-        metadata_path = result._archiver.path / 'metadata.yaml' if not uuid else result._archiver.path / 'provenance' / 'artifacts' / str(uuid) / 'metadata.yaml'
+
+        if uuid is None:
+            base_path = result._archiver.path
+        else:
+            base_path = \
+                result._archiver.path / 'provenance' / 'artifacts' / self._uuid
+
+        if archive_version != '0' and archive_version != '1':
+            action_path = base_path / 'action' / 'action.yaml'
+            self.action = _Action(action_path)
+        else:
+            self.action = None
+
+        metadata_path = base_path / 'metadata.yaml'
         self._result_md = _ResultMetadata(metadata_path)
+
+        citation_path = base_path / 'citations.bib'
+        if os.path.exists(citation_path):
+            self._citations = _Citations(citation_path)
+        else:
+            self._citations = None
 
         if self.has_provenance:
             all_metadata_fps, self._artifacts_passed_as_md = \
@@ -522,7 +524,7 @@ class _Action:
         '''Returns this action's transformers dictionary if any.'''
         return self._action_dict.get('transformers')
 
-    def __init__(self, result: Result, uuid: str = None):
+    def __init__(self, fp: str):
         action_fp = os.path.join(result._archiver.provenance_dir, 'action', 'action.yaml') if uuid is None else os.path.join(result._archiver.provenance_dir, 'artifacts', uuid, 'action', 'action.yaml')
 
         with open(action_fp) as action_fh:
@@ -544,8 +546,9 @@ class _Citations:
     on the citation's bibtex ID.
     '''
 
-    def __init__(self, zf: ZipFile, fp: str):
-        bib_db = bp.loads(zf.read(fp))
+    def __init__(self, fp: str):
+        with open(fp) as fh:
+            bib_db = bp.loads(fh.read())
         self.citations = bib_db.get_entry_dict()
 
     def __repr__(self):

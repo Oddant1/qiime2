@@ -365,43 +365,37 @@ class CitationsTests(unittest.TestCase):
         cls.das = DummyArtifacts()
         cls.tempdir = cls.das.tempdir
 
-        cite_strs = ['cite_none', 'cite_one', 'cite_many']
-        cls.bibs = [bib+'.bib' for bib in cite_strs]
-        cls.zips = [
-            os.path.join(cls.das.datadir, bib+'.zip') for bib in cite_strs
-        ]
+        cls.cite_none = os.path.join(cls.das.datadir, 'cite_none.bib')
+        cls.cite_one = os.path.join(cls.das.datadir, 'cite_one.bib')
+        cls.cite_many = os.path.join(cls.das.datadir, 'cite_many.bib')
 
     @classmethod
     def tearDownClass(cls):
         cls.das.free()
 
     def test_empty_bib(self):
-        with zipfile.ZipFile(self.zips[0]) as zf:
-            citations = _Citations(zf, self.bibs[0])
-            self.assertEqual(len(citations.citations), 0)
+        citations = _Citations(self.cite_none)
+        self.assertEqual(len(citations.citations), 0)
 
     def test_citation(self):
-        with zipfile.ZipFile(self.zips[1]) as zf:
-            exp = 'framework'
-            citations = _Citations(zf, self.bibs[1])
-            for key in citations.citations:
-                self.assertRegex(key, exp)
+        exp = 'framework'
+        citations = _Citations(self.cite_one)
+        for key in citations.citations:
+            self.assertRegex(key, exp)
 
     def test_many_citations(self):
         exp = ['2020.6.0.dev0', 'unweighted_unifrac.+0',
                'unweighted_unifrac.+1', 'unweighted_unifrac.+2',
                'unweighted_unifrac.+3', 'unweighted_unifrac.+4',
                'BIOMV210DirFmt', 'BIOMV210Format']
-        with zipfile.ZipFile(self.zips[2]) as zf:
-            citations = _Citations(zf, self.bibs[2])
-            for i, key in enumerate(citations.citations):
-                self.assertRegex(key, exp[i])
+        citations = _Citations(self.cite_many)
+        for i, key in enumerate(citations.citations):
+            self.assertRegex(key, exp[i])
 
     def test_repr(self):
         exp = ("Citations(['framework|qiime2:2020.6.0.dev0|0'])")
-        with zipfile.ZipFile(self.zips[1]) as zf:
-            citations = _Citations(zf, self.bibs[1])
-            self.assertEqual(repr(citations), exp)
+        citations = _Citations(self.cite_one)
+        self.assertEqual(repr(citations), exp)
 
 
 class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
