@@ -9,14 +9,11 @@ import abc
 import os
 import pandas as pd
 import pathlib
-import tempfile
 import warnings
 import yaml
-from zipfile import ZipFile
 
 from dataclasses import dataclass
 from datetime import timedelta
-from io import BytesIO
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import bibtexparser as bp
