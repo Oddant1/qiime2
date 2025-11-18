@@ -90,19 +90,6 @@ class ProvNode:
     One node of a provenance DAG, describing one QIIME2 Result.
     '''
 
-    # @property
-    # def _uuid(self) -> str:
-    #     return self._result.uuid
-
-    # @_uuid.setter
-    # def _uuid(self, new_uuid: str):
-    #     '''
-    #     ProvNode's UUID. Safe for use as getter. Prefer ProvDAG.relabel_nodes
-    #     as a setter because it preserves alignment between ids across the dag
-    #     and its ProvNodes.
-    #     '''
-    #     self.uuid = new_uuid
-
     @property
     def type(self) -> str:
         return self._result._archiver.type
