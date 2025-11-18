@@ -173,20 +173,23 @@ class ActionTests(unittest.TestCase):
         cls.das = DummyArtifacts()
         cls.tempdir = cls.das.tempdir
 
-        action_path = os.path.join(cls.das.concated_ints_v6.uuid, 'provenance',
-                                   'action', 'action.yaml')
-        with zipfile.ZipFile(cls.das.concated_ints_v6.filepath) as zf:
-            cls.concat_action = _Action(zf, action_path)
+        action_path = os.path.join(
+            cls.das.concated_ints_v6.artifact._archiver.path, 'provenance',
+            'action', 'action.yaml'
+        )
+        cls.concat_action = _Action(action_path)
 
-        action_path = os.path.join(cls.das.single_int.uuid, 'provenance',
-                                   'action', 'action.yaml')
-        with zipfile.ZipFile(cls.das.single_int.filepath) as zf:
-            cls.import_action = _Action(zf, action_path)
+        action_path = os.path.join(
+            cls.das.single_int.artifact._archiver.path, 'provenance', 'action',
+            'action.yaml'
+        )
+        cls.import_action = _Action(action_path)
 
-        action_path = os.path.join(cls.das.pipeline_viz.uuid, 'provenance',
-                                   'action', 'action.yaml')
-        with zipfile.ZipFile(cls.das.pipeline_viz.filepath) as zf:
-            cls.pipeline_action = _Action(zf, action_path)
+        action_path = os.path.join(
+            cls.das.pipeline_viz.artifact._archiver.path, 'provenance',
+            'action', 'action.yaml'
+        )
+        cls.pipeline_action = _Action(action_path)
 
     @classmethod
     def tearDownClass(cls):
@@ -365,12 +368,8 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
         cfg = Config(parse_study_metadata=True)
         cls.nodes = {}
         for artifact in cls.das.all_artifact_versions:
-            with zipfile.ZipFile(artifact.filepath) as zf:
-                all_filenames = zf.namelist()
-                root_md_fnames = filter(is_root_provnode_data, all_filenames)
-                root_md_fps = [pathlib.Path(fp) for fp in root_md_fnames]
-                cls.nodes[str(artifact.archive_version)] = \
-                    ProvNode(cfg, zf, root_md_fps)
+            cls.nodes[str(artifact.archive_version)] = \
+                ProvNode(cfg, artifact.artifact)
 
         with zipfile.ZipFile(cls.das.concated_ints_with_md.filepath) as zf:
             root_node_id = cls.das.concated_ints_with_md.uuid
