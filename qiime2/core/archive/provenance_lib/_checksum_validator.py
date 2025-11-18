@@ -61,8 +61,8 @@ def validate_checksums(
 
     Parameters
     ----------
-    zf : ZipFile
-        The zipfile object of the archive.
+    result : Result
+        The Result object being validated.
 
     Returns
     -------
