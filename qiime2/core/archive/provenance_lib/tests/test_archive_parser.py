@@ -43,44 +43,6 @@ class ParserVxTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.das.free()
 
-    # def test_some_stuff(self):
-    #     from qiime2 import Artifact
-    #     art = Artifact.import_data(IntSequence1, [0, 42, 43])
-    #     ArchiveParser.parse_prov(art)
-
-    # def test_parse_root_md(self):
-    #     for artifact in self.das.all_artifact_versions:
-    #         fp = artifact.filepath
-    #         uuid = artifact.uuid
-    #         parser = ArchiveParser.get_parser(fp)
-    #         with zipfile.ZipFile(fp) as zf:
-    #             root_md = parser._parse_root_md(zf, uuid)
-    #             self.assertEqual(root_md.uuid, uuid)
-    #             self.assertEqual(root_md.format, 'IntSequenceDirectoryFormat')
-    #             self.assertEqual(root_md.type, 'IntSequence1')
-
-    # def test_parse_root_md_no_md_yaml(self):
-    #     for artifact in self.das.all_artifact_versions:
-    #         parser = ArchiveParser.get_parser(artifact.filepath)
-
-    #         with tempfile.TemporaryDirectory() as tempdir:
-    #             with zipfile.ZipFile(artifact.filepath) as zf:
-    #                 zf.extractall(tempdir)
-
-    #             metadata_path = os.path.join(tempdir, artifact.uuid,
-    #                                          'metadata.yaml')
-    #             os.remove(metadata_path)
-    #             fn = os.path.basename(artifact.filepath)
-    #             fp = os.path.join(tempdir, fn)
-    #             write_zip_archive(fp, tempdir)
-
-    #             with zipfile.ZipFile(fp) as zf:
-    #                 with self.assertRaisesRegex(
-    #                     ValueError,
-    #                     'Malformed.*metadata'
-    #                 ):
-    #                     parser._parse_root_md(zf, artifact.uuid)
-
     @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_populate_archive(self):
         for artifact in self.das.all_artifact_versions:
