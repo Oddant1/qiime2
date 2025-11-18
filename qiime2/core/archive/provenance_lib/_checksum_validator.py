@@ -74,8 +74,10 @@ def validate_checksums(
     if not hasattr(result._archiver, 'validate_checksums'):
         return ValidationCode.PREDATES_CHECKSUMS, ChecksumDiff({}, {}, {})
 
-    checksum_diff = result._archiver.validate_checksums()
-    provenance_is_valid = ValidationCode.VALID
+    try:
+        checksum_diff = result._archiver.validate_checksums()
+    except FileNotFoundError:
+        return ValidationCode.INVALID, None
 
     if checksum_diff != ChecksumDiff({}, {}, {}):
         warnings.warn(
@@ -89,5 +91,7 @@ def validate_checksums(
             UserWarning
         )
         provenance_is_valid = ValidationCode.INVALID
+    else:
+        provenance_is_valid = ValidationCode.VALID
 
     return provenance_is_valid, checksum_diff
