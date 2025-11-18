@@ -11,7 +11,6 @@ import re
 import warnings
 
 from typing import Tuple
-from zipfile import ZipFile
 
 from qiime2.sdk import Result
 
