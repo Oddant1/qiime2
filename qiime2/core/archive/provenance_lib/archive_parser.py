@@ -185,8 +185,9 @@ class ProvNode:
         self,
         cfg: Config,
         result: Result,
-        archive_version: str,
-        framework_version: str,
+        *args,
+        archive_version: str=None,
+        framework_version: str=None,
         uuid: str | None = None
     ):
         '''
@@ -194,12 +195,17 @@ class ProvNode:
         its provenance if relevant
         '''
         self.cfg = cfg
-
         self._result = result
-        self._archive_version = archive_version
-        self._framework_version = framework_version
-        self._uuid = str(uuid) if uuid else str(result.uuid)
 
+        # TODO: Maybe make sure both are set or both are None
+        if archive_version is None or framework_version is None:
+            self.archive_version, self.framework_version = \
+                parse_version(result, uuid)
+        else:
+            self._archive_version = archive_version
+            self._framework_version = framework_version
+
+        self._uuid = uuid if uuid else str(result.uuid)
         if uuid is None:
             base_path = result._archiver.path
         else:
@@ -207,7 +213,11 @@ class ProvNode:
                 result._archiver.path / 'provenance' / 'artifacts' / self._uuid
 
         if archive_version != '0' and archive_version != '1':
-            action_path = base_path / 'action' / 'action.yaml'
+            if uuid:
+                action_path = base_path / 'action' / 'action.yaml'
+            else:
+                action_path = \
+                    base_path / 'provenance' / 'action' / 'action.yaml'
             self.action = _Action(action_path)
         else:
             self.action = None
@@ -522,9 +532,7 @@ class _Action:
         return self._action_dict.get('transformers')
 
     def __init__(self, fp: str):
-        action_fp = os.path.join(result._archiver.provenance_dir, 'action', 'action.yaml') if uuid is None else os.path.join(result._archiver.provenance_dir, 'artifacts', uuid, 'action', 'action.yaml')
-
-        with open(action_fp) as action_fh:
+        with open(fp) as action_fh:
             self._action_dict = yaml.safe_load(action_fh)
 
         self._action_details = self._action_dict['action']
@@ -712,7 +720,8 @@ class ParserV0(ArchiveParser):
 
         nodes = {
             uuid: ProvNode(
-                cfg, result, archive_version, framework_version)
+                cfg, result, archive_version=archive_version,
+                framework_version=framework_version)
         }
         graph = self._digraph_from_archive_contents(nodes)
 
@@ -808,7 +817,8 @@ class ParserV2(ParserV1):
         # make a provnode for each UUID
         archive_contents = {
             uuid: ProvNode(
-                cfg, result, archive_version, framework_version)
+                cfg, result, archive_version=archive_version,
+                framework_version=framework_version)
         }
 
         for fp in os.listdir(result._archiver.provenance_dir / 'artifacts'):
@@ -834,7 +844,8 @@ class ParserV2(ParserV1):
             #     exp_node_fps.append(prefix / expected_file)
 
             archive_contents[node_uuid] = ProvNode(
-                cfg, result, archive_version, framework_version, node_uuid
+                cfg, result, archive_version=archive_version,
+                framework_version=framework_version, uuid=node_uuid
             )
 
         graph = self._digraph_from_archive_contents(archive_contents)
