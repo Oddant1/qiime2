@@ -26,8 +26,6 @@ from ..archive_parser import (
 from ...provenance import MetadataInfo
 
 from qiime2.core.testing.util import ReallyEqualMixin
-from qiime2.core.testing.type import IntSequence1
-from qiime2.core.testing.format import IntSequenceDirectoryFormat
 
 
 class ParserVxTests(unittest.TestCase):
@@ -446,9 +444,9 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
             self.nodes, [str(i) for i in range(7)]
         ):
             self.assertEqual(
-                self.nodes[node].format, IntSequenceDirectoryFormat
+                self.nodes[node].format, 'IntSequenceDirectoryFormat'
             )
-            self.assertEqual(self.nodes[node].type, IntSequence1)
+            self.assertEqual(self.nodes[node].type, 'IntSequence1')
             if archive_version == '0' or archive_version == '1':
                 self.assertEqual(self.nodes[node].has_provenance, False)
             else:
