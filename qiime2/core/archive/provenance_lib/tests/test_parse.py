@@ -147,7 +147,7 @@ class ProvDAGTests(unittest.TestCase):
         with open(fp, 'w') as fh:
             fh.write("This is just a text file.")
 
-        err_msg = 'zipfile.BadZipFile.*File is not a zip file'
+        err_msg = 'is not a QIIME archive.'
         with self.assertRaisesRegex(UnparseableDataError, err_msg):
             ProvDAG(fp)
 
