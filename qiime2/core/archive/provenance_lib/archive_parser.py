@@ -89,11 +89,11 @@ class ProvNode:
 
     @property
     def type(self) -> str:
-        return self._result._archiver.type
+        return self._result_md.type
 
     @property
     def format(self) -> Optional[str]:
-        return self._result._archiver.format
+        return self._result_md.format
 
     @property
     def archive_version(self) -> str:
