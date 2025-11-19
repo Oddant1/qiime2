@@ -120,8 +120,7 @@ class ProvDAGTests(unittest.TestCase):
 
     def test_nonexistent_fp(self):
         fp = os.path.join(self.tempdir, 'does-not-exist.qza')
-        err_msg = 'FileNotFoundError'
-        with self.assertRaisesRegex(UnparseableDataError, err_msg):
+        with self.assertRaisesRegex(UnparseableDataError, 'does not exist'):
             ProvDAG(fp)
 
     def test_insufficient_permissions(self):
