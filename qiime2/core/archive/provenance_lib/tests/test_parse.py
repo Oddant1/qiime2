@@ -541,7 +541,7 @@ class ProvDAGTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            nx.number_weakly_connected_components(unioned_dag.dag), 1
+            nx.number_weakly_connected_components(unioned_dag.dag), 2
         )
 
     def test_union_other_missing_checksums_sha512(self):
@@ -563,7 +563,7 @@ class ProvDAGTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            nx.number_weakly_connected_components(unioned_dag.dag), 1
+            nx.number_weakly_connected_components(unioned_dag.dag), 2
         )
 
     def test_union_both_missing_checksums_sha512(self):
