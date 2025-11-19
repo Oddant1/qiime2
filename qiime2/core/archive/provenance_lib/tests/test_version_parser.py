@@ -189,25 +189,18 @@ class TestVersionParser(unittest.TestCase):
         self.assertNotRegex('framework: 1953.3.0', self.re_l3)
 
     def test_parser_semantic_versioning_fallback(self):
+        int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
+
         class DummyParser:
             pass
 
-        with monkey_patch_format_registry({'7.0': DummyParser}):
-            with tempfile.TemporaryDirectory() as tempdir:
-                archive_dir = os.path.join(tempdir, 'artifact')
-                os.makedirs(archive_dir)
+        # Set this to a really high version so we aren't likely to actually
+        # hit it
+        with monkey_patch_format_registry({'42.0': DummyParser}):
+            with open(int_seq._archiver.path / 'VERSION', 'w') as fh:
+                fh.write('QIIME 2\n')
+                fh.write('archive: 42.2\n')
+                fh.write('framework: 2025.4.0\n')
 
-                uuid = 'mock-uuid'
-                archive_root = os.path.join(archive_dir, uuid)
-                os.makedirs(archive_root)
-
-                with open(os.path.join(archive_root, 'VERSION'), 'w') as fh:
-                    fh.write('QIIME 2\n')
-                    fh.write('archive: 7.2\n')
-                    fh.write('framework: 2025.4.0\n')
-
-                archive_fp = os.path.join(tempdir, 'fake-artifact.qza')
-                write_zip_archive(archive_fp, archive_dir)
-
-                parser = ArchiveParser.get_parser(archive_fp)
-                self.assertIsInstance(parser, DummyParser)
+            parser = ArchiveParser.get_parser(int_seq)
+            self.assertIsInstance(parser, DummyParser)

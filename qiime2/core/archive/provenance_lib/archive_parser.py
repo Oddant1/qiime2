@@ -603,7 +603,21 @@ class ArchiveParser(Parser):
         # framework_version as instance state here; however, to maintain the
         # legacy API, I am not
         archive_version, _ = parse_version(artifact_data)
-        return FORMAT_REGISTRY[archive_version]()
+
+        if archive_version in FORMAT_REGISTRY:
+            return FORMAT_REGISTRY[archive_version]()
+
+        # Minor versions should more or less support future minor versions
+        major, minor = archive_version.split('.')
+        minor = int(minor)
+
+        for minor_version in range(minor, -1, -1):
+            ver = f'{major}.{minor_version}'
+            if ver in FORMAT_REGISTRY:
+                return FORMAT_REGISTRY[ver]()
+        else:
+            raise KeyError('No matching parser found for version: '
+                            f'{archive_version}')
 
     def _digraph_from_archive_contents(
         self, archive_contents: Dict[str, 'ProvNode']
