@@ -56,14 +56,15 @@ class DummyArtifacts:
         '''
         single_int = Artifact.import_data('SingleInt', 0)
         single_int2 = Artifact.import_data('SingleInt', 7)
+        single_int_no_checksum = Artifact.import_data('SingleInt', 0)
         int_seq1 = Artifact.import_data('IntSequence1', [1, 1, 2])
         int_seq2 = Artifact.import_data('IntSequence2', [3, 5])
         mapping1 = Artifact.import_data('Mapping', {'a': 42})
         mapping2 = Artifact.import_data('Mapping', {'c': 8, 'd': 13})
 
         for name in (
-            'single_int', 'single_int2', 'int_seq1', 'int_seq2', 'mapping1',
-            'mapping2'
+            'single_int', 'single_int2', 'single_int_no_checksum', 'int_seq1',
+            'int_seq2', 'mapping1', 'mapping2'
         ):
             artifact = locals()[name]
             fp = os.path.join(self.tempdir, f'{name}.qza')
@@ -204,14 +205,10 @@ class DummyArtifacts:
         '''
         create archive with missing checksums.sha512
         '''
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', category=UserWarning)
-            with generate_archive_with_file_removed(
-                self.single_int.filepath,
-                self.single_int.uuid,
-                'checksums.sha512'
-            ) as altered_archive:
-                self.dag_missing_sha512 = ProvDAG(altered_archive)
+        os.remove(
+            self.single_int_no_checksum.artifact._archiver.path /
+            'checksums.sha512')
+        self.dag_missing_sha512 = ProvDAG(self.single_int_no_checksum.artifact)
 
     @property
     def all_artifact_versions(self):

@@ -577,7 +577,7 @@ class ProvDAGTests(unittest.TestCase):
         self.assertRegex(
             repr(unioned_dag),
             'ProvDAG representing the provenance.*Artifacts.*'
-            f'{self.das.single_int.uuid}'
+            f'{self.das.single_int_no_checksum.uuid}'
         )
 
         # Both DAGs have NoneType checksum_diffs, so the ChecksumDiff==None
