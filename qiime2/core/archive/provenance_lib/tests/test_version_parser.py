@@ -10,7 +10,6 @@ import os
 import shutil
 import tempfile
 import unittest
-import zipfile
 import contextlib
 
 import qiime2
@@ -56,27 +55,22 @@ class TestVersionParser(unittest.TestCase):
 
     def test_parse_version(self):
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
-        int_seq.save(os.path.join(self.tempdir, 'int-seq.qza'))
-        fp = os.path.join(self.tempdir, 'int-seq.qza')
-        with zipfile.ZipFile(fp) as zf:
-            actual = parse_version(zf)
-            self.assertEqual(
-                actual, (self.archive_version_exp, self.framework_version_exp)
-            )
+
+        actual = parse_version(int_seq)
+        self.assertEqual(
+            actual, (self.archive_version_exp, self.framework_version_exp)
+        )
 
     def test_parse_version_old_archive_format(self):
         archive_version_exp = '2'
-        fp = os.path.join(self.tempdir, 'int-seq-av2.qza')
 
         with monkeypatch_archive_version(archive_version_exp):
             int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
-            int_seq.save(fp)
 
-        with zipfile.ZipFile(fp) as zf:
-            actual = parse_version(zf)
-            self.assertEqual(
-                actual, (archive_version_exp, self.framework_version_exp)
-            )
+        actual = parse_version(int_seq)
+        self.assertEqual(
+            actual, (archive_version_exp, self.framework_version_exp)
+        )
 
     def test_artifact_with_commit_version(self):
         framework_version_exp = '2022.8.0+29.gb053440'
@@ -91,64 +85,36 @@ class TestVersionParser(unittest.TestCase):
 
     def test_parse_version_no_VERSION_file(self):
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
-        fp = os.path.join(self.tempdir, 'int-seq-no-v.qza')
-        int_seq.save(fp)
+        os.remove(int_seq._archiver.path / 'VERSION')
 
-        with tempfile.TemporaryDirectory() as tempdir:
-            with zipfile.ZipFile(fp) as zf:
-                zf.extractall(tempdir)
-
-            uuid = os.listdir(tempdir)[0]
-            os.remove(os.path.join(tempdir, uuid, 'VERSION'))
-            write_zip_archive(fp, tempdir)
-
-        with zipfile.ZipFile(fp) as zf:
-            with self.assertRaisesRegex(ValueError,
-                                        '(?s)VERSION.*nonexistent.*'):
-                parse_version(zf)
+        with self.assertRaisesRegex(FileNotFoundError,
+                                    'No such file or directory:.*VERSION'):
+            parse_version(int_seq)
 
     def test_parse_version_VERSION_file_missing_archive_field(self):
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
-        fp = os.path.join(self.tempdir, 'int-seq-no-af.qza')
-        int_seq.save(fp)
 
-        with tempfile.TemporaryDirectory() as tempdir:
-            with zipfile.ZipFile(fp) as zf:
-                zf.extractall(tempdir)
+        with open(
+                os.path.join(int_seq._archiver.path / 'VERSION'), 'r+') as fh:
+            lines = fh.readlines()
+            missing_archive_lines = [lines[0], lines[2]]
 
-            uuid = os.listdir(tempdir)[0]
-            with open(os.path.join(tempdir, uuid, 'VERSION')) as fh:
-                lines = fh.readlines()
-                missing_archive_lines = [lines[0], lines[2]]
+            fh.seek(0)
+            for line in missing_archive_lines:
+                fh.write(line)
 
-            with open(os.path.join(tempdir, uuid, 'VERSION'), 'w') as fh:
-                for line in missing_archive_lines:
-                    fh.write(line)
-
-            write_zip_archive(fp, tempdir)
-
-        with zipfile.ZipFile(fp) as zf:
-            with self.assertRaisesRegex(ValueError, 'VERSION.*out of spec.*'):
-                parse_version(zf)
+        with self.assertRaisesRegex(ValueError, 'VERSION.*out of spec.*'):
+            parse_version(int_seq)
 
     def test_parse_version_VERSION_file_extra_field(self):
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
-        fp = os.path.join(self.tempdir, 'int-seq-extra-f.qza')
-        int_seq.save(fp)
 
-        with tempfile.TemporaryDirectory() as tempdir:
-            with zipfile.ZipFile(fp) as zf:
-                zf.extractall(tempdir)
+        with open(
+                os.path.join(int_seq._archiver.path / 'VERSION'), 'a') as fh:
+            fh.write('fourth line\n')
 
-            uuid = os.listdir(tempdir)[0]
-            with open(os.path.join(tempdir, uuid, 'VERSION'), 'a') as fh:
-                fh.write('fourth line\n')
-
-            write_zip_archive(fp, tempdir)
-
-        with zipfile.ZipFile(fp) as zf:
-            with self.assertRaisesRegex(ValueError, 'VERSION.*out of spec.*'):
-                parse_version(zf)
+        with self.assertRaisesRegex(ValueError, 'VERSION.*out of spec.*'):
+            parse_version(int_seq)
 
     '''
     Tests of the regex match itself below
