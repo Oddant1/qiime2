@@ -6,7 +6,6 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 import codecs
-import pathlib
 import re
 import warnings
 
@@ -17,7 +16,7 @@ from qiime2.sdk import Result
 
 _VERSION_MATCHER = (
     r'QIIME 2\n'
- # allows for 0-6 as ints and 7.0+ as floats
+    # allows for 0-6 as ints and 7.0+ as floats
     r'archive: (?:[0-6]|[7-9]\.[0-9]+|[1-9][0-9]+\.[0-9]+)$\n'
     r'framework: '
     r'(?:20[0-9]{2}|2)\.(?:[1-9][0-2]?|0)\.[0-9](?:\.dev[0-9]?)?'
@@ -49,7 +48,8 @@ def parse_version(
     uuid = result.uuid
 
     if nested_artifact is not None:
-        version_fp = result._archiver.provenance_dir/ 'artifacts' / nested_artifact / 'VERSION'
+        version_fp = result._archiver.provenance_dir / 'artifacts' \
+            / nested_artifact / 'VERSION'
         result = nested_artifact
     else:
         version_fp = result._archiver.path / 'VERSION'

@@ -8,7 +8,6 @@
 from datetime import timedelta
 import os
 import networkx as nx
-import pathlib
 from unittest.mock import MagicMock
 import pandas as pd
 import unittest
@@ -18,7 +17,7 @@ import copy
 import pytest
 
 from .._checksum_validator import ChecksumDiff, ValidationCode
-from .testing_utilities import DummyArtifacts, is_root_provnode_data
+from .testing_utilities import DummyArtifacts
 from ..archive_parser import (
     ProvNode, Config, _Action, _Citations, _ResultMetadata, ParserResults,
     ArchiveParser, ParserV0, ParserV1, ParserV2, ParserV3, ParserV4, ParserV5,
@@ -136,7 +135,7 @@ class ArchiveParserTests(unittest.TestCase):
     def test_get_parser_nonexistent_fp(self):
         fn = 'not_a_filepath.qza'
         fp = os.path.join(self.tempdir, fn)
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaisesRegex(ValueError, ".*does not exist"):
             ArchiveParser.get_parser(fp)
 
     def test_artifact_parser_parse_prov(self):

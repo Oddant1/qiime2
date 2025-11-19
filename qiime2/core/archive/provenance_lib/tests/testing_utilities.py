@@ -216,9 +216,9 @@ class DummyArtifacts:
     @property
     def all_artifact_versions(self):
         return (
-            self.concated_ints_v0, self.concated_ints_v1, self.concated_ints_v2,
-            self.concated_ints_v3, self.concated_ints_v4,
-            self.concated_ints_v5, self.concated_ints_v6
+            self.concated_ints_v0, self.concated_ints_v1,
+            self.concated_ints_v2, self.concated_ints_v3,
+            self.concated_ints_v4, self.concated_ints_v5, self.concated_ints_v6
         )
 
     def free(self):

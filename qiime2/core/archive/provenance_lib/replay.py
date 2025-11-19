@@ -22,7 +22,7 @@ from .parse import ProvDAG
 from .usage_drivers import build_header, build_footer
 from ..provenance import MetadataInfo
 
-from qiime2.sdk import PluginManager, Result
+from qiime2.sdk import PluginManager
 from qiime2.sdk.usage import Usage, UsageVariable
 from qiime2.sdk.util import camel_to_snake
 

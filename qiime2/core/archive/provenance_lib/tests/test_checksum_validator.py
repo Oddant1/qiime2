@@ -9,7 +9,6 @@ import os
 import shutil
 import tempfile
 import unittest
-import zipfile
 
 import pytest
 
@@ -18,7 +17,6 @@ from qiime2.core.archive.archiver import ChecksumDiff
 from qiime2.sdk.plugin_manager import PluginManager
 
 from .._checksum_validator import validate_checksums, ValidationCode
-from .testing_utilities import write_zip_archive
 
 
 class ValidateChecksumTests(unittest.TestCase):
@@ -64,7 +62,7 @@ class ValidateChecksumTests(unittest.TestCase):
         self.assertEqual(list(diff.removed.keys()), ['metadata.yaml'])
         self.assertEqual(list(diff.added.keys()), ['tamper.txt'])
         self.assertEqual(list(diff.changed.keys()),
-                        ['provenance/citations.bib'])
+                         ['provenance/citations.bib'])
 
     @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_validate_checksums_checksums_missing(self):

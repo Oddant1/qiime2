@@ -186,8 +186,8 @@ class ProvNode:
         cfg: Config,
         result: Result,
         *args,
-        archive_version: str=None,
-        framework_version: str=None,
+        archive_version: str = None,
+        framework_version: str = None,
         uuid: str | None = None
     ):
         '''
@@ -236,8 +236,8 @@ class ProvNode:
             if cfg.parse_study_metadata:
                 self._metadata = self._parse_metadata(all_metadata_fps)
 
-    def _get_metadata_from_Action(self
-    ) -> Tuple[Dict[str, str], List[Dict[str, str]]]:
+    def _get_metadata_from_Action(
+            self) -> Tuple[Dict[str, str], List[Dict[str, str]]]:
         '''
         Gathers data related to Metadata and MetadataColumn-based metadata
         files from the parsed action.yaml file.
@@ -704,7 +704,8 @@ class ParserV0(ArchiveParser):
 
         uuid = str(result.uuid)
         if cfg.perform_checksum_validation:
-            provenance_is_valid, checksum_diff = self._validate_checksums(result)
+            provenance_is_valid, checksum_diff = \
+                self._validate_checksums(result)
         else:
             provenance_is_valid = ValidationCode.VALIDATION_OPTOUT
             checksum_diff = None
@@ -806,7 +807,8 @@ class ParserV2(ParserV1):
 
         uuid = str(result.uuid)
         if cfg.perform_checksum_validation:
-            provenance_is_valid, checksum_diff = self._validate_checksums(result)
+            provenance_is_valid, checksum_diff = \
+                self._validate_checksums(result)
         else:
             provenance_is_valid = ValidationCode.VALIDATION_OPTOUT
             checksum_diff = None
@@ -855,6 +857,7 @@ class ParserV2(ParserV1):
             provenance_is_valid,
             checksum_diff
         )
+
 
 class ParserV3(ParserV2):
     '''

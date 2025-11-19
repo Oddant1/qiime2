@@ -506,7 +506,7 @@ def select_parser(payload: Any) -> Parser:
         'Visualization': ArchiveParser,
         'str': DirectoryParser,
         'ProvDAG': ProvDAGParser,
-        'None': EmptyParser
+        'NoneType': EmptyParser
     }
 
     err_msg = (
