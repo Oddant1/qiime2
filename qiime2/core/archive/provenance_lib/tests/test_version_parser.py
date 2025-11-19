@@ -80,17 +80,14 @@ class TestVersionParser(unittest.TestCase):
 
     def test_artifact_with_commit_version(self):
         framework_version_exp = '2022.8.0+29.gb053440'
-        fp = os.path.join(self.tempdir, 'int-seq-custom-fv.qza')
 
         with monkeypatch_framework_version(framework_version_exp):
             int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
-            int_seq.save(fp)
 
-        with zipfile.ZipFile(fp) as zf:
-            actual = parse_version(zf)
-            self.assertEqual(
-                actual, (self.archive_version_exp, framework_version_exp)
-            )
+        actual = parse_version(int_seq)
+        self.assertEqual(
+            actual, (self.archive_version_exp, framework_version_exp)
+        )
 
     def test_parse_version_no_VERSION_file(self):
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
