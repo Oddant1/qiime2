@@ -338,23 +338,20 @@ class ProvDAGTests(unittest.TestCase):
                                  ['provenance/citations.bib'])
 
     def test_missing_checksums_sha512(self):
-        uuid = self.das.single_int.uuid
-        with generate_archive_with_file_removed(
-            self.das.single_int.filepath,
-            uuid,
-            'checksums.sha512'
-        ) as altered_archive:
-            expected = (
-                'The checksums.sha512 file is missing from the archive.*'
-                'Archive may be corrupt'
-            )
-            with self.assertWarnsRegex(UserWarning, expected):
-                dag = ProvDAG(altered_archive)
+        single_int = Artifact.import_data('SingleInt', 0)
+        os.remove(single_int._archiver.path / 'checksums.sha512')
 
-            self.assertEqual(dag.provenance_is_valid, ValidationCode.INVALID)
+        expected = (
+            'The checksums.sha512 file is missing from the archive.*'
+            'Archive may be corrupt'
+        )
+        with self.assertWarnsRegex(UserWarning, expected):
+            dag = ProvDAG(single_int)
 
-            diff = dag.checksum_diff
-            self.assertEqual(diff, None)
+        self.assertEqual(dag.provenance_is_valid, ValidationCode.INVALID)
+
+        diff = dag.checksum_diff
+        self.assertEqual(diff, None)
 
     @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_error_if_missing_node_files(self):
