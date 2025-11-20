@@ -77,6 +77,11 @@ def validate_checksums(
     try:
         checksum_diff = result._archiver.validate_checksums()
     except FileNotFoundError:
+        warnings.warn(
+            f'The {result._archiver._fmt.CHECKSUM_FILE} file is missing from '
+            'the archive. Archive may be corrupt or provenance may be false.',
+            UserWarning
+        )
         return ValidationCode.INVALID, None
 
     if checksum_diff != ChecksumDiff({}, {}, {}):
