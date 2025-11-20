@@ -37,12 +37,15 @@ from qiime2.core.archive.archiver import ChecksumDiff
 from qiime2.core.archive.provenance_lib.tests.testing_utilities import (
     write_zip_file
 )
+from qiime2.sdk.plugin_manager import PluginManager
 
 
 class ProvDAGTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.das = DummyArtifacts()
+        cls.pm = PluginManager()
+        cls.dp = cls.pm.plugins['dummy-plugin']
         cls.tempdir = cls.das.tempdir
 
     @classmethod
@@ -355,8 +358,8 @@ class ProvDAGTests(unittest.TestCase):
 
     @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_error_if_missing_node_files(self):
-        path_prefix = os.path.join('provenance', 'artifacts')
-        root_uuid = self.das.concated_ints.uuid
+        concat_ints = self.dp.methods['concatenate_ints']
+
         for removed_file in [
             'metadata.yaml',
             'citations.bib',
@@ -364,21 +367,23 @@ class ProvDAGTests(unittest.TestCase):
             'action/action.yaml'
         ]:
             for uuid in [self.das.int_seq1.uuid, self.das.int_seq2.uuid]:
-                with generate_archive_with_file_removed(
-                    self.das.concated_ints.filepath,
-                    root_uuid,
-                    os.path.join(path_prefix, uuid, removed_file)
-                ) as altered_archive:
-                    if removed_file == 'action/action.yaml':
-                        file = 'action.yaml'
-                    else:
-                        file = removed_file
+                concated_ints, = concat_ints(
+                    self.das.int_seq1.artifact, self.das.int_seq1.artifact,
+                    self.das.int_seq2.artifact, 7, 13
+                )
 
-                    expected = (
-                        f'(?s)Malformed.*{file}.*{uuid}.*corrupt.*'
-                    )
-                    with self.assertRaisesRegex(ValueError, expected):
-                        ProvDAG(altered_archive)
+                removed_path = concated_ints._archiver.provenance_dir / \
+                    'artifacts' / uuid / removed_file
+                os.remove(removed_path)
+                expected = f'No such file or directory:.*{removed_path}'
+
+                if removed_file == 'citations.bib':
+                    dag = ProvDAG(concated_ints)
+                    self.assertEqual(
+                        dag._provenance_is_valid, ValidationCode.INVALID)
+                else:
+                    with self.assertRaisesRegex(FileNotFoundError, expected):
+                        ProvDAG(concated_ints)
 
     def test_v0_archive(self):
         dag = self.das.concated_ints_v0.dag
