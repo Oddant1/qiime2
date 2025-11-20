@@ -378,6 +378,9 @@ class ProvDAGTests(unittest.TestCase):
                 expected = f'No such file or directory:.*{removed_path}'
 
                 if removed_file == 'citations.bib':
+                    # NOTE: This used to be an error before we loaded Results
+                    # for parsing. Now it leads to invalid prov here because
+                    # the checksums fail, but it does not create an error
                     dag = ProvDAG(concated_ints)
                     self.assertEqual(
                         dag._provenance_is_valid, ValidationCode.INVALID)
