@@ -20,8 +20,7 @@ from qiime2.core.archive.provenance_lib.archive_parser import (FORMAT_REGISTRY,
                                                                ArchiveParser)
 
 from .testing_utilities import (
-    write_zip_archive, monkeypatch_archive_version,
-    monkeypatch_framework_version
+    monkeypatch_archive_version, monkeypatch_framework_version
 )
 from ..util import _VERSION_MATCHER, parse_version
 

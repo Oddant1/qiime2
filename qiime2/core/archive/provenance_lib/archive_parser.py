@@ -618,7 +618,7 @@ class ArchiveParser(Parser):
                     return FORMAT_REGISTRY[ver]()
 
         raise KeyError('No matching parser found for version: '
-                        f'{archive_version}')
+                       f'{archive_version}')
 
     def _digraph_from_archive_contents(
         self, archive_contents: Dict[str, 'ProvNode']

@@ -1059,13 +1059,13 @@ class ParseProvenanceTests(unittest.TestCase):
         dir_fp = os.path.join(self.tempdir, 'fake_dir')
         with self.assertRaisesRegex(
             UnparseableDataError,
-            f"Input data {dir_fp} is not supported\.\n"
+            rf"Input data {dir_fp} is not supported.\n"
             "Parsers are available for the following data types: "
-            "\[\'Result\', \'Artifact\', \'Visualization\', \'str\', "
-            "\'ProvDAG\', \'NoneType\'\]\.\n"
+            r"['Result', 'Artifact', 'Visualization', 'str', "
+            r"'ProvDAG', 'NoneType'].\n"
             "The following error was caught while trying to identify a parser "
             "that can handle this input data:\n"
-            f"{dir_fp} does not exist\."
+            rf"{dir_fp} does not exist."
         ):
             parse_provenance(self.cfg, dir_fp)
 
@@ -1073,13 +1073,13 @@ class ParseProvenanceTests(unittest.TestCase):
         input_data = {'this': 'is not parseable'}
         with self.assertRaisesRegex(
             UnparseableDataError,
-            f"Input data {input_data} is not supported\.\n"
+            rf"Input data {input_data} is not supported.\n"
             "Parsers are available for the following data types: "
-            "\[\'Result\', \'Artifact\', \'Visualization\', \'str\', "
-            "\'ProvDAG\', \'NoneType\'\]\.\n"
+            r"['Result', 'Artifact', 'Visualization', 'str', "
+            r"'ProvDAG', 'NoneType'].\n"
             "The following error was caught while trying to identify a parser "
             "that can handle this input data:\n"
-            "\'NoneType\' object has no attribute \'get_parser\'"
+            r"'NoneType' object has no attribute 'get_parser'"
         ):
             select_parser(input_data)
 
@@ -1226,16 +1226,3 @@ class DirectoryParserTests(unittest.TestCase):
         stdout_log = buffer.getvalue()
         self.assertRegex(stdout_log, f'parsing.*{concated_ints}')
         self.assertRegex(stdout_log, f'parsing.*{int_seq}')
-
-
-# ".*Input data {'this': 'is not parseable'} is not supported.
-# Parsers are available for the following data types: dict_keys(['Result', 'Artifact', 'Visualization', 'str', 'ProvDAG', 'NoneType']).
-# The following error was caught while trying to identify a parser that can_handle this input data:
-# 'NoneType' object has no attribute 'get_parser'"
-
-# does not match
-
-# "Input data {'this': 'is not parseable'} is not supported.
-# Parsers are available for the following data types: dict_keys(['Result', 'Artifact', 'Visualization', 'str', 'ProvDAG', 'NoneType']).
-# The following error was caught while trying to identify a parser that can_handle this input data:
-# 'NoneType' object has no attribute 'get_parser'"
