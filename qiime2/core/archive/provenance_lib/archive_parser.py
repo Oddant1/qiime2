@@ -219,8 +219,6 @@ class ProvNode:
                 action_path = \
                     base_path / 'provenance' / 'action' / 'action.yaml'
             self.action = _Action(action_path)
-        else:
-            self.action = None
 
         metadata_path = base_path / 'metadata.yaml'
         self._result_md = _ResultMetadata(metadata_path)
@@ -231,8 +229,6 @@ class ProvNode:
             else:
                 citation_path = base_path / 'provenance' / 'citations.bib'
             self._citations = _Citations(citation_path)
-        else:
-            self._citations = None
 
         if self.has_provenance:
             all_metadata_fps, self._artifacts_passed_as_md = \
