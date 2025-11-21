@@ -813,7 +813,7 @@ class BuildNoProvenanceUsageTests(CustomAssertions):
         v0_node = dag.get_node_data(uuid)
         build_no_provenance_node_usage(v0_node, uuid, ns, cfg)
 
-        out_var_name = 'feature_table_frequency_0'
+        out_var_name = 'int_sequence1_0'
         self.assertIn(uuid, ns._usg_var_ns)
         self.assertEqual(ns._usg_var_ns[uuid].name, out_var_name)
 
@@ -824,7 +824,7 @@ class BuildNoProvenanceUsageTests(CustomAssertions):
         self.assertREAppearsOnlyOnce(rendered, header)
 
         # Confirm expected values have been rendered
-        exp_v0 = f'# {uuid}   feature_table_frequency_0'
+        exp_v0 = f'# {uuid}   int_sequence1_0'
         self.assertRegex(rendered, exp_v0)
 
     def test_build_no_provenance_node_usage_uuid_only_node(self):
@@ -870,10 +870,10 @@ class BuildNoProvenanceUsageTests(CustomAssertions):
         self.assertIn(uuid, ns._usg_var_ns)
         self.assertIn(dummy_node_uuid, ns._usg_var_ns)
         self.assertEqual(
-            ns._usg_var_ns[uuid].name, 'feature_table_frequency_0'
+            ns._usg_var_ns[uuid].name, 'int_sequence1_0'
         )
         self.assertEqual(
-            ns._usg_var_ns[dummy_node_uuid].name, 'feature_table_frequency_1'
+            ns._usg_var_ns[dummy_node_uuid].name, 'int_sequence1_1'
         )
 
         rendered = cfg.use.render()
@@ -883,8 +883,8 @@ class BuildNoProvenanceUsageTests(CustomAssertions):
         self.assertREAppearsOnlyOnce(rendered, header)
 
         # Confirm expected values have been rendered
-        exp_og = f'# {uuid}   feature_table_frequency_0'
-        exp_dummy = f'# {uuid}-dummy   feature_table_frequency_1'
+        exp_og = f'# {uuid}   int_sequence1_0'
+        exp_dummy = f'# {uuid}-dummy   int_sequence1_1'
         self.assertRegex(rendered, exp_og)
         self.assertRegex(rendered, exp_dummy)
 
