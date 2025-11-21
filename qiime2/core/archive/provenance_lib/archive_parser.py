@@ -113,8 +113,8 @@ class ProvNode:
     @property
     def citations(self) -> Dict:
         citations = {}
-        if hasattr(self._result._archiver, 'citations'):
-            citations = self._result._archiver.citations
+        if hasattr(self, '_citations'):
+            citations = self._citations.citations
         return citations
 
     @property

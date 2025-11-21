@@ -1443,7 +1443,6 @@ class CitationsTests(unittest.TestCase):
         }
 
         citations = collect_citations(dag, deduplicate=True)
-        print(citations.entries_dict.keys())
         keys = set(citations.entries_dict.keys())
         self.assertEqual(len(keys), len(exp_keys))
         self.assertEqual(keys, exp_keys)
