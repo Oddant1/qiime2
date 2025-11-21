@@ -303,7 +303,10 @@ class ProvDAG:
 class EmptyParser(Parser):
     @classmethod
     def get_parser(cls, artifact_data: None):
-        return cls()
+        if artifact_data is None:
+            return cls()
+
+        raise TypeError(f' in EmptyParser: {artifact_data} is not None.')
 
     '''
     Creates empty ProvDAGs.
@@ -325,7 +328,21 @@ class EmptyParser(Parser):
 class DirectoryParser(Parser):
     @classmethod
     def get_parser(cls, artifact_data):
-        return cls()
+        try:
+            is_dir = os.path.isdir(artifact_data)
+        except TypeError:
+            t = type(artifact_data)
+            raise TypeError(
+                f' in DirectoryParser: expects a directory, not a {t}.'
+            )
+
+        if not is_dir:
+            raise ValueError(
+                f' in DirectoryParser: {artifact_data} '
+                'is not a valid directory.'
+            )
+
+        return DirectoryParser()
 
     def parse_prov(self, cfg: Config, data: str) -> ParserResults:
         '''
@@ -416,16 +433,22 @@ def archive_not_parsed(root_uuid: str, dag: ProvDAG) -> bool:
 
 
 class ProvDAGParser(Parser):
-    @classmethod
-    def get_parser(cls, artifact_data):
-        return cls()
-
     '''
     Effectively a ProvDAG copy constructor, this "parses" a ProvDAG, loading
     its data into a new ProvDAG.
 
     Disregards Config, because it's not meaningful in this context.
     '''
+
+    @classmethod
+    def get_parser(cls, artifact_data):
+        if isinstance(artifact_data, ProvDAG):
+            return ProvDAGParser()
+
+        raise TypeError(
+            f' in ProvDAGParser: {artifact_data} is not a ProvDAG.'
+        )
+
     def parse_prov(self, cfg: Config, dag: ProvDAG) -> ParserResults:
         '''
         Parses a ProvDAG returning a ParserResults by deep copying existing
@@ -524,7 +547,7 @@ def select_parser(payload: Any) -> Parser:
     except Exception as e:
         err_msg += (
             'The following error was caught while trying to identify a '
-            'parser that can_handle this input data:\n'
+            'parser that can handle this input data:\n'
             f'{str(e)}'
         )
 
