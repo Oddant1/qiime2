@@ -374,16 +374,8 @@ class ProvDAGTests(unittest.TestCase):
                 os.remove(removed_path)
                 expected = f'No such file or directory:.*{removed_path}'
 
-                if removed_file == 'citations.bib':
-                    # NOTE: This used to be an error before we loaded Results
-                    # for parsing. Now it leads to invalid prov here because
-                    # the checksums fail, but it does not create an error
-                    dag = ProvDAG(concated_ints)
-                    self.assertEqual(
-                        dag._provenance_is_valid, ValidationCode.INVALID)
-                else:
-                    with self.assertRaisesRegex(FileNotFoundError, expected):
-                        ProvDAG(concated_ints)
+                with self.assertRaisesRegex(FileNotFoundError, expected):
+                    ProvDAG(concated_ints)
 
     def test_v0_archive(self):
         dag = self.das.concated_ints_v0.dag
