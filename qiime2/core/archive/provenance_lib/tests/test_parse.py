@@ -1057,7 +1057,16 @@ class ParseProvenanceTests(unittest.TestCase):
 
     def test_parse_with_directory_parser_bad_dir_path(self):
         dir_fp = os.path.join(self.tempdir, 'fake_dir')
-        with self.assertRaisesRegex(Exception, 'not a valid dir'):
+        with self.assertRaisesRegex(
+            UnparseableDataError,
+            f"Input data {dir_fp} is not supported\.\n"
+            "Parsers are available for the following data types: "
+            "\[\'Result\', \'Artifact\', \'Visualization\', \'str\', "
+            "\'ProvDAG\', \'NoneType\'\]\.\n"
+            "The following error was caught while trying to identify a parser "
+            "that can handle this input data:\n"
+            f"{dir_fp} does not exist\."
+        ):
             parse_provenance(self.cfg, dir_fp)
 
     def test_no_correct_parser_found_error(self):
