@@ -1059,13 +1059,13 @@ class ParseProvenanceTests(unittest.TestCase):
         dir_fp = os.path.join(self.tempdir, 'fake_dir')
         with self.assertRaisesRegex(
             UnparseableDataError,
-            rf"Input data {dir_fp} is not supported.\n"
+            f"Input data {dir_fp} is not supported.\n"
             "Parsers are available for the following data types: "
-            r"['Result', 'Artifact', 'Visualization', 'str', "
-            r"'ProvDAG', 'NoneType'].\n"
+            "\['Result', 'Artifact', 'Visualization', 'str', "  # noqa :W605
+            "'ProvDAG', 'NoneType'].\n"
             "The following error was caught while trying to identify a parser "
             "that can handle this input data:\n"
-            rf"{dir_fp} does not exist."
+            f"{dir_fp} does not exist."
         ):
             parse_provenance(self.cfg, dir_fp)
 
@@ -1073,13 +1073,13 @@ class ParseProvenanceTests(unittest.TestCase):
         input_data = {'this': 'is not parseable'}
         with self.assertRaisesRegex(
             UnparseableDataError,
-            rf"Input data {input_data} is not supported.\n"
+            f"Input data {input_data} is not supported.\n"
             "Parsers are available for the following data types: "
-            r"['Result', 'Artifact', 'Visualization', 'str', "
-            r"'ProvDAG', 'NoneType'].\n"
+            "\['Result', 'Artifact', 'Visualization', 'str', " # noqa :W605
+            "'ProvDAG', 'NoneType'].\n"
             "The following error was caught while trying to identify a parser "
             "that can handle this input data:\n"
-            r"'NoneType' object has no attribute 'get_parser'"
+            "'NoneType' object has no attribute 'get_parser'"
         ):
             select_parser(input_data)
 
