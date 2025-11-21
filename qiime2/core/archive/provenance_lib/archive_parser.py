@@ -202,6 +202,7 @@ class ProvNode:
             archive_version, framework_version = parse_version(result, uuid)
 
         self._archive_version = archive_version
+        _archive_version = float(archive_version)
         self._framework_version = framework_version
 
         self._uuid = uuid if uuid else str(result.uuid)
@@ -211,7 +212,7 @@ class ProvNode:
             base_path = \
                 result._archiver.path / 'provenance' / 'artifacts' / self._uuid
 
-        if archive_version != '0' and archive_version != '1':
+        if _archive_version >= 2:
             if uuid:
                 action_path = base_path / 'action' / 'action.yaml'
             else:
@@ -224,8 +225,11 @@ class ProvNode:
         metadata_path = base_path / 'metadata.yaml'
         self._result_md = _ResultMetadata(metadata_path)
 
-        citation_path = base_path / 'citations.bib'
-        if os.path.exists(citation_path):
+        if _archive_version >= 4:
+            if uuid:
+                citation_path = base_path / 'citations.bib'
+            else:
+                citation_path = base_path / 'provenance' / 'citations.bib'
             self._citations = _Citations(citation_path)
         else:
             self._citations = None
@@ -608,16 +612,17 @@ class ArchiveParser(Parser):
             return FORMAT_REGISTRY[archive_version]()
 
         # Minor versions should more or less support future minor versions
-        major, minor = archive_version.split('.')
-        minor = int(minor)
+        if '.' in archive_version:
+            major, minor = archive_version.split('.')
+            minor = int(minor)
 
-        for minor_version in range(minor, -1, -1):
-            ver = f'{major}.{minor_version}'
-            if ver in FORMAT_REGISTRY:
-                return FORMAT_REGISTRY[ver]()
-        else:
-            raise KeyError('No matching parser found for version: '
-                            f'{archive_version}')
+            for minor_version in range(minor, -1, -1):
+                ver = f'{major}.{minor_version}'
+                if ver in FORMAT_REGISTRY:
+                    return FORMAT_REGISTRY[ver]()
+
+        raise KeyError('No matching parser found for version: '
+                        f'{archive_version}')
 
     def _digraph_from_archive_contents(
         self, archive_contents: Dict[str, 'ProvNode']
@@ -850,10 +855,6 @@ class ParserV2(ParserV1):
             #      0         1          2        3
             # /root-uuid/provenance/artifacts/node-uuid
             archive_version, _ = parse_version(result, node_uuid)
-
-            # TODO: I MIGHT care about validating that all paths exist for
-            # results in prov
-            # parser = FORMAT_REGISTRY[archive_version]
 
             # for expected_file in parser.expected_files_all_nodes:
             #     exp_node_fps.append(prefix / expected_file)
