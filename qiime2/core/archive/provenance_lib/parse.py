@@ -535,7 +535,7 @@ def select_parser(payload: Any) -> Parser:
     err_msg = (
         f'Input data {payload} is not supported.\n'
         'Parsers are available for the following data types: '
-        f'{PARSER_TYPE_MAP.keys()}.\n'
+        f'{list(PARSER_TYPE_MAP.keys())}.\n'
     )
 
     try:

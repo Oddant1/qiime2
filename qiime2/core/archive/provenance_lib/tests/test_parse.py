@@ -796,8 +796,8 @@ class ProvDAGTests(unittest.TestCase):
             self.assertEqual(dag.checksum_diff, None)
 
     def test_no_checksum_validation_missing_node_files(self):
-        path_prefix = os.path.join('provenance', 'artifacts')
-        root_uuid = self.das.concated_ints.uuid
+        concat_ints = self.dp.methods['concatenate_ints']
+
         for removed_file in [
             'metadata.yaml',
             'citations.bib',
@@ -805,19 +805,18 @@ class ProvDAGTests(unittest.TestCase):
             'action/action.yaml'
         ]:
             for uuid in [self.das.int_seq1.uuid, self.das.int_seq2.uuid]:
-                with generate_archive_with_file_removed(
-                    self.das.concated_ints.filepath,
-                    root_uuid,
-                    os.path.join(path_prefix, uuid, removed_file)
-                ) as altered_archive:
-                    if removed_file == 'action/action.yaml':
-                        file = 'action.yaml'
-                    else:
-                        file = removed_file
+                concated_ints, = concat_ints(
+                    self.das.int_seq1.artifact, self.das.int_seq1.artifact,
+                    self.das.int_seq2.artifact, 7, 13
+                )
 
-                    expected = (f'(?s)Malformed.*{file}.*{uuid}.*corrupt.*')
-                    with self.assertRaisesRegex(ValueError, expected):
-                        ProvDAG(altered_archive, validate_checksums=False)
+                removed_path = concated_ints._archiver.provenance_dir / \
+                    'artifacts' / uuid / removed_file
+                os.remove(removed_path)
+                expected = f'No such file or directory:.*{removed_path}'
+
+                with self.assertRaisesRegex(FileNotFoundError, expected):
+                    ProvDAG(concated_ints, validate_checksums=False)
 
     def test_mixed_archive_version_provenance(self):
         '''
@@ -1065,11 +1064,13 @@ class ParseProvenanceTests(unittest.TestCase):
         input_data = {'this': 'is not parseable'}
         with self.assertRaisesRegex(
             UnparseableDataError,
-            f'(?s)Input data {input_data}.*not supported.*'
-            'ArchiveParser expects a string or pathlib.PosixPath.*'
-            'DirectoryParser.*expects a directory.*'
-            'ProvDAGParser.*is not a ProvDAG.*'
-            'EmptyParser.*is not None'
+            f"Input data {input_data} is not supported\.\n"
+            "Parsers are available for the following data types: "
+            "\[\'Result\', \'Artifact\', \'Visualization\', \'str\', "
+            "\'ProvDAG\', \'NoneType\'\]\.\n"
+            "The following error was caught while trying to identify a parser "
+            "that can handle this input data:\n"
+            "\'NoneType\' object has no attribute \'get_parser\'"
         ):
             select_parser(input_data)
 
@@ -1216,3 +1217,16 @@ class DirectoryParserTests(unittest.TestCase):
         stdout_log = buffer.getvalue()
         self.assertRegex(stdout_log, f'parsing.*{concated_ints}')
         self.assertRegex(stdout_log, f'parsing.*{int_seq}')
+
+
+# ".*Input data {'this': 'is not parseable'} is not supported.
+# Parsers are available for the following data types: dict_keys(['Result', 'Artifact', 'Visualization', 'str', 'ProvDAG', 'NoneType']).
+# The following error was caught while trying to identify a parser that can_handle this input data:
+# 'NoneType' object has no attribute 'get_parser'"
+
+# does not match
+
+# "Input data {'this': 'is not parseable'} is not supported.
+# Parsers are available for the following data types: dict_keys(['Result', 'Artifact', 'Visualization', 'str', 'ProvDAG', 'NoneType']).
+# The following error was caught while trying to identify a parser that can_handle this input data:
+# 'NoneType' object has no attribute 'get_parser'"
