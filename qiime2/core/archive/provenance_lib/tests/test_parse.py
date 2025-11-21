@@ -1061,7 +1061,7 @@ class ParseProvenanceTests(unittest.TestCase):
             UnparseableDataError,
             f"Input data {dir_fp} is not supported.\n"
             "Parsers are available for the following data types: "
-            "\['Result', 'Artifact', 'Visualization', 'str', "  # noqa :W605
+            "\['Result', 'Artifact', 'Visualization', 'str', "  # noqa: W605
             "'ProvDAG', 'NoneType'].\n"
             "The following error was caught while trying to identify a parser "
             "that can handle this input data:\n"
@@ -1075,7 +1075,7 @@ class ParseProvenanceTests(unittest.TestCase):
             UnparseableDataError,
             f"Input data {input_data} is not supported.\n"
             "Parsers are available for the following data types: "
-            "\['Result', 'Artifact', 'Visualization', 'str', " # noqa :W605
+            "\['Result', 'Artifact', 'Visualization', 'str', "  # noqa: W605
             "'ProvDAG', 'NoneType'].\n"
             "The following error was caught while trying to identify a parser "
             "that can handle this input data:\n"
