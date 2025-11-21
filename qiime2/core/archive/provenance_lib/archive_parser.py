@@ -676,12 +676,6 @@ class ParserV0(ArchiveParser):
     '''
     Parser for V0 archives. V0 archives have no ancestral provenance.
     '''
-    # These are files we expect will be present in every QIIME2 archive with
-    # this format. "Optional" filenames (like Metadata, which may or may
-    # not be present in an archive) should not be included here.
-    expected_files_root_only = tuple()
-    expected_files_all_nodes = ('metadata.yaml', 'VERSION')
-
     def parse_prov(self, cfg, result):
         '''
         Parses an artifact's provenance into a directed acyclic graph.
@@ -777,8 +771,7 @@ class ParserV1(ParserV0):
     difficulties untangling provenance without output names. V1 archives are
     treated as having no provenance, like V0 archives.
     '''
-    expected_files_root_only = ParserV0.expected_files_root_only
-    expected_files_all_nodes = ParserV0.expected_files_all_nodes
+    pass
 
 
 class ParserV2(ParserV1):
@@ -787,11 +780,6 @@ class ParserV2(ParserV1):
     Directory structure identical to V1, action.yaml changes to support
     Pipelines.
     '''
-    expected_files_root_only = ParserV1.expected_files_root_only
-    expected_files_all_nodes = (
-        *ParserV1.expected_files_all_nodes, 'action/action.yaml'
-    )
-
     def parse_prov(self, cfg, result):
         '''
         Parses an artifact's provenance into a directed acyclic graph.
@@ -841,20 +829,10 @@ class ParserV2(ParserV1):
             fp = pathlib.Path(fp)
             node_uuid = os.path.basename(fp)
 
-            # /root-uuid/provenance/artifacts/node-uuid
-            # prefix = pathlib.Path(*fp.parts[0:4])
-
             if node_uuid in archive_contents:
                 continue
 
-            # different artifact versions have different expected files
-            #      0         1          2        3
-            # /root-uuid/provenance/artifacts/node-uuid
             archive_version, _ = parse_version(result, node_uuid)
-
-            # for expected_file in parser.expected_files_all_nodes:
-            #     exp_node_fps.append(prefix / expected_file)
-
             archive_contents[node_uuid] = ProvNode(
                 cfg, result, archive_version=archive_version,
                 framework_version=framework_version, uuid=node_uuid
@@ -875,8 +853,7 @@ class ParserV3(ParserV2):
     Parser for V3 archives. Directory structure identical to V1 & V2,
     action.yaml now supports variadic inputs, so !set tags in action.yaml.
     '''
-    expected_files_root_only = ParserV2.expected_files_root_only
-    expected_files_all_nodes = ParserV2.expected_files_all_nodes
+    pass
 
 
 class ParserV4(ParserV3):
@@ -884,19 +861,13 @@ class ParserV4(ParserV3):
     Parser for V4 archives. Adds citations to directory structure, changes to
     action.yaml including transformers.
     '''
-    expected_files_root_only = ParserV3.expected_files_root_only
-    expected_files_all_nodes = (
-        *ParserV3.expected_files_all_nodes, 'citations.bib'
-    )
+    pass
 
 
 class ParserV5(ParserV4):
     '''
     Parser for V5 archives. Adds checksum validation with checksums.md5.
     '''
-    expected_files_root_only = ('checksums.md5', )
-    expected_files_all_nodes = ParserV4.expected_files_all_nodes
-
     def _validate_checksums(
             self, result: Result
     ) -> Tuple[ValidationCode, Optional[ChecksumDiff]]:
@@ -932,8 +903,7 @@ class ParserV6(ParserV5):
     Parser for V6 archives. Adds support for output collections, adds
     execution_context field to action.yaml.
     '''
-    expected_files_root_only = ParserV5.expected_files_root_only
-    expected_files_all_nodes = ParserV5.expected_files_all_nodes
+    pass
 
 
 class ParserV7(ParserV6):
@@ -954,9 +924,7 @@ class ParserV7(ParserV6):
     for more details on Annotations.
 
     '''
-    expected_files_root_only = ParserV6.expected_files_root_only
-    expected_files_all_nodes = (
-        *ParserV6.expected_files_all_nodes, 'conda-env.yaml')
+    pass
 
 
 FORMAT_REGISTRY = {
