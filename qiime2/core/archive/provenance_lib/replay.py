@@ -54,7 +54,7 @@ class ReplayConfig:
     verbose : bool
         If True, progress is reported to stdout.
     md_out_dir : str
-        The directory where caputred metadata should be written.
+        The directory where captured metadata should be written.
     '''
     def __init__(
         self,
