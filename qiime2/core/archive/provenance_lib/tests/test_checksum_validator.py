@@ -59,8 +59,8 @@ class ValidateChecksumTests(unittest.TestCase):
         is_valid, diff = validate_checksums(int_seq)
 
         self.assertEqual(is_valid, ValidationCode.INVALID)
-        self.assertEqual(list(diff.removed.keys()), ['metadata.yaml'])
         self.assertEqual(list(diff.added.keys()), ['tamper.txt'])
+        self.assertEqual(list(diff.removed.keys()), ['metadata.yaml'])
         self.assertEqual(list(diff.changed.keys()),
                          ['provenance/citations.bib'])
 
