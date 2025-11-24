@@ -551,7 +551,7 @@ def select_parser(payload: Any) -> Parser:
             f'{str(e)}'
         )
 
-    raise UnparseableDataError(err_msg) from e
+        raise UnparseableDataError(err_msg) from e
 
 
 def _load_payload(payload):
