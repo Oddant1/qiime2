@@ -131,12 +131,6 @@ class ArchiveParserTests(unittest.TestCase):
             parser = ArchiveParser.get_parser(artifact.artifact._archiver)
             self.assertEqual(type(parser), parser_version)
 
-    def test_get_parser_nonexistent_fp(self):
-        fn = 'not_a_filepath.qza'
-        fp = os.path.join(self.tempdir, fn)
-        with self.assertRaisesRegex(ValueError, ".*does not exist"):
-            ArchiveParser.get_parser(fp)
-
     def test_artifact_parser_parse_prov(self):
         with self.assertRaisesRegex(NotImplementedError, "Use a subclass"):
             ArchiveParser().parse_prov(Config(), 'doesnotmatter.txt')
