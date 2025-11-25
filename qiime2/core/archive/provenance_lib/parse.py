@@ -20,6 +20,7 @@ from .archive_parser import (
 )
 
 from qiime2.sdk import Result
+from qiime2.core.archive import Archiver
 
 
 class ProvDAG:
@@ -500,7 +501,7 @@ def parse_provenance(cfg: Config, payload: Any) -> ParserResults:
         checksum diff.
 
     '''
-    parser = select_parser(payload)
+    payload, parser = select_parser(payload)
     return parser.parse_prov(cfg, payload)
 
 
@@ -517,6 +518,8 @@ def select_parser(payload: Any) -> Parser:
     -------
     Parser
         The appropriate Parser for the payload type.
+    Payload
+        Kick the payload back up possibly converted if necessary
 
     Raises
     ------
@@ -524,9 +527,7 @@ def select_parser(payload: Any) -> Parser:
         If no appropriate parser could be found for the payload.
     '''
     PARSER_TYPE_MAP = {
-        'Result': ArchiveParser,
-        'Artifact': ArchiveParser,
-        'Visualization': ArchiveParser,
+        'Archiver': ArchiveParser,
         'str': DirectoryParser,
         'ProvDAG': ProvDAGParser,
         'NoneType': EmptyParser
@@ -543,7 +544,7 @@ def select_parser(payload: Any) -> Parser:
         parser = \
             PARSER_TYPE_MAP.get(payload.__class__.__name__).get_parser(payload)
         if parser is not None:
-            return parser
+            return payload, parser
     except Exception as e:
         err_msg += (
             'The following error was caught while trying to identify a '
@@ -557,7 +558,7 @@ def select_parser(payload: Any) -> Parser:
 def _load_payload(payload):
     '''
     Ensures Paths are converted into strings and then attempts to load non
-    directory paths as a Result
+    directory paths as an Archiver. If a Result was provided take its _archiver
 
     Parameters
     ----------
@@ -572,8 +573,11 @@ def _load_payload(payload):
     if isinstance(payload, Path):
         payload = str(payload)
 
+    if isinstance(payload, Result):
+        payload = payload._archiver
+
     if isinstance(payload, str) and not os.path.isdir(payload):
-        payload = Result.load(payload)
+        payload = Archiver.load(payload)
 
     return payload
 

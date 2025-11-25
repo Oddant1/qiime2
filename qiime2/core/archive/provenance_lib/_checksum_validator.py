@@ -9,8 +9,7 @@ from enum import IntEnum
 import warnings
 from typing import Optional, Tuple
 
-from qiime2.sdk import Result
-from qiime2.core.archive.archiver import ChecksumDiff
+from qiime2.core.archive.archiver import Archiver, ChecksumDiff
 
 
 class ValidationCode(IntEnum):
@@ -52,7 +51,7 @@ class ValidationCode(IntEnum):
 
 
 def validate_checksums(
-    result: Result
+    archiver: Archiver
 ) -> Tuple[ValidationCode, Optional[ChecksumDiff]]:
     '''
     Uses diff_checksums to validate the archive's provenance,
@@ -61,8 +60,8 @@ def validate_checksums(
 
     Parameters
     ----------
-    result : Result
-        The Result object being validated.
+    result : Archiver
+        The Archiver object being validated.
 
     Returns
     -------
@@ -71,14 +70,14 @@ def validate_checksums(
         set ChecksumDiff to None and ValidationCode to INVALID and return.
 
     '''
-    if not hasattr(result._archiver, 'validate_checksums'):
+    if not hasattr(archiver, 'validate_checksums'):
         return ValidationCode.PREDATES_CHECKSUMS, ChecksumDiff({}, {}, {})
 
     try:
-        checksum_diff = result._archiver.validate_checksums()
+        checksum_diff = archiver.validate_checksums()
     except FileNotFoundError:
         warnings.warn(
-            f'The {result._archiver._fmt.CHECKSUM_FILE} file is missing from '
+            f'The {archiver._fmt.CHECKSUM_FILE} file is missing from '
             'the archive. Archive may be corrupt or provenance may be false.',
             UserWarning
         )
@@ -86,7 +85,7 @@ def validate_checksums(
 
     if checksum_diff != ChecksumDiff({}, {}, {}):
         warnings.warn(
-            f'Checksums are invalid for Archive {result.uuid}\n'
+            f'Checksums are invalid for Archive {archiver.uuid}\n'
             'Archive may be corrupt or provenance may be false.\n'
             f'Files added since archive creation: {checksum_diff.added}\n'
             'Files removed since archive creation: '

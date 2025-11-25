@@ -41,8 +41,7 @@ class ParserVxTests(unittest.TestCase):
     @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_populate_archive(self):
         for artifact in self.das.all_artifact_versions:
-            parser = ArchiveParser.get_parser(artifact.filepath)
-            fp = artifact.filepath
+            parser = ArchiveParser.get_parser(artifact.artifact._archiver)
             uuid = artifact.uuid
             version = artifact.archive_version
 
@@ -51,10 +50,11 @@ class ParserVxTests(unittest.TestCase):
                     UserWarning,
                     'Artifact .*prior to provenance'
                 ):
-                    res = parser.parse_prov(Config(), fp)
+                    res = parser.parse_prov(
+                        Config(), artifact.artifact._archiver)
 
             else:
-                res = parser.parse_prov(Config(), fp)
+                res = parser.parse_prov(Config(), artifact.artifact._archiver)
                 self.assertIsInstance(res, ParserResults)
                 pa_uuids = res.parsed_artifact_uuids
                 self.assertIsInstance(pa_uuids, set)
@@ -74,8 +74,9 @@ class ParserVxTests(unittest.TestCase):
 
     def test_validate_checksums(self):
         for artifact in self.das.all_artifact_versions:
-            parser = ArchiveParser.get_parser(artifact.artifact)
-            is_valid, diff = parser._validate_checksums(artifact.artifact)
+            parser = ArchiveParser.get_parser(artifact.artifact._archiver)
+            is_valid, diff = \
+                parser._validate_checksums(artifact.artifact._archiver)
             if artifact.archive_version < 5:
                 self.assertEqual(is_valid, ValidationCode.PREDATES_CHECKSUMS)
                 self.assertEqual(diff, None)
@@ -90,13 +91,13 @@ class ParserVxTests(unittest.TestCase):
         even when it calls super().parse_prov() internally
         '''
         for artifact in self.das.all_artifact_versions:
-            parser = ArchiveParser.get_parser(artifact.filepath)
+            parser = ArchiveParser.get_parser(artifact.artifact._archiver)
             if artifact.archive_version < 5:
                 parser._validate_checksums = MagicMock(
                     # return values only here to facilitate normal execution
                     return_value=(ValidationCode.PREDATES_CHECKSUMS, None)
                 )
-                parser.parse_prov(Config(), artifact.filepath)
+                parser.parse_prov(Config(), artifact.artifact._archiver)
                 parser._validate_checksums.assert_called_once()
             else:
                 parser._validate_checksums = MagicMock(
@@ -105,7 +106,7 @@ class ParserVxTests(unittest.TestCase):
                         ChecksumDiff({}, {}, {})
                     )
                 )
-                parser.parse_prov(Config(), artifact.filepath)
+                parser.parse_prov(Config(), artifact.artifact._archiver)
                 parser._validate_checksums.assert_called_once()
 
 
@@ -127,7 +128,7 @@ class ArchiveParserTests(unittest.TestCase):
         for artifact, parser_version in zip(
             self.das.all_artifact_versions, parsers
         ):
-            parser = ArchiveParser.get_parser(artifact.filepath)
+            parser = ArchiveParser.get_parser(artifact.artifact._archiver)
             self.assertEqual(type(parser), parser_version)
 
     def test_get_parser_nonexistent_fp(self):

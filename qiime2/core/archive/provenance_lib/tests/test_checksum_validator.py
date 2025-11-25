@@ -33,7 +33,7 @@ class ValidateChecksumTests(unittest.TestCase):
     def test_validate_checksums(self):
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
 
-        is_valid, diff = validate_checksums(int_seq)
+        is_valid, diff = validate_checksums(int_seq._archiver)
         self.assertEqual(is_valid, ValidationCode.VALID)
         self.assertEqual(diff, ChecksumDiff({}, {}, {}))
 
@@ -56,7 +56,7 @@ class ValidateChecksumTests(unittest.TestCase):
                 int_seq._archiver.provenance_dir / 'citations.bib', 'w') as fh:
             fh.write('file overwritten\n')
 
-        is_valid, diff = validate_checksums(int_seq)
+        is_valid, diff = validate_checksums(int_seq._archiver)
 
         self.assertEqual(is_valid, ValidationCode.INVALID)
         self.assertEqual(list(diff.added.keys()), ['tamper.txt'])
@@ -69,7 +69,7 @@ class ValidateChecksumTests(unittest.TestCase):
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
         os.remove(int_seq._archiver.path / 'checksums.sha512')
 
-        is_valid, diff = validate_checksums(int_seq)
+        is_valid, diff = validate_checksums(int_seq._archiver)
 
         self.assertEqual(is_valid, ValidationCode.INVALID)
         self.assertEqual(diff, None)

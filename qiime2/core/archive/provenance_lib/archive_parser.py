@@ -25,6 +25,7 @@ from ._checksum_validator import (
 from .util import parse_version
 from ..provenance import MetadataInfo
 from qiime2.sdk import Result
+from qiime2.core.archive import Archiver
 
 
 @dataclass
@@ -184,7 +185,7 @@ class ProvNode:
     def __init__(
         self,
         cfg: Config,
-        result: Result,
+        archiver: Archiver,
         *args,
         archive_version: str = None,
         framework_version: str = None,
@@ -195,22 +196,22 @@ class ProvNode:
         its provenance if relevant
         '''
         self.cfg = cfg
-        self._result = result
+        self._archiver = archiver
 
         # TODO: Maybe make sure both are set or both are None
         if archive_version is None or framework_version is None:
-            archive_version, framework_version = parse_version(result, uuid)
+            archive_version, framework_version = parse_version(archiver, uuid)
 
         self._archive_version = archive_version
         _archive_version = float(archive_version)
         self._framework_version = framework_version
 
-        self._uuid = uuid if uuid else str(result.uuid)
+        self._uuid = uuid if uuid else str(archiver.uuid)
         if uuid is None:
-            base_path = result._archiver.path
+            base_path = archiver.path
         else:
             base_path = \
-                result._archiver.path / 'provenance' / 'artifacts' / self._uuid
+                archiver.path / 'provenance' / 'artifacts' / self._uuid
 
         if _archive_version >= 2:
             if uuid:
@@ -308,8 +309,8 @@ class ProvNode:
         if metadata_fps == {}:
             return {}
 
-        pfx = self._result._archiver.path / 'provenance'
-        if str(self._result.uuid) == self._uuid:
+        pfx = self._archiver.path / 'provenance'
+        if str(self._archiver.uuid) == self._uuid:
             pfx = pfx / 'action'
         else:
             pfx = pfx / 'artifacts' / self._uuid / 'action'
@@ -598,7 +599,7 @@ class Parser(metaclass=abc.ABCMeta):
 
 class ArchiveParser(Parser):
     @classmethod
-    def get_parser(cls, artifact_data: Result):
+    def get_parser(cls, artifact_data: Archiver):
         # NOTE: I would love to set result, archive_version, and
         # framework_version as instance state here; however, to maintain the
         # legacy API, I am not
@@ -676,7 +677,7 @@ class ParserV0(ArchiveParser):
     '''
     Parser for V0 archives. V0 archives have no ancestral provenance.
     '''
-    def parse_prov(self, cfg, result):
+    def parse_prov(self, cfg, archiver):
         '''
         Parses an artifact's provenance into a directed acyclic graph.
 
@@ -708,13 +709,10 @@ class ParserV0(ArchiveParser):
             networkx graph, the provenance-is-valid flag, and the
             checksum diff.
         '''
-        if not isinstance(result, Result):
-            result = Result.load(result)
-
-        uuid = str(result.uuid)
+        uuid = str(archiver.uuid)
         if cfg.perform_checksum_validation:
             provenance_is_valid, checksum_diff = \
-                self._validate_checksums(result)
+                self._validate_checksums(archiver)
         else:
             provenance_is_valid = ValidationCode.VALIDATION_OPTOUT
             checksum_diff = None
@@ -725,11 +723,11 @@ class ParserV0(ArchiveParser):
             UserWarning
         )
 
-        archive_version, framework_version = parse_version(result)
+        archive_version, framework_version = parse_version(archiver)
 
         nodes = {
             uuid: ProvNode(
-                cfg, result, archive_version=archive_version,
+                cfg, archiver, archive_version=archive_version,
                 framework_version=framework_version)
         }
         graph = self._digraph_from_archive_contents(nodes)
@@ -742,7 +740,7 @@ class ParserV0(ArchiveParser):
         )
 
     def _validate_checksums(
-            self, result: Result
+            self, archiver: Archiver
     ) -> Tuple[ValidationCode, Optional[ChecksumDiff]]:
         '''
         Return the ValidationCode and ChecksumDiff for an archive. Because
@@ -752,8 +750,8 @@ class ParserV0(ArchiveParser):
 
         Parameters
         ----------
-        result : Result
-            The Result we are validating. Ignored here but
+        archiver : Archiver
+            The Archiver we are validating. Ignored here but
             needed in signature for inheritance.
 
         Returns
@@ -780,7 +778,7 @@ class ParserV2(ParserV1):
     Directory structure identical to V1, action.yaml changes to support
     Pipelines.
     '''
-    def parse_prov(self, cfg, result):
+    def parse_prov(self, cfg, archiver):
         '''
         Parses an artifact's provenance into a directed acyclic graph.
 
@@ -805,36 +803,33 @@ class ParserV2(ParserV1):
             networkx graph, the provenance-is-valid flag, and the
             checksum diff.
         '''
-        if not isinstance(result, Result):
-            result = Result.load(result)
-
-        uuid = str(result.uuid)
+        uuid = str(archiver.uuid)
         if cfg.perform_checksum_validation:
             provenance_is_valid, checksum_diff = \
-                self._validate_checksums(result)
+                self._validate_checksums(archiver)
         else:
             provenance_is_valid = ValidationCode.VALIDATION_OPTOUT
             checksum_diff = None
 
-        archive_version, framework_version = parse_version(result)
+        archive_version, framework_version = parse_version(archiver)
 
         # make a provnode for each UUID
         archive_contents = {
             uuid: ProvNode(
-                cfg, result, archive_version=archive_version,
+                cfg, archiver, archive_version=archive_version,
                 framework_version=framework_version)
         }
 
-        for fp in os.listdir(result._archiver.provenance_dir / 'artifacts'):
+        for fp in os.listdir(archiver.provenance_dir / 'artifacts'):
             fp = pathlib.Path(fp)
             node_uuid = os.path.basename(fp)
 
             if node_uuid in archive_contents:
                 continue
 
-            archive_version, _ = parse_version(result, node_uuid)
+            archive_version, _ = parse_version(archiver, node_uuid)
             archive_contents[node_uuid] = ProvNode(
-                cfg, result, archive_version=archive_version,
+                cfg, archiver, archive_version=archive_version,
                 framework_version=framework_version, uuid=node_uuid
             )
 
@@ -869,15 +864,15 @@ class ParserV5(ParserV4):
     Parser for V5 archives. Adds checksum validation with checksums.md5.
     '''
     def _validate_checksums(
-            self, result: Result
+            self, archiver: Archiver
     ) -> Tuple[ValidationCode, Optional[ChecksumDiff]]:
         '''
         Checksum support added for v5, so perform checksum validation.
 
         Parameters
         ----------
-        result : Result
-            The Result we are validating.
+        archiver : Archiver
+            The Archiver we are validating.
 
         Returns
         -------
@@ -895,7 +890,7 @@ class ParserV5(ParserV4):
         than in pre-V5 archive parsers, the ChecksumDiff should only be
         intepreted in conjuction with the ValidationCode.
         '''
-        return validate_checksums(result)
+        return validate_checksums(archiver)
 
 
 class ParserV6(ParserV5):

@@ -11,8 +11,7 @@ import warnings
 
 from typing import Tuple
 
-from qiime2.sdk import Result
-
+from qiime2.core.archive import Archiver
 
 _VERSION_MATCHER = (
     r'QIIME 2\n'
@@ -25,15 +24,15 @@ _VERSION_MATCHER = (
 
 
 def parse_version(
-    result: Result | str, nested_artifact: str | None = None
+    archiver: Archiver, nested_artifact: str | None = None
 ) -> Tuple[str, str]:
     '''
     Finds and parses the VERSION file inside of an archive.
 
     Parameters
     ----------
-    result : Result
-        The Result we are getting the version of
+    archiver : Archiver
+        The Archiver we are getting the version of
     nested_artifact : str | None
         the uuid of the nested result
 
@@ -42,17 +41,14 @@ def parse_version(
     tuple of (str, str)
         The archive version and framework version of the archive.
     '''
-    if not isinstance(result, Result):
-        result = Result.load(result)
-
-    uuid = result.uuid
+    uuid = archiver.uuid
 
     if nested_artifact is not None:
-        version_fp = result._archiver.provenance_dir / 'artifacts' \
+        version_fp = archiver.provenance_dir / 'artifacts' \
             / nested_artifact / 'VERSION'
-        result = nested_artifact
+        archiver = nested_artifact
     else:
-        version_fp = result._archiver.path / 'VERSION'
+        version_fp = archiver.path / 'VERSION'
 
     try:
         with open(str(version_fp)) as v_fp:
@@ -60,7 +56,7 @@ def parse_version(
     except KeyError:
         raise ValueError(
             f'Malformed Archive: VERSION file for node {uuid} misplaced '
-            f'or nonexistent.\nArchive {result._archiver.path} may be corrupt '
+            f'or nonexistent.\nArchive {archiver.path} may be corrupt '
             'or provenance may be false.'
         )
 
@@ -73,7 +69,7 @@ def parse_version(
         )
         raise ValueError(
             f'Malformed Archive: VERSION file out of spec in '
-            f'{result._archiver.path}.\n'
+            f'{archiver.path}.\n'
             f'Should match this regular expression:\n{version_match_repr}\n'
             f'Actually looks like:\n{version_contents}\n'
         )
