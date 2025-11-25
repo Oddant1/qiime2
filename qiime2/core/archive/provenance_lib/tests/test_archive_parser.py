@@ -364,7 +364,7 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
         cls.nodes = {}
         for artifact in cls.das.all_artifact_versions:
             cls.nodes[str(artifact.archive_version)] = \
-                ProvNode(cfg, artifact.artifact)
+                ProvNode(cfg, artifact.artifact._archiver)
 
         with zipfile.ZipFile(cls.das.concated_ints_with_md.filepath) as zf:
             root_node_id = cls.das.concated_ints_with_md.uuid
@@ -383,35 +383,36 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
 
         # build a nonroot node without study metadata
         cls.nonroot_non_md_node = ProvNode(
-            cfg, cls.das.concated_ints_with_md.artifact,
+            cfg, cls.das.concated_ints_with_md.artifact._archiver,
             uuid=non_md_node_id
         )
 
         # build a nonroot node with study metadata
         cls.nonroot_md_node = ProvNode(
-            cfg, cls.das.concated_ints_with_md.artifact, uuid=md_node_id
+            cfg, cls.das.concated_ints_with_md.artifact._archiver,
+            uuid=md_node_id
         )
 
         # build a root node and parse study metadata files
         cfg = Config(parse_study_metadata=True)
         cls.root_node_parse_md = ProvNode(
-            cfg, cls.das.concated_ints_with_md.artifact
+            cfg, cls.das.concated_ints_with_md.artifact._archiver
         )
 
         # build a root node and don't parse study metadata files
         cfg = Config(parse_study_metadata=False)
         cls.root_node_dont_parse_md = ProvNode(
-            cfg, cls.das.concated_ints_with_md.artifact
+            cfg, cls.das.concated_ints_with_md.artifact._archiver
         )
 
         # build a node with a collection as input
         cls.input_collection_node = ProvNode(
-            cfg, cls.das.int_from_collection.artifact
+            cfg, cls.das.int_from_collection.artifact._archiver
         )
 
         # build a node with an optional input that defaults to None
         cls.optional_input_node = ProvNode(
-            cfg, cls.das.int_seq_optional_input.artifact
+            cfg, cls.das.int_seq_optional_input.artifact._archiver
         )
 
     @classmethod
@@ -592,7 +593,9 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
         self.assertEqual(len(actual_parent_names), 2)
 
     def test_parents_for_import_node(self):
-        import_node = ProvNode(Config(), self.das.single_int.artifact)
+        import_node = ProvNode(
+            Config(), self.das.single_int.artifact._archiver
+        )
         self.assertEqual(import_node._parents, [])
 
     def test_parents_collection_of_inputs(self):

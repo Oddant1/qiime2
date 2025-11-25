@@ -516,10 +516,11 @@ def select_parser(payload: Any) -> Parser:
 
     Returns
     -------
+    Payload
+        Return the payload back up the chain converted to a parsable format if
+        necessary
     Parser
         The appropriate Parser for the payload type.
-    Payload
-        Kick the payload back up possibly converted if necessary
 
     Raises
     ------

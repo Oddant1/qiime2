@@ -55,7 +55,7 @@ class TestVersionParser(unittest.TestCase):
     def test_parse_version(self):
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
 
-        actual = parse_version(int_seq)
+        actual = parse_version(int_seq._archiver)
         self.assertEqual(
             actual, (self.archive_version_exp, self.framework_version_exp)
         )
@@ -66,7 +66,7 @@ class TestVersionParser(unittest.TestCase):
         with monkeypatch_archive_version(archive_version_exp):
             int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
 
-        actual = parse_version(int_seq)
+        actual = parse_version(int_seq._archiver)
         self.assertEqual(
             actual, (archive_version_exp, self.framework_version_exp)
         )
@@ -77,7 +77,7 @@ class TestVersionParser(unittest.TestCase):
         with monkeypatch_framework_version(framework_version_exp):
             int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
 
-        actual = parse_version(int_seq)
+        actual = parse_version(int_seq._archiver)
         self.assertEqual(
             actual, (self.archive_version_exp, framework_version_exp)
         )
@@ -88,7 +88,7 @@ class TestVersionParser(unittest.TestCase):
 
         with self.assertRaisesRegex(FileNotFoundError,
                                     'No such file or directory:.*VERSION'):
-            parse_version(int_seq)
+            parse_version(int_seq._archiver)
 
     def test_parse_version_VERSION_file_missing_archive_field(self):
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
@@ -103,7 +103,7 @@ class TestVersionParser(unittest.TestCase):
                 fh.write(line)
 
         with self.assertRaisesRegex(ValueError, 'VERSION.*out of spec.*'):
-            parse_version(int_seq)
+            parse_version(int_seq._archiver)
 
     def test_parse_version_VERSION_file_extra_field(self):
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3])
@@ -113,7 +113,7 @@ class TestVersionParser(unittest.TestCase):
             fh.write('fourth line\n')
 
         with self.assertRaisesRegex(ValueError, 'VERSION.*out of spec.*'):
-            parse_version(int_seq)
+            parse_version(int_seq._archiver)
 
     '''
     Tests of the regex match itself below
@@ -201,5 +201,5 @@ class TestVersionParser(unittest.TestCase):
                 fh.write('archive: 42.2\n')
                 fh.write('framework: 2025.4.0\n')
 
-            parser = ArchiveParser.get_parser(int_seq)
+            parser = ArchiveParser.get_parser(int_seq._archiver)
             self.assertIsInstance(parser, DummyParser)

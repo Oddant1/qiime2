@@ -33,7 +33,7 @@ from .testing_utilities import (
 )
 
 from qiime2 import Artifact, Cache
-from qiime2.core.archive.archiver import ChecksumDiff
+from qiime2.core.archive.archiver import ChecksumDiff, Archiver
 from qiime2.core.archive.provenance_lib.tests.testing_utilities import (
     write_zip_file
 )
@@ -104,7 +104,9 @@ class ProvDAGTests(unittest.TestCase):
         self.assertEqual(num_pipeline_viz_term_nodes, 1)
 
     def test_root_node_is_archive_root(self):
-        exp_node = ProvNode(Config(), self.das.concated_ints.artifact)
+        exp_node = ProvNode(
+            Config(), self.das.concated_ints.artifact._archiver
+        )
         act_terminal_node, *_ = self.das.concated_ints.dag.terminal_nodes
         self.assertEqual(exp_node, act_terminal_node)
 
@@ -926,26 +928,27 @@ class SelectParserTests(unittest.TestCase):
         cls.das.free()
 
     def test_correct_parser_type(self):
-        empty = select_parser(None)
+        _, empty = select_parser(None)
         self.assertIsInstance(empty, EmptyParser)
 
-        archive = select_parser(self.das.concated_ints.filepath)
+        payload, archive = select_parser(self.das.concated_ints.filepath)
         self.assertIsInstance(archive, ArchiveParser)
+        self.assertIsInstance(payload, Archiver)
 
         dag = ProvDAG()
-        pdag = select_parser(dag)
+        _, pdag = select_parser(dag)
         self.assertIsInstance(pdag, ProvDAGParser)
 
         # check dir_fp as fp
         test_dir = os.path.join(self.tempdir, 'parse_dir_test')
         os.mkdir(test_dir)
         dir_fp = pathlib.Path(test_dir)
-        dir_p = select_parser(dir_fp)
+        _, dir_p = select_parser(dir_fp)
         self.assertIsInstance(dir_p, DirectoryParser)
 
         # check dir_fp as str
         dir_fp_str = str(dir_fp)
-        dir_p = select_parser(dir_fp_str)
+        _, dir_p = select_parser(dir_fp_str)
         self.assertIsInstance(dir_p, DirectoryParser)
 
     def test_correct_archive_parser_version(self):
@@ -953,8 +956,8 @@ class SelectParserTests(unittest.TestCase):
             ParserV0, ParserV1, ParserV2, ParserV3, ParserV4, ParserV5,
             ParserV6
         ]
-        for archive, parser in zip(self.das.all_artifact_versions, parsers):
-            handler = select_parser(archive.filepath)
+        for artifact, parser in zip(self.das.all_artifact_versions, parsers):
+            _, handler = select_parser(artifact.artifact._archiver)
             self.assertEqual(type(handler), parser)
 
 
@@ -1061,7 +1064,7 @@ class ParseProvenanceTests(unittest.TestCase):
             UnparseableDataError,
             f"Input data {dir_fp} is not supported.\n"
             "Parsers are available for the following data types: "
-            "\['Archiver', 'str', 'ProvDAG', 'NoneType'].\n"
+            "\['Archiver', 'str', 'ProvDAG', 'NoneType'].\n"  # noqa: W605
             "The following error was caught while trying to identify a parser "
             "that can handle this input data:\n"
             f"{dir_fp} does not exist."
@@ -1074,7 +1077,7 @@ class ParseProvenanceTests(unittest.TestCase):
             UnparseableDataError,
             f"Input data {input_data} is not supported.\n"
             "Parsers are available for the following data types: "
-            "\['Archiver', 'str', 'ProvDAG', 'NoneType'].\n"
+            "\['Archiver', 'str', 'ProvDAG', 'NoneType'].\n"  # noqa: W605
             "The following error was caught while trying to identify a parser "
             "that can handle this input data:\n"
             "'NoneType' object has no attribute 'get_parser'"

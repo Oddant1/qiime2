@@ -24,7 +24,6 @@ from ._checksum_validator import (
 )
 from .util import parse_version
 from ..provenance import MetadataInfo
-from qiime2.sdk import Result
 from qiime2.core.archive import Archiver
 
 
