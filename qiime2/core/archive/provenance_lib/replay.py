@@ -784,9 +784,9 @@ def build_action_usage(
 
     # Determine if the action we are looking at is present in the environment
     # we are using
-    plugin_obj = cfg.pm._plugin_by_id.get(action)
+    plugin_obj = cfg.pm._plugin_by_id.get(plugin)
     if plugin_obj:
-        action_present = plugin.actions.get(action, default=False)
+        action_present = action in plugin_obj.actions
     else:
         action_present = False
 
