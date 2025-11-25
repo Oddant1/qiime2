@@ -9,14 +9,14 @@ from datetime import datetime
 from importlib.metadata import metadata
 import importlib.resources
 import textwrap
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Type
 
 from .parse import ProvDAG
 
 from qiime2.sdk import Action
 from qiime2.plugins import ArtifactAPIUsage
 from qiime2.sdk.usage import (
-    Usage, UsageVariable, UsageInputs, UsageOutputs
+    Usage, UsageAction, UsageVariable, UsageInputs, UsageOutputs
 )
 
 
@@ -113,7 +113,32 @@ def build_footer(dag: ProvDAG, boundary: str) -> List[str]:
     return footer
 
 
+class ReplayUsageAction(UsageAction):
+    def __init__(self, plugin_id: str, action_id: str,
+                 action_present: bool=True):
+        self.action_present = action_present
+        if action_present:
+            super().__init__(plugin_id, action_id)
+        else:
+            if plugin_id == '':
+                raise ValueError('Must specify a value for plugin_id.')
+
+            if action_id == '':
+                raise ValueError('Must specify a value for action_id.')
+
+            self.plugin_id: str = plugin_id
+            self.action_id: str = action_id
+
+    def get_action(self) -> Action | None:
+        if self.action_present:
+            return super().get_action()
+
+        return None
+
+
 class ReplayPythonUsage(ArtifactAPIUsage):
+    UsageAction: Type[ReplayUsageAction] = ReplayUsageAction
+
     shebang = '#!/usr/bin/env python'
     header_boundary = '# ' + ('-' * 77)
     copyright = importlib.resources.read_text(
