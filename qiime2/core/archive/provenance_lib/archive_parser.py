@@ -205,6 +205,7 @@ class ProvNode:
         _archive_version = float(archive_version)
         self._framework_version = framework_version
 
+        #  Set up the base path we are looking under for files
         self._uuid = uuid if uuid else str(archiver.uuid)
         if uuid is None:
             base_path = archiver.path
@@ -212,6 +213,7 @@ class ProvNode:
             base_path = \
                 archiver.path / 'provenance' / 'artifacts' / self._uuid
 
+        # Parse the action.yaml
         if _archive_version >= 2:
             if uuid:
                 action_path = base_path / 'action' / 'action.yaml'
@@ -220,9 +222,11 @@ class ProvNode:
                     base_path / 'provenance' / 'action' / 'action.yaml'
             self.action = _Action(action_path)
 
+        # Parse the root metadata
         metadata_path = base_path / 'metadata.yaml'
         self._result_md = _ResultMetadata(metadata_path)
 
+        # Parse the citations
         if _archive_version >= 4:
             if uuid:
                 citation_path = base_path / 'citations.bib'
