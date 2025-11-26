@@ -39,6 +39,7 @@ from typing import Set, List, Literal, Any, Callable, Type, Union
 import dataclasses
 import functools
 import re
+import yaml
 
 import qiime2
 from qiime2 import sdk
@@ -1679,9 +1680,43 @@ class Usage:
                              'received %r.' % (UsageOutputNames,
                                                type(outputs)))
 
+        usage_results = []
         for param_name, var_name in outputs.items():
-            print(param_name)
-            print(var_name)
+            var_type = self._find_var_type_from_prov(
+                action.node, action.node.action._action_dict)
+
+            variable = self._usage_variable(var_name, lambda x: x, var_type)
+            usage_results.append(variable)
+
+        results = UsageOutputs(outputs.keys(), usage_results)
+        return results
+
+    def _find_var_type_from_prov(self,
+                                 node,
+                                 action_yaml):
+        if action_yaml['action']['type'] == 'visualizer':
+            # Visualizers can only output visualizations
+            if type(action_yaml['action']['output-name']) is List:
+                var_type = 'visualization_collection'
+            else:
+                var_type = 'visualization'
+        elif action_yaml['action']['type'] == 'method':
+            # Methods can only output artifacts
+            if type(action_yaml['action']['output-name']) is List:
+                var_type = 'artifact_collection'
+            else:
+                var_type = 'artifact'
+        else:
+            # If we are a pipeline we need to recurse until we find our root
+            alias_uuid = action_yaml['action']['alias-of']
+            alias_path = node._archiver.provenance_dir / 'artifacts' \
+                / alias_uuid / 'action' / 'action.yaml'
+            alias_yaml = yaml.safe_load(alias_path)
+
+            var_type = self._find_var_type_from_prov(node, alias_yaml)
+
+        return var_type
+
 
 class DiagnosticUsage(Usage):
     @dataclasses.dataclass(frozen=True)

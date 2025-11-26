@@ -114,11 +114,9 @@ def build_footer(dag: ProvDAG, boundary: str) -> List[str]:
 
 
 class ReplayUsageAction(UsageAction):
-    def __init__(self, plugin_id: str, action_id: str, node: ProvNode,
-                 action_present: bool=True):
+    def __init__(self, plugin_id: str, action_id: str, node: ProvNode):
         self.node = node
-        self.action_present = action_present
-        if action_present:
+        if node.action_present:
             super().__init__(plugin_id, action_id)
         else:
             if plugin_id == '':
@@ -131,7 +129,7 @@ class ReplayUsageAction(UsageAction):
             self.action_id: str = action_id
 
     def get_action(self) -> Action | None:
-        if self.action_present:
+        if self.node.action_present:
             return super().get_action()
 
         return None
@@ -264,6 +262,59 @@ class ReplayPythonUsage(ArtifactAPIUsage):
         lines.append('')
         self._add(lines)
 
+    def _template_action_not_present(
+        self, action: Action, input_opts: UsageInputs, variables: UsageOutputs
+    ):
+        '''
+        Templates the artifact api python code for the action `action`.
+
+        Extends the parent method to:
+        - accommodate action signatures that may differ between those found in
+          provenance and those accessible in the currently executing
+          environment
+        - render artifact api code that saves the results to disk.
+
+        Parameters
+        ----------
+        action : Action
+            The qiime2 Action object.
+        input_opts : UsageInputs
+            The UsageInputs mapping for the action.
+        variables : UsageOutputs
+            The UsageOutputs object for the action.
+        '''
+        output_vars = 'action_results'
+
+        plugin_id = action.plugin_id
+        action_id = action.action_id
+        lines = [
+            '# FIXME: The following action was not found in your current\n'
+            '# QIIME 2 environment. Please ensure the action is correct\n'
+            '# before running.',
+            f'{output_vars} = {plugin_id}_actions.{action_id}('
+        ]
+
+        for k, v in input_opts.items():
+            line = self._template_input(k, v)
+            lines.append(line)
+
+        lines.append(')')
+        for k, v in variables._asdict().items():
+            interface_name = v.to_interface_name()
+            lines.append('%s = action_results.%s' % (interface_name, k))
+
+        lines.append(
+            '# SAVE: comment out the following with \'# \' to skip saving '
+            'Results to disk'
+        )
+        for k, v in variables._asdict().items():
+            interface_name = v.to_interface_name()
+            lines.append(
+                '%s.save(\'%s\')' % (interface_name, interface_name,))
+
+        lines.append('')
+        self._add(lines)
+
     def _template_outputs(
         self, action: Action, variables: UsageOutputs
     ) -> str:
@@ -299,6 +350,31 @@ class ReplayPythonUsage(ArtifactAPIUsage):
             output_vars.append('')
 
         return ', '.join(output_vars).strip()
+
+    def action(self, action, inputs, outputs):
+        if action.node.action_present:
+            variables = super().action(action, inputs, outputs)
+            self._plugin_import_as_name(action)
+        else:
+            variables = super().action_not_present(action, inputs, outputs)
+            self._plugin_import_as_name_not_present(action)
+
+        inputs = inputs.map_variables(lambda v: v.to_interface_name())
+        if action.node.action_present:
+            self._template_action(action, inputs, variables)
+        else:
+            self._template_action_not_present(action, inputs, variables)
+
+        return variables
+
+    def _plugin_import_as_name_not_present(self, action):
+        base = f'qiime2.plugins.{action.plugin_id}.actions'
+        FIXME_COMMENT = ("# FIXME: This import is unverified because one or "
+        "more actions associated with it were not found in your current "
+        "QIIME 2 environment")
+        as_ = f'{action.plugin_id}_actions  {FIXME_COMMENT}'
+        self._update_imports(import_='%s.actions' % (base,), as_=as_)
+        return as_
 
     def init_metadata(
         self, name: str, factory: Callable, dumped_md_fn: str = ''
