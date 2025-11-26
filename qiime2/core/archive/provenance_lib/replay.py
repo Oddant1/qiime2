@@ -1218,8 +1218,7 @@ def dump_recorded_md_file(
 
 
 def param_is_metadata_column(
-    cfg: ReplayConfig, param: str, plugin: str, action: str,
-    ns: ReplayNamespaces
+    cfg: ReplayConfig, param: str, plugin: str, action: str
 ) -> bool:
     '''
     Returns True if the parameter name `param` is registered as a
