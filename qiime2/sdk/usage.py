@@ -1661,6 +1661,27 @@ class Usage:
         object.__setattr__(results, '_cache_reset', cache_clear)
         return results
 
+    def action_not_present(self,
+                           action: 'qiime2.sdk.usage.UsageAction',
+                           inputs: 'qiime2.sdk.usage.UsageInputs',
+                           outputs: 'qiime2.sdk.usage.UsageOutputNames'
+                           ) -> 'qiime2.sdk.usage.UsageOutputs':
+        if not isinstance(action, UsageAction):
+            raise ValueError('Invalid value for `action`: expected %r, '
+                             'received %r.' % (UsageAction, type(action)))
+
+        if not isinstance(inputs, UsageInputs):
+            raise ValueError('Invalid value for `inputs`: expected %r, '
+                             'received %r.' % (UsageInputs, type(inputs)))
+
+        if not isinstance(outputs, UsageOutputNames):
+            raise ValueError('Invalid value for `outputs`: expected %r, '
+                             'received %r.' % (UsageOutputNames,
+                                               type(outputs)))
+
+        for param_name, var_name in outputs.items():
+            print(param_name)
+            print(var_name)
 
 class DiagnosticUsage(Usage):
     @dataclasses.dataclass(frozen=True)

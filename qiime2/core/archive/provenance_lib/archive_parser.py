@@ -226,6 +226,14 @@ class ProvNode:
         metadata_path = base_path / 'metadata.yaml'
         self._result_md = _ResultMetadata(metadata_path)
 
+        # Determine if the action we are looking at is present in the environment
+        # we are using
+        plugin_obj = cfg.pm._plugin_by_id.get(self.action.plugin)
+        if plugin_obj:
+            self.action_present = self.action.action_name in plugin_obj.actions
+        else:
+            self.action_present = False
+
         # Parse the citations
         if _archive_version >= 4:
             if uuid:

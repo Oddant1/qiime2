@@ -151,11 +151,6 @@ class ReplayNamespaces:
     def __init__(self, dag=None):
         self._usg_var_ns = {}
         self._action_ns = set()
-        # TODO: Add namespace for "actions not present" here?
-        # If action is not present then outputs and metadata are uncertain
-        # TODO: Is there any reason to differentiate between plugin not present
-        # and action not present?
-        self.actions_not_present_ns = set()
         if dag:
             self.result_collection_ns = \
                 self.make_result_collection_namespace(dag)
@@ -782,17 +777,6 @@ def build_action_usage(
     action = node.action.action_name
     plg_action_name = ns.uniquify_action_name(plugin, action)
 
-    # Determine if the action we are looking at is present in the environment
-    # we are using
-    plugin_obj = cfg.pm._plugin_by_id.get(plugin)
-    if plugin_obj:
-        action_present = action in plugin_obj.actions
-    else:
-        action_present = False
-
-    if not action_present:
-        ns.actions_not_present_ns.add(f'{plugin} {action}')
-
     inputs = _collect_action_inputs(cfg.use, ns, node)
 
     # Process outputs before params so we can access the unique output name
@@ -1065,7 +1049,8 @@ def init_md_from_recorded_md(
     plugin = node.action.plugin
     action = node.action.action_name
 
-    if param_is_metadata_column(cfg, param_name, plugin, action, ns):
+    if node.action_present and \
+            param_is_metadata_column(cfg, param_name, plugin, action, ns):
         mdc_id = node._uuid + '_mdc'
         mdc_name = ns.get_usg_var_record(md_id).name + '_mdc'
         var_name = ns.add_usg_var_record(mdc_id, mdc_name)
@@ -1107,7 +1092,8 @@ def init_md_from_md_file(
     action = node.action.action_name
     md = cfg.use.init_metadata(ns.get_usg_var_record(md_id).name, lambda: None)
 
-    if param_is_metadata_column(cfg, param_name, plugin, action, ns):
+    if node.action_present and \
+            param_is_metadata_column(cfg, param_name, plugin, action, ns):
         mdc_id = node._uuid + '_mdc'
         mdc_name = ns.get_usg_var_record(md_id).name + '_mdc'
         var_name = ns.add_usg_var_record(mdc_id, mdc_name)
@@ -1250,8 +1236,6 @@ def param_is_metadata_column(
         The plugin that the relevant action belongs to.
     action : str
         The action that has the parameter of interest.
-    ns : ReplayNamespaces
-        Info tracking usage and result collection namespaces.
 
     Returns
     -------
@@ -1265,9 +1249,6 @@ def param_is_metadata_column(
         - If the action of interest is not registered with the plugin.
         - If the parameter is not in the signature of the action.
     '''
-    if f'{plugin} {action}' in ns.actions_not_present_ns:
-        return False
-
     plugin = cfg.pm.get_plugin(id=plugin)
 
     try:
