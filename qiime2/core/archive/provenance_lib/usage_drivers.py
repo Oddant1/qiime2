@@ -11,12 +11,12 @@ import importlib.resources
 import textwrap
 from typing import Any, Callable, List, Type
 
-from .parse import ProvDAG
+from .parse import ProvDAG, ProvNode
 
 from qiime2.sdk import Action
 from qiime2.plugins import ArtifactAPIUsage
 from qiime2.sdk.usage import (
-    Usage, UsageAction, UsageVariable, UsageInputs, UsageOutputs
+    Usage, UsageAction, UsageVariable, UsageInputs, UsageOutputs,
 )
 
 
@@ -114,8 +114,9 @@ def build_footer(dag: ProvDAG, boundary: str) -> List[str]:
 
 
 class ReplayUsageAction(UsageAction):
-    def __init__(self, plugin_id: str, action_id: str,
+    def __init__(self, plugin_id: str, action_id: str, node: ProvNode,
                  action_present: bool=True):
+        self.node = node
         self.action_present = action_present
         if action_present:
             super().__init__(plugin_id, action_id)

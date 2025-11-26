@@ -865,7 +865,8 @@ def build_action_usage(
 
     usg_var = cfg.use.action(
         cfg.use.UsageAction(
-            plugin_id=plugin, action_id=action, action_present=action_present),
+            plugin_id=plugin, action_id=action, node=node,
+            action_present=action_present),
         cfg.use.UsageInputs(**inputs),
         cfg.use.UsageOutputNames(**outputs)
     )
