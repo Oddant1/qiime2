@@ -226,14 +226,6 @@ class ProvNode:
         metadata_path = base_path / 'metadata.yaml'
         self._result_md = _ResultMetadata(metadata_path)
 
-        # Determine if the action we are looking at is present in the environment
-        # we are using
-        plugin_obj = cfg.pm._plugin_by_id.get(self.action.plugin)
-        if plugin_obj:
-            self.action_present = self.action.action_name in plugin_obj.actions
-        else:
-            self.action_present = False
-
         # Parse the citations
         if _archive_version >= 4:
             if uuid:
@@ -247,6 +239,27 @@ class ProvNode:
                 self._get_metadata_from_Action()
             if cfg.parse_study_metadata:
                 self._metadata = self._parse_metadata(all_metadata_fps)
+
+    def set_action_present(self, action_present):
+        '''
+        This is set later when we build our UsageAction and actually have a
+        PluginManager so we can determine whether this action is present in our
+        environment or not
+        '''
+        if hasattr(self, '_action_present'):
+            raise ValueError('Action present already set, cannot set twice')
+
+        self._action_present = action_present
+
+    @property
+    def action_present(self):
+        if not hasattr(self, '_action_present'):
+            raise ValueError(
+                'No value set for whether action is present or not'
+            )
+
+        return self._action_present
+
 
     def _get_metadata_from_Action(
             self) -> Tuple[Dict[str, str], List[Dict[str, str]]]:

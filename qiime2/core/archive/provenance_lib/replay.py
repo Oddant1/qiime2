@@ -777,6 +777,14 @@ def build_action_usage(
     action = node.action.action_name
     plg_action_name = ns.uniquify_action_name(plugin, action)
 
+    # Determine if the action we are looking at is present in the environment
+    # we are using
+    plugin_obj = cfg.pm._plugin_by_id.get(node.action.plugin)
+    if plugin_obj:
+        node.set_action_present(node.action.action_name in plugin_obj.actions)
+    else:
+        node.set_action_present(False)
+
     inputs = _collect_action_inputs(cfg.use, ns, node)
 
     # Process outputs before params so we can access the unique output name
