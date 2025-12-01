@@ -289,8 +289,8 @@ class ReplayPythonUsage(ArtifactAPIUsage):
         action_id = action.action_id
         lines = [
             '# FIXME: The following action was not found in your current\n'
-            '# QIIME 2 environment. Please ensure the action is correct\n'
-            '# before running.',
+            '# QIIME 2 environment. Please ensure the action and its\n'
+            '# parameters are correct before running.',
             f'{output_vars} = {plugin_id}_actions.{action_id}('
         ]
 
@@ -371,13 +371,10 @@ class ReplayPythonUsage(ArtifactAPIUsage):
 
     def _plugin_import_as_name_not_present(self, action):
         base = f'qiime2.plugins.{action.plugin_id}.actions'
-        FIXME_COMMENT = (
-            "# FIXME: This import is unverified because one or more actions "
-            "associated with it were not found in your current QIIME 2 "
-            "environment"
+        as_ = f'{action.plugin_id}_actions'
+        self._update_imports(
+            import_='%s.actions' % (base,), as_=as_, missing_=True
         )
-        as_ = f'{action.plugin_id}_actions  {FIXME_COMMENT}'
-        self._update_imports(import_='%s.actions' % (base,), as_=as_)
         return as_
 
     def init_metadata(
