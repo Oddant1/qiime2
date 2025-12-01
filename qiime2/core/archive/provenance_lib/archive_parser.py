@@ -266,7 +266,6 @@ class ProvNode:
 
         return self._action_present
 
-
     def _get_metadata_from_Action(
             self) -> Tuple[Dict[str, str], List[Dict[str, str]]]:
         '''
