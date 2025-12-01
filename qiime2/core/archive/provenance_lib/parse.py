@@ -578,7 +578,7 @@ def _load_payload(payload):
         payload = payload._archiver
 
     if isinstance(payload, str) and not os.path.isdir(payload):
-        payload = Archiver.load(payload)
+        payload = Archiver.load(payload, replay=True)
 
     return payload
 

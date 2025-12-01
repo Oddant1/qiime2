@@ -1711,9 +1711,10 @@ class Usage:
             alias_uuid = action_yaml['action']['alias-of']
             alias_path = node._archiver.provenance_dir / 'artifacts' \
                 / alias_uuid / 'action' / 'action.yaml'
-            alias_yaml = yaml.safe_load(alias_path)
 
-            var_type = self._find_var_type_from_prov(node, alias_yaml)
+            with open(alias_path) as fh:
+                alias_yaml = yaml.safe_load(fh)
+                var_type = self._find_var_type_from_prov(node, alias_yaml)
 
         return var_type
 

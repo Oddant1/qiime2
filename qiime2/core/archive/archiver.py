@@ -370,7 +370,7 @@ class Archiver:
         return str(archive.extract(dest))
 
     @classmethod
-    def load(cls, filepath):
+    def load(cls, filepath, *args, replay=False):
         archive = cls.get_archive(filepath)
         path, cache = cls._make_temp_path(archive.uuid)
 
@@ -381,11 +381,12 @@ class Archiver:
 
             archive.mount(path)
             process_alias, data_path = \
-                cache._rename_to_data(archive.uuid, path)
+                cache._rename_to_data(archive.uuid, path, replay=True)
             rec = ArchiveRecord(
                 data_path, data_path / archive.VERSION_FILE, archive.uuid,
                 archive.version, archive.framework_version)
-            ref = cls(data_path, process_alias, Format(rec), cache)
+            ref = cls(
+                data_path, process_alias, Format(rec, replay=replay), cache)
             return ref
         # We really just want to kill these paths if anything at all goes wrong
         # Exceptions including keyboard interrupts are re-raised
@@ -396,7 +397,7 @@ class Archiver:
             raise
 
     @classmethod
-    def load_raw(cls, filepath, cache):
+    def load_raw(cls, filepath, cache, *args, replay=False):
         archive = cls.get_archive(filepath)
         process_alias = cache._alias(str(archive.uuid))
 
@@ -407,7 +408,7 @@ class Archiver:
         path = pathlib.Path(filepath)
 
         rec = archive.mount(path)
-        ref = cls(path, process_alias, Format(rec), cache)
+        ref = cls(path, process_alias, Format(rec, replay=replay), cache)
 
         return ref
 
