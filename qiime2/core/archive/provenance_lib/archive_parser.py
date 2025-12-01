@@ -25,6 +25,7 @@ from ._checksum_validator import (
 from .util import parse_version
 from ..provenance import MetadataInfo
 from qiime2.core.archive import Archiver
+from qiime2.sdk import PluginManager
 
 
 @dataclass
@@ -254,9 +255,14 @@ class ProvNode:
     @property
     def action_present(self):
         if not hasattr(self, '_action_present'):
-            raise ValueError(
-                'No value set for whether action is present or not'
-            )
+            pm = PluginManager.reuse_existing()
+
+            plugin_obj = pm._plugin_by_id.get(self.action.plugin)
+            if plugin_obj:
+                self.set_action_present(
+                    self.action.action_name in plugin_obj.actions)
+            else:
+                self.set_action_present(False)
 
         return self._action_present
 
