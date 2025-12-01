@@ -354,16 +354,18 @@ class ReplayPythonUsage(ArtifactAPIUsage):
     def action(self, action, inputs, outputs):
         if action.node.action_present:
             variables = super().action(action, inputs, outputs)
-            self._plugin_import_as_name(action)
         else:
-            variables = super().action_not_present(action, inputs, outputs)
-            self._plugin_import_as_name_not_present(action)
+            variables = self.action_not_present(action, inputs, outputs)
+
+        return variables
+
+    def action_not_present(self, action, inputs, outputs):
+        variables = super().action_not_present(action, inputs, outputs)
+
+        self._plugin_import_as_name_not_present(action)
 
         inputs = inputs.map_variables(lambda v: v.to_interface_name())
-        if action.node.action_present:
-            self._template_action(action, inputs, variables)
-        else:
-            self._template_action_not_present(action, inputs, variables)
+        self._template_action_not_present(action, inputs, variables)
 
         return variables
 
