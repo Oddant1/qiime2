@@ -28,6 +28,7 @@ from qiime2.sdk.plugin_manager import PluginManager
 class DummyArtifact:
     name: str
     artifact: Artifact
+    archiver: Archiver
     uuid: str
     filepath: str
     dag: ProvDAG
@@ -70,7 +71,8 @@ class DummyArtifacts:
             fp = os.path.join(self.tempdir, f'{name}.qza')
             artifact.save(fp)
             test_artifact = DummyArtifact(
-                name, artifact, str(artifact.uuid), fp, ProvDAG(fp)
+                name, artifact, artifact._archiver, str(artifact.uuid), fp,
+                ProvDAG(fp)
             )
             setattr(self, name, test_artifact)
 
@@ -149,7 +151,8 @@ class DummyArtifacts:
             fp = os.path.join(self.tempdir, f'{name}{ext}')
             artifact.save(fp)
             test_artifact = DummyArtifact(
-                name, artifact, str(artifact.uuid), fp, ProvDAG(fp)
+                name, artifact, artifact._archiver, str(artifact.uuid), fp,
+                ProvDAG(fp)
             )
             setattr(self, name, test_artifact)
 
@@ -160,7 +163,10 @@ class DummyArtifacts:
         make artifacts of non-current versions on the fly
         '''
         for version in range(0, 7):
-            dirname = f'concated-ints-v{version}'
+            if version == 0:
+                dirname = 'table-v0'
+            else:
+                dirname = f'concated-ints-v{version}'
 
             versioned_artifact_dir = os.path.join(self.datadir, dirname)
             temp_zf_path = os.path.join(self.tempdir, 'temp.zip')
@@ -169,8 +175,14 @@ class DummyArtifacts:
             filename = f'{dirname}.qza'
             fp = os.path.join(self.tempdir, filename)
 
-            a = Artifact.load(temp_zf_path)
-            a.save(fp)
+            if version == 0:
+                shutil.copy(temp_zf_path, fp)
+                archiver = Archiver.load(temp_zf_path, replay=True)
+                artifact = None
+            else:
+                artifact = Artifact.load(temp_zf_path)
+                archiver = artifact._archiver
+                artifact.save(fp)
 
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', category=UserWarning)
@@ -181,7 +193,9 @@ class DummyArtifacts:
             uuid = terminal_node._uuid
 
             name = filename.replace('-', '_').replace('.qza', '')
-            da = DummyArtifact(name, a, uuid, fp, dag, version)
+            da = DummyArtifact(
+                name, artifact, archiver, uuid, fp, dag, version
+            )
             setattr(self, name, da)
 
     def init_artifact_with_md_in_provenance(self):
@@ -198,7 +212,7 @@ class DummyArtifacts:
         terminal_node, *_ = dag.terminal_nodes
         uuid = terminal_node._uuid
         name = filename.replace('-', '_').replace('.qza', '')
-        da = DummyArtifact(name, a, uuid, fp, dag, 6)
+        da = DummyArtifact(name, a, a._archiver, uuid, fp, dag, 6)
         setattr(self, name, da)
 
     def init_no_checksum_dag(self):
@@ -213,7 +227,7 @@ class DummyArtifacts:
     @property
     def all_artifact_versions(self):
         return (
-            self.concated_ints_v0, self.concated_ints_v1,
+            self.table_v0, self.concated_ints_v1,
             self.concated_ints_v2, self.concated_ints_v3,
             self.concated_ints_v4, self.concated_ints_v5, self.concated_ints_v6
         )

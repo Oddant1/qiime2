@@ -41,7 +41,7 @@ class ParserVxTests(unittest.TestCase):
     @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_populate_archive(self):
         for artifact in self.das.all_artifact_versions:
-            parser = ArchiveParser.get_parser(artifact.artifact._archiver)
+            parser = ArchiveParser.get_parser(artifact.archiver)
             uuid = artifact.uuid
             version = artifact.archive_version
 
@@ -51,10 +51,10 @@ class ParserVxTests(unittest.TestCase):
                     'Artifact .*prior to provenance'
                 ):
                     res = parser.parse_prov(
-                        Config(), artifact.artifact._archiver)
+                        Config(), artifact.archiver)
 
             else:
-                res = parser.parse_prov(Config(), artifact.artifact._archiver)
+                res = parser.parse_prov(Config(), artifact.archiver)
                 self.assertIsInstance(res, ParserResults)
                 pa_uuids = res.parsed_artifact_uuids
                 self.assertIsInstance(pa_uuids, set)
@@ -74,9 +74,9 @@ class ParserVxTests(unittest.TestCase):
 
     def test_validate_checksums(self):
         for artifact in self.das.all_artifact_versions:
-            parser = ArchiveParser.get_parser(artifact.artifact._archiver)
+            parser = ArchiveParser.get_parser(artifact.archiver)
             is_valid, diff = \
-                parser._validate_checksums(artifact.artifact._archiver)
+                parser._validate_checksums(artifact.archiver)
             if artifact.archive_version < 5:
                 self.assertEqual(is_valid, ValidationCode.PREDATES_CHECKSUMS)
                 self.assertEqual(diff, None)
@@ -91,13 +91,13 @@ class ParserVxTests(unittest.TestCase):
         even when it calls super().parse_prov() internally
         '''
         for artifact in self.das.all_artifact_versions:
-            parser = ArchiveParser.get_parser(artifact.artifact._archiver)
+            parser = ArchiveParser.get_parser(artifact.archiver)
             if artifact.archive_version < 5:
                 parser._validate_checksums = MagicMock(
                     # return values only here to facilitate normal execution
                     return_value=(ValidationCode.PREDATES_CHECKSUMS, None)
                 )
-                parser.parse_prov(Config(), artifact.artifact._archiver)
+                parser.parse_prov(Config(), artifact.archiver)
                 parser._validate_checksums.assert_called_once()
             else:
                 parser._validate_checksums = MagicMock(
@@ -106,7 +106,7 @@ class ParserVxTests(unittest.TestCase):
                         ChecksumDiff({}, {}, {})
                     )
                 )
-                parser.parse_prov(Config(), artifact.artifact._archiver)
+                parser.parse_prov(Config(), artifact.archiver)
                 parser._validate_checksums.assert_called_once()
 
 
@@ -128,7 +128,7 @@ class ArchiveParserTests(unittest.TestCase):
         for artifact, parser_version in zip(
             self.das.all_artifact_versions, parsers
         ):
-            parser = ArchiveParser.get_parser(artifact.artifact._archiver)
+            parser = ArchiveParser.get_parser(artifact.archiver)
             self.assertEqual(type(parser), parser_version)
 
     def test_artifact_parser_parse_prov(self):
@@ -364,7 +364,7 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
         cls.nodes = {}
         for artifact in cls.das.all_artifact_versions:
             cls.nodes[str(artifact.archive_version)] = \
-                ProvNode(cfg, artifact.artifact._archiver)
+                ProvNode(cfg, artifact.archiver)
 
         with zipfile.ZipFile(cls.das.concated_ints_with_md.filepath) as zf:
             root_node_id = cls.das.concated_ints_with_md.uuid
@@ -439,10 +439,16 @@ class ProvNodeTests(unittest.TestCase, ReallyEqualMixin):
         for node, archive_version in zip(
             self.nodes, [str(i) for i in range(7)]
         ):
-            self.assertEqual(
-                self.nodes[node].format, 'IntSequenceDirectoryFormat'
-            )
-            self.assertEqual(self.nodes[node].type, 'IntSequence1')
+            if archive_version == '0':
+                self.assertEqual(self.nodes[node].format, 'BIOMV210DirFmt')
+                self.assertEqual(self.nodes[node].type,
+                                 'FeatureTable[Frequency]')
+            else:
+                self.assertEqual(
+                    self.nodes[node].format, 'IntSequenceDirectoryFormat'
+                )
+                self.assertEqual(self.nodes[node].type, 'IntSequence1')
+
             if archive_version == '0' or archive_version == '1':
                 self.assertEqual(self.nodes[node].has_provenance, False)
             else:
