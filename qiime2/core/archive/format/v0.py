@@ -75,7 +75,7 @@ class ArchiveFormat:
 
         try:
             self.format = sdk.parse_format(format)
-        except KeyError:
+        except TypeError:
             if replay:
                 self.format = format
             else:
