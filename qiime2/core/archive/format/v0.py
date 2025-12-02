@@ -72,10 +72,14 @@ class ArchiveFormat:
 
         self.uuid = _uuid.UUID(uuid)
         self.type = sdk.parse_type(type)
-        if replay:
-            self.format = format
-        else:
+
+        try:
             self.format = sdk.parse_format(format)
+        except KeyError:
+            if replay:
+                self.format = format
+            else:
+                raise
 
         self.path = path
         self.data_dir = path / self.DATA_DIR
