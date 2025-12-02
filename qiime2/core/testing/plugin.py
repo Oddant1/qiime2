@@ -10,7 +10,7 @@ from importlib import import_module
 
 from qiime2.plugin import (Plugin, Bool, Int, Str, Choices, Range, List, Set,
                            Collection, Visualization, Metadata, MetadataColumn,
-                           Categorical, Numeric, TypeMatch, Capture)
+                           Categorical, Numeric, TypeMatch)
 
 from .format import (
     IntSequenceFormat,
@@ -1115,7 +1115,7 @@ dummy_plugin.methods.register_function(
     function=random_seed_method,
     inputs={},
     parameters={
-       'random_seed': Capture[Int]
+       'random_seed': Int
     },
     outputs=[('seed', SingleInt)],
     name='Takes a random seed',
@@ -1129,7 +1129,7 @@ dummy_plugin.methods.register_function(
     function=random_seed_method_set_twice,
     inputs={},
     parameters={
-       'random_seed': Capture[Int]
+       'random_seed': Int
     },
     outputs=[('seed', SingleInt)],
     name='Sets the value on the Capture twice.',

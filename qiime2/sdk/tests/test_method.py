@@ -756,7 +756,7 @@ class TestMethod(unittest.TestCase):
 
         self.assertEqual(returned_seed, prov_seed)
 
-    def test_set_random_seed_method(self):
+    def test_set_random_seed_method_good_value(self):
         random_seed_method = self.plugin.methods['random_seed_method']
         int1, = random_seed_method(0)
 

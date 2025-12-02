@@ -621,24 +621,6 @@ class _Threads(_PrimitiveTemplateBase):
         return str(value)
 
 
-class _Capture(_PrimitiveTemplateBase):
-    _valid_predicates = set()
-
-    def is_element_expr(self, self_expr, value):
-        return value in self_expr.fields[0]
-
-    def is_element(self, value):
-        raise NotImplementedError
-
-    def get_field_names(self):
-        return ["type"]
-
-    def validate_field(self, name, field):
-        # We don't actually care what type this is as long as it is a complete
-        # type expression which is verified elsewhere.
-        pass
-
-
 class CaptureHolder:
     def __init__(self, name, value, type, provenance):
         self._set = False
@@ -646,6 +628,9 @@ class CaptureHolder:
         self._value = value
         self._type = type
         self._provenance = provenance
+
+    def get_value(self):
+        return self._value
 
     def set_value(self, value):
         if self._set:
@@ -670,7 +655,6 @@ Categorical = _Categorical()
 Numeric = _Numeric()
 Jobs = _Jobs()
 Threads = _Threads()
-Capture = _Capture()
 
 
 def infer_primitive_type(value):
