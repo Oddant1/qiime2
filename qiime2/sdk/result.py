@@ -7,14 +7,18 @@
 # ----------------------------------------------------------------------------
 
 import os
+import re
 import shutil
 import warnings
 import tempfile
+import subprocess
 import collections
 import distutils.dir_util
 import pathlib
+import json
 from typing import Union, get_args, get_origin
 
+from qiime2.core.format import report
 import qiime2.metadata
 import qiime2.plugin
 import qiime2.sdk
@@ -26,7 +30,9 @@ import qiime2.core.util as util
 import qiime2.core.exceptions as exceptions
 
 from qiime2.sdk.iresult import IResult
-from qiime2.core.annotate import Annotation
+from qiime2.core.annotate import (Annotation, ANNOTATION_TYPE_DICT)
+from qiime2.core.util import (sha512_file_hex, gpg_find_key,
+                              normalize_fingerprint, unix_gpg_terminal_helper)
 
 # Note: Result, Artifact, and Visualization classes are in this file to avoid
 # circular dependencies between Result and its subclasses. Result is tightly
@@ -327,6 +333,17 @@ class Result(IResult):
                 'formats of 7.0 and above.'
             )
 
+    def _iter_checksums(self, checksums_fp):
+        checksum_line_regex = re.compile(r"^([0-9a-f]{128})\s\s(.+)$")
+        with checksums_fp.open('r', encoding='utf-8') as fh:
+            for line in fh:
+                line = line.rstrip('\n')
+                if not line:
+                    continue
+                match = checksum_line_regex.match(line)
+                if match:
+                    yield (match.group(1), match.group(2))
+
     def add_annotation(self, annotation):
         """
         Add an Annotation onto a Result object.
@@ -336,7 +353,7 @@ class Result(IResult):
         Parameters
         ----------
         annotation
-            An instantiated Annotation subclass (Note, etc).
+            An instantiated Annotation subclass (Note, Signature, etc).
 
         Raises
         ------
@@ -383,6 +400,11 @@ class Result(IResult):
                 fh.write(util.to_checksum_format(*item))
                 fh.write('\n')
 
+        # this ensures additional attrs on Signature (signer name/email)
+        # are present when running Result.verify
+        loaded_annotation = Annotation.load(str(annotation_dir))
+        self._annotations[loaded_annotation.name] = loaded_annotation
+
     def get_annotation(self, name):
         """Retrieve an Annotation given by `name` from the Result object.
 
@@ -409,14 +431,22 @@ class Result(IResult):
 
         raise KeyError(f'No Annotation with name: "{name}" was found.')
 
-    # TODO: add support to filter by type
-    # once additional annotation types are added in 7.1
-    def iter_annotations(self):
+    def iter_annotations(self, filter_by_type=None):
         """Constructs an iterable containing all Annotations associated with
         the Result object.
         """
         self._validate_annotation_support()
-        yield from self._annotations.values()
+
+        if filter_by_type is None:
+            yield from self._annotations.values()
+        elif filter_by_type not in ANNOTATION_TYPE_DICT:
+            raise ValueError(f'Unknown annotation type: "{filter_by_type}". '
+                             'Supported annotation types are: '
+                             f'{ANNOTATION_TYPE_DICT.keys()}')
+        else:
+            for annotation in self._annotations.values():
+                if getattr(annotation, 'annotation_type') == filter_by_type:
+                    yield annotation
 
     def remove_annotation(self, name):
         """
@@ -454,6 +484,124 @@ class Result(IResult):
 
         shutil.rmtree(annotation_disk_dir)
         del annotations[name]
+
+    def merge_annotations(self, other):
+        annotation_uuids = \
+            [str(annotation.id) for annotation in self._annotations.values()]
+
+        for other_annotation in other._annotations.values():
+            if str(other_annotation.id) not in annotation_uuids:
+                try:
+                    self.add_annotation(other_annotation)
+                except ValueError as e:
+                    if 'Duplicate name' in str(e):
+                        warnings.warn(f'Duplicate name {other_annotation.name}'
+                                      ' found. The annotation UUID will be'
+                                      ' prepended to the name of the new'
+                                      ' annotation.')
+                        # It should not be possible for this to collide because
+                        # we only get here if this annotation.id isn't present
+                        # on the artifact.
+                        other_annotation.name = \
+                            f'{other_annotation.name}-{other_annotation.id}'
+                        self.add_annotation(other_annotation)
+                    else:
+                        raise e
+
+    def verify(self, signature_name):
+        """
+        Verify a Signature annotation by name on the provided Result.
+
+        Parameters
+        ----------
+        signature_name
+            Name of the Signature Annotation to verify.
+
+        Notes
+        -----
+        The following checks are performed:
+            - fingerprint match in local GPG keyring
+            - sha512sum for root level checksums file matches checksum_digest
+            - gpg detached signature verification
+            - sha512sum checks for each file in signature-level checksums file
+        """
+        # first make sure the Result isn't malformed & the Signature exists
+        self.validate()
+        signature = self.get_annotation(signature_name)
+
+        annotation_dir = \
+            pathlib.Path(self._archiver.annotations_dir) / str(signature.id)
+
+        root_fp = self._archiver.root_dir
+        root_checksums_fp = root_fp / 'checksums.sha512'
+        sig_checksums_fp = annotation_dir / 'checksums.sha512'
+        signature_fp = annotation_dir / 'signature.gpg'
+
+        try:
+            fingerprint = getattr(signature, 'fingerprint')
+
+            if not fingerprint:
+                raise ValueError('Signature is missing fingerprint.')
+
+            found_fingerprint = gpg_find_key(fingerprint)
+            if not (normalize_fingerprint(found_fingerprint['fingerprint']) ==
+                    normalize_fingerprint(signature.fingerprint)):
+                raise ValueError('Found fingerprint does not match '
+                                 'fingerprint associated with Signature.')
+
+        except Exception as e:
+            raise ValueError(f'Signer key not found in local GPG keyring: {e}')
+
+        root_checksum_digest = sha512_file_hex(root_checksums_fp)
+        if not root_checksum_digest == getattr(signature, 'checksum_digest'):
+            raise ValueError(
+                'Root checksums.sha512 does not match digest in metadata.yaml')
+
+        try:
+            env = os.environ.copy()
+            unix_gpg_terminal_helper(env)
+
+            subprocess.run(
+                ['gpg', '--verify',
+                 str(signature_fp),
+                 str(root_checksums_fp)],
+                check=True, env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+        except FileNotFoundError:
+            raise FileNotFoundError('`gpg` not found on PATH.')
+
+        except subprocess.CalledProcessError as e:
+            msg = (e.stderr or '').strip()
+            if len(msg) > 500:
+                msg = msg[:500] + '...'
+            raise subprocess.CalledProcessError(
+                f'`gpg --verify` failed (rc={e.returncode}): {msg}')
+
+        missing, mismatched = [], []
+        for exp_digest, relpath in self._iter_checksums(sig_checksums_fp):
+            fp = annotation_dir / relpath
+            if not fp.exists():
+                missing.append(relpath)
+                continue
+            obs_digest = sha512_file_hex(fp)
+            if obs_digest != exp_digest:
+                mismatched.append({
+                    'path': relpath,
+                    'expected': exp_digest,
+                    'actual': obs_digest
+                })
+        if missing:
+            raise ValueError('The following expected files were not found: '
+                             f'{missing}')
+        if mismatched:
+            raise ValueError('The following unexpected files were found: '
+                             f'{mismatched}')
+
+        return f'Signature `{signature_name}` verified successfully.'
 
 
 class Artifact(Result):
@@ -650,6 +798,105 @@ class Visualization(Result):
             qiime2.core.type.Visualization, None,
             data_initializer=data_initializer,
             provenance_capture=provenance_capture)
+        return viz
+
+    @classmethod
+    def make_report(cls, template, collection):
+        """Make a report out of existing visualizations and a template.
+
+        Parameters
+        ----------
+        template : Callable[[str, dict], None]
+            A template function which is given the output directory as the
+            first argument and an index of subfigures as the second.
+
+        collection : dict[str, Visualization]
+            The visualizations to make available to the template. It is up
+            to the template to use them, but they will exist in a specialized
+            subfigures directory unique to the report format for Visualization.
+
+        Returns
+        -------
+        Visualization
+            The newly created report as a Visualization. It will have the
+            format of "report".
+
+        """
+        provenance_capture = archive.ReportProvenanceCapture()
+        to_reindex = {}
+
+        def data_initializer(destination):
+            index = {}
+            subfigures_dir = os.path.join(destination, 'subfigures')
+            for key, viz in collection.items():
+                viz_uuid = str(viz.uuid)
+                provenance_capture.add_input(key, viz)
+                index[key] = {
+                    "name": key,
+                    "index": f'subfigures/{viz_uuid}/index.html',
+                }
+                subfigure_root = os.path.join(subfigures_dir, viz_uuid)
+                if not os.path.exists(subfigure_root):
+                    shutil.copytree(viz._archiver.data_dir, subfigure_root)
+
+                # if not for reports of reports, this would have been the end
+                # of the data_initializer, however we don't want nested
+                # reports to have an arbitrarily long path as this will break
+                # things. Also we get de-duplication for free if we hoist
+                # sub-subfigures into just subfigures of the outermost report
+                if viz.format is report:
+                    # reports which were provided as part of the collection
+                    # will have sub-figures moved and index.json re-written
+                    # to a new flattened path
+                    to_reindex[viz_uuid] = set()
+                    child_figs = os.path.join(subfigure_root, 'subfigures')
+                    with open(os.path.join(child_figs, 'index.json')) as fh:
+                        inner_index = json.load(fh)
+                        index[key]['children'] = inner_index
+                        # collect the set of inner subfigures which may be
+                        # referenced by the inner report. The `index` key
+                        # holds the "url" `subfigures/<uuid>/index.html`
+                        # so we get the subfigure UUID from there.
+                        to_reindex[viz_uuid] = \
+                            set(map(lambda x: x['index'].split('/')[-2],
+                                    util.flatten_children(inner_index)))
+
+                    for uuid in os.listdir(child_figs):
+                        if not os.path.isdir(os.path.join(child_figs, uuid)):
+                            continue
+                        child_root = os.path.join(child_figs, uuid)
+                        flattened_dest = os.path.join(subfigures_dir, uuid)
+                        if os.path.exists(child_root):
+                            if os.path.exists(flattened_dest):
+                                # exists already via another subfigure
+                                shutil.rmtree(child_root)
+                            else:
+                                # hoist the sub-subfigure into a subfigure
+                                shutil.move(child_root, flattened_dest)
+
+            for report_uuid, children in to_reindex.items():
+                subfigure_root = os.path.join(subfigures_dir, report_uuid)
+                for uuid in children:
+                    # correct any references to the original sub-subfigures
+                    # they are now the hoisted/flattened path
+                    util.replace_bytes_in_directory(
+                        subfigure_root,
+                        f'subfigures/{uuid}/index.html'.encode(),
+                        f'../{uuid}/index.html'.encode(),
+                        {'.json', '.jsonp', '.js', '.htm', '.html'}
+                    )
+
+            with open(os.path.join(subfigures_dir, 'index.json'), 'w') as fh:
+                json.dump(index, fh, indent=2)
+
+            template(destination, index)
+
+        viz = cls.__new__(cls)
+        viz._archiver = archive.Archiver.from_data(
+            qiime2.core.type.Visualization, report,
+            data_initializer=data_initializer,
+            provenance_capture=provenance_capture
+        )
         return viz
 
     def get_index_paths(self, relative=True):
