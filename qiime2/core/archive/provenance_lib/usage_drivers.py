@@ -288,9 +288,9 @@ class ReplayPythonUsage(ArtifactAPIUsage):
         plugin_id = action.plugin_id
         action_id = action.action_id
         lines = [
-            '# FIXME: The following action was not found in your current\n'
-            '# QIIME 2 environment. Please ensure the action and its\n'
-            '# parameters are correct before running.',
+            '# FIXME: The following action was not found in your current '
+            'QIIME 2\n# environment. Please ensure the action and its '
+            'parameters are correct before\n# running.',
             f'{output_vars} = {plugin_id}_actions.{action_id}('
         ]
 

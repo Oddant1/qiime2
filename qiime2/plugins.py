@@ -106,7 +106,7 @@ class ArtifactAPIUsage(usage.Usage):
         def render(self):
             FIXME_COMMENT = (
                 "# FIXME: This import is unverified because one or more "
-                "actions associated with it were not found in your current "
+                "actions associated with\n# it were not found in your current "
                 "QIIME 2 environment"
             )
 
