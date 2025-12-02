@@ -262,7 +262,7 @@ class ReplayPythonUsage(ArtifactAPIUsage):
         lines.append('')
         self._add(lines)
 
-    def _template_action_not_present(
+    def _template_action_not_found(
         self, action: Action, input_opts: UsageInputs, variables: UsageOutputs
     ):
         '''
@@ -355,21 +355,21 @@ class ReplayPythonUsage(ArtifactAPIUsage):
         if action.node.action_present:
             variables = super().action(action, inputs, outputs)
         else:
-            variables = self.action_not_present(action, inputs, outputs)
+            variables = self.action_not_found(action, inputs, outputs)
 
         return variables
 
-    def action_not_present(self, action, inputs, outputs):
-        variables = super().action_not_present(action, inputs, outputs)
+    def action_not_found(self, action, inputs, outputs):
+        variables = super().action_not_found(action, inputs, outputs)
 
-        self._plugin_import_as_name_not_present(action)
+        self._plugin_import_as_name_not_found(action)
 
         inputs = inputs.map_variables(lambda v: v.to_interface_name())
-        self._template_action_not_present(action, inputs, variables)
+        self._template_action_not_found(action, inputs, variables)
 
         return variables
 
-    def _plugin_import_as_name_not_present(self, action):
+    def _plugin_import_as_name_not_found(self, action):
         base = f'qiime2.plugins.{action.plugin_id}.actions'
         as_ = f'{action.plugin_id}_actions'
         self._update_imports(

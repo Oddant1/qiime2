@@ -1662,11 +1662,11 @@ class Usage:
         object.__setattr__(results, '_cache_reset', cache_clear)
         return results
 
-    def action_not_present(self,
-                           action: 'qiime2.sdk.usage.UsageAction',
-                           inputs: 'qiime2.sdk.usage.UsageInputs',
-                           outputs: 'qiime2.sdk.usage.UsageOutputNames'
-                           ) -> 'qiime2.sdk.usage.UsageOutputs':
+    def action_not_found(self,
+                         action: 'qiime2.sdk.usage.UsageAction',
+                         inputs: 'qiime2.sdk.usage.UsageInputs',
+                         outputs: 'qiime2.sdk.usage.UsageOutputNames'
+                         ) -> 'qiime2.sdk.usage.UsageOutputs':
         if not isinstance(action, UsageAction):
             raise ValueError('Invalid value for `action`: expected %r, '
                              'received %r.' % (UsageAction, type(action)))
