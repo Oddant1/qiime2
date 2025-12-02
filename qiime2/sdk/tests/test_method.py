@@ -774,7 +774,7 @@ class TestMethod(unittest.TestCase):
         random_seed_method = self.plugin.methods['random_seed_method']
         with self.assertRaisesRegex(
                 TypeError,
-                "\'random_seed\'.*1\.0.*Capture\[Int\]"):  # noqa: W605
+                "\'random_seed\'.*1\.0.*Int"):  # noqa: W605
             int1, = random_seed_method(1.0)
 
     def test_set_random_seed_twice(self):
