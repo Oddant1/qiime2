@@ -1681,7 +1681,7 @@ class Usage:
                                                type(outputs)))
 
         usage_results = []
-        for param_name, var_name in outputs.items():
+        for _, var_name in outputs.items():
             var_type = self._find_var_type_from_prov(
                 action.node, action.node.action._action_dict)
 
