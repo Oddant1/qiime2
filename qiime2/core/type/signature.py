@@ -401,9 +401,6 @@ class PipelineSignature:
                     self._transform_and_add_input_to_prov(
                         provenance, name, spec, arg)
             else:
-                print(spec)
-                print(dir(spec))
-                # raise ValueError()
                 if spec.view_type == qtype.CaptureHolder:
                     capture = qtype.CaptureHolder(
                         name, arg, spec.qiime_type, provenance)
