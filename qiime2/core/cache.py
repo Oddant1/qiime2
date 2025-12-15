@@ -806,7 +806,7 @@ class Cache:
             # while tracking all data within those that were referenced
             for pool in self.get_pools():
                 if pool not in referenced_pools:
-                    shutil.rmtree(self.pools / pool)
+                    self._try_to_remove_target_dir(self.pools / pool)
                 else:
                     for data in os.listdir(self.pools / pool):
                         if not self._check_dangling_reference(
