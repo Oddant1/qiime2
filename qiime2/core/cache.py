@@ -848,12 +848,12 @@ class Cache:
         # try-except introduces no performance penalty if an
         # exception is not raised.
         except PermissionError:
-                try:
-                    set_permissions(target, None, USER_GROUP_RWX)
-                    shutil.rmtree(target)
-                except PermissionError:
-                    # Give up, we tried
-                    pass
+            try:
+                set_permissions(target, None, USER_GROUP_RWX)
+                shutil.rmtree(target)
+            except PermissionError:
+                # Give up, we tried
+                pass
 
     def _check_dangling_reference(self, data_path, key_path):
         """ If the data specified does not exist then we have a dangling
