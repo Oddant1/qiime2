@@ -845,8 +845,15 @@ class Cache:
                     # exception is not raised.
                     except PermissionError as e:
                         if e.errno == 13:
-                            set_permissions(target, None, USER_GROUP_RWX)
-                            shutil.rmtree(target)
+                            try:
+                                set_permissions(target, None, USER_GROUP_RWX)
+                                shutil.rmtree(target)
+                            except PermissionError as e2:
+                                # Give up, we tried
+                                if e2.errno == 13:
+                                    pass
+                                else:
+                                    raise e2
                         else:
                             raise e
 
