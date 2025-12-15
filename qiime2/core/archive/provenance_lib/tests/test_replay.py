@@ -262,9 +262,6 @@ class ReplayProvenanceTests(unittest.TestCase):
             self.assertNotIn('optional1=', rendered)
             self.assertNotIn('num2=', rendered)
 
-    def test_replay_missing_action(self):
-        pass
-
 
 class MultiplePluginTests(unittest.TestCase):
     @classmethod
