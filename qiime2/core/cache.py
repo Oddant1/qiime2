@@ -847,19 +847,13 @@ class Cache:
         # set_permissions every time. In Python 3.11 and on,
         # try-except introduces no performance penalty if an
         # exception is not raised.
-        except PermissionError as e:
-            if e.errno == 13:
+        except PermissionError:
                 try:
                     set_permissions(target, None, USER_GROUP_RWX)
                     shutil.rmtree(target)
-                except PermissionError as e2:
+                except PermissionError:
                     # Give up, we tried
-                    if e2.errno == 13:
-                        pass
-                    else:
-                        raise e2
-            else:
-                raise e
+                    pass
 
     def _check_dangling_reference(self, data_path, key_path):
         """ If the data specified does not exist then we have a dangling
