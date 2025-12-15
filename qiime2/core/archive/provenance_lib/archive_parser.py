@@ -615,7 +615,7 @@ class Parser(metaclass=abc.ABCMeta):
         '''
         Return the appropriate Parser.
 
-        As of time of writing on really needed for ArchiveParser because it
+        As of time of writing only really needed for ArchiveParser because it
         must dispatch different parsers based on Archive version
         '''
 
@@ -706,7 +706,7 @@ class ParserV0(ArchiveParser):
     '''
     Parser for V0 archives. V0 archives have no ancestral provenance.
     '''
-    def parse_prov(self, cfg, archiver):
+    def parse_prov(self, cfg: Config, archiver: Archiver):
         '''
         Parses an artifact's provenance into a directed acyclic graph.
 
@@ -728,8 +728,8 @@ class ParserV0(ArchiveParser):
             checksum validation, whether to parse study metadata, whether to
             recursively parse nested directories, and whether to enable verbose
             mode.
-        archive : str
-            A path to the artifact to be parsed.
+        archiver : Archiver
+            The Archiver representing the Result we are parsing.
 
         Returns
         -------
@@ -807,7 +807,7 @@ class ParserV2(ParserV1):
     Directory structure identical to V1, action.yaml changes to support
     Pipelines.
     '''
-    def parse_prov(self, cfg, archiver):
+    def parse_prov(self, cfg: Config, archiver: Archiver):
         '''
         Parses an artifact's provenance into a directed acyclic graph.
 
@@ -822,8 +822,8 @@ class ParserV2(ParserV1):
             checksum validation, whether to parse study metadata, whether to
             recursively parse nested directories, and whether to enable verbose
             mode.
-        archive_data : str
-            A path to the artifact to be parsed.
+        archiver : Archiver
+            The Archiver representing the Result we are parsing.
 
         Returns
         -------
