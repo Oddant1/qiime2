@@ -1494,17 +1494,15 @@ class PluginActionFormatNotFoundTests(unittest.TestCase):
         datadir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), 'data'
         )
-        cls.artifact_path = os.path.join(datadir, 'rarefied_table.qza')
+        cls.artifact_fp = os.path.join(datadir, 'rarefied_table.qza')
 
     def test_replay_not_found(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             out_fp = pathlib.Path(tmpdir) / 'rendered.txt'
             replay_provenance(
-                ReplayPythonUsage, self.artifact_path, out_fp,
+                ReplayPythonUsage, self.artifact_fp, out_fp,
                 md_out_dir=tmpdir
             )
-
-            self.assertTrue(out_fp.is_file())
 
             with open(out_fp, 'r') as fh:
                 rendered = fh.read()
