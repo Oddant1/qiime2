@@ -10,8 +10,8 @@ from .model import (TextFileFormat, BinaryFileFormat, DirectoryFormat,
                     ValidationError, SingleFileDirectoryFormat)
 from .plugin import Plugin
 from .util import get_available_cores
-from qiime2.core.cite import Citations, CitationRecord
-from qiime2.core.type import (SemanticType, Int, Str, Float, Metadata,
+from rachis.core.cite import Citations, CitationRecord
+from rachis.core.type import (SemanticType, Int, Str, Float, Metadata,
                               MetadataColumn, Categorical, Numeric, Properties,
                               Range, Start, End, Choices, Bool, Set, List,
                               Collection, Visualization, TypeMap, TypeMatch,
@@ -29,9 +29,9 @@ __all__ = ['TextFileFormat', 'BinaryFileFormat', 'DirectoryFormat', 'Plugin',
 # IMPORTANT:
 # Autodoc cannot find a docstring unless it is defined in the same module that
 # is referenced. So if you say something like
-# .. autodata:: qiime2.plugin.Set
-# then the docstring has to be present at qiime2.plugin (aka here)
-# Otherwise, you would have to say `qiime2.core.type.collections.Set` which is
+# .. autodata:: rachis.plugin.Set
+# then the docstring has to be present at rachis.plugin (aka here)
+# Otherwise, you would have to say `rachis.core.type.collections.Set` which is
 # NOT what we want other developers to be importing.
 
 Set = Set
@@ -46,7 +46,7 @@ List = List
 
 Examples
 --------
->>> from qiime2.plugin import List, Str
+>>> from rachis.plugin import List, Str
 
 A regular list:
 
@@ -70,7 +70,7 @@ auto-incrementing integer keys.
 
 Examples
 --------
->>> from qiime2.plugin import Collection, Str
+>>> from rachis.plugin import Collection, Str
 
 A regular dictionary:
 
@@ -85,7 +85,7 @@ True
 
 
 Visualization = Visualization
-"""The type of a QIIME 2 Visualization.
+"""The type of a Rachis Visualization.
 
 This is not a semantic type as it represents a terminal/non-composable output.
 
@@ -94,7 +94,7 @@ as it is meant for human interpretation.
 
 Examples
 --------
->>> from qiime2.plugin import Visualization
+>>> from rachis.plugin import Visualization
 >>> Visualization
 Visualization
 """
@@ -107,7 +107,7 @@ It can use the predicates :py:class:`.Range`, :py:func:`.Start`, and
 
 Examples
 --------
->>> from qiime2.plugin import Int, Range, Start, End
+>>> from rachis.plugin import Int, Range, Start, End
 
 No bounds on the value:
 
@@ -138,7 +138,7 @@ It can use the predicates :py:class:`.Range`, :py:func:`.Start`, and
 
 Examples
 --------
->>> from qiime2.plugin import Float, Range, Start, End
+>>> from rachis.plugin import Float, Range, Start, End
 
 No bounds on the value:
 
@@ -168,7 +168,7 @@ when using :py:class:`.TypeMap`)
 
 Examples
 --------
->>> from qiime2.plugin import Bool, Choices
+>>> from rachis.plugin import Bool, Choices
 
 Normal values:
 
@@ -192,7 +192,7 @@ It can use the predicate :py:class:`.Choices` to create strict enumeration.
 
 Examples
 --------
->>> from qiime2.plugin import Str, Choices
+>>> from rachis.plugin import Str, Choices
 
 Arbitrary string:
 
@@ -217,33 +217,33 @@ interface to store (and manipulate) your data as it sees fit.
 Metadata = Metadata
 """Tabular metadata where unique identifiers can be associated with columns.
 
-This is the type that represents :py:class:`qiime2.Metadata`.
+This is the type that represents :py:class:`rachis.Metadata`.
 
 Examples
 --------
 >>> import pandas as pd
->>> import qiime2
->>> from qiime2.plugin import Metadata
+>>> import rachis
+>>> from rachis.plugin import Metadata
 
 Note the distinct module paths:
 
->>> md = qiime2.Metadata(pd.DataFrame([{'num':1, 'cat': 'a'}],
+>>> md = rachis.Metadata(pd.DataFrame([{'num':1, 'cat': 'a'}],
 ...                                   index=pd.Series(['s1'], name='id')))
 >>> md in Metadata
 True
 """
 
 MetadataColumn = MetadataColumn
-"""A column of a :py:class:`qiime2.Metadata`.
+"""A column of a :py:class:`rachis.Metadata`.
 
 Has two variants: :py:data:`.Categorical` and :py:data:`.Numeric`.
 
 Examples
 --------
 >>> import pandas as pd
->>> import qiime2
->>> from qiime2.plugin import Metadata, Categorical, Numeric
->>> md = qiime2.Metadata(pd.DataFrame([{'num':1, 'cat': 'a'}],
+>>> import rachis
+>>> from rachis.plugin import Metadata, Categorical, Numeric
+>>> md = rachis.Metadata(pd.DataFrame([{'num':1, 'cat': 'a'}],
 ...                                   index=pd.Series(['s1'], name='id')))
 >>> md
 Metadata
@@ -296,7 +296,7 @@ It does not support any predicate expressions.
 
 Examples
 --------
->>> from qiime2.plugin import Jobs
+>>> from rachis.plugin import Jobs
 
 Positive integer for the number of jobs to use:
 
@@ -321,7 +321,7 @@ It does not support any predicate expressions.
 
 Examples
 --------
->>> from qiime2.plugin import Threads
+>>> from rachis.plugin import Threads
 
 Positive integer for the number of logical threads to use:
 

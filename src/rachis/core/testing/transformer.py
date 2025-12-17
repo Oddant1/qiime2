@@ -6,7 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 import collections
-from qiime2 import Metadata
+from rachis import Metadata
 import pandas as pd
 
 from .format import (

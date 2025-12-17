@@ -10,8 +10,8 @@ import pathlib
 
 from contextlib import contextmanager
 
-from qiime2.core.archive import Archiver
-from qiime2.core.util import checksum_directory, to_checksum_format
+from rachis.core.archive import Archiver
+from rachis.core.util import checksum_directory, to_checksum_format
 
 
 @contextmanager

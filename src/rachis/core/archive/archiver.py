@@ -15,10 +15,10 @@ import importlib
 import os
 import io
 
-import qiime2
-import qiime2.core.cite as cite
+import rachis
+import rachis.core.cite as cite
 
-from qiime2.core.util import checksum_directory, from_checksum_format, is_uuid4
+from rachis.core.util import checksum_directory, from_checksum_format, is_uuid4
 
 _VERSION_TEMPLATE = """\
 QIIME 2
@@ -273,15 +273,15 @@ class Archiver:
     CURRENT_FORMAT_VERSION = '7.1'
     _FORMAT_REGISTRY = {
         # NOTE: add more archive formats as things change
-        '0': 'qiime2.core.archive.format.v0:ArchiveFormat',
-        '1': 'qiime2.core.archive.format.v1:ArchiveFormat',
-        '2': 'qiime2.core.archive.format.v2:ArchiveFormat',
-        '3': 'qiime2.core.archive.format.v3:ArchiveFormat',
-        '4': 'qiime2.core.archive.format.v4:ArchiveFormat',
-        '5': 'qiime2.core.archive.format.v5:ArchiveFormat',
-        '6': 'qiime2.core.archive.format.v6:ArchiveFormat',
-        '7.0': 'qiime2.core.archive.format.v7_0:ArchiveFormat',
-        '7.1': 'qiime2.core.archive.format.v7_1:ArchiveFormat'
+        '0': 'rachis.core.archive.format.v0:ArchiveFormat',
+        '1': 'rachis.core.archive.format.v1:ArchiveFormat',
+        '2': 'rachis.core.archive.format.v2:ArchiveFormat',
+        '3': 'rachis.core.archive.format.v3:ArchiveFormat',
+        '4': 'rachis.core.archive.format.v4:ArchiveFormat',
+        '5': 'rachis.core.archive.format.v5:ArchiveFormat',
+        '6': 'rachis.core.archive.format.v6:ArchiveFormat',
+        '7.0': 'rachis.core.archive.format.v7_0:ArchiveFormat',
+        '7.1': 'rachis.core.archive.format.v7_1:ArchiveFormat'
     }
 
     @classmethod
@@ -289,7 +289,7 @@ class Archiver:
         """Allocates a place in the cache for the file to be temporarily
         written. Returns this location and the cache in use.
         """
-        from qiime2.core.cache import get_cache
+        from rachis.core.cache import get_cache
 
         cache = get_cache()
         path = cache.process_pool._allocate(uuid)
@@ -297,7 +297,7 @@ class Archiver:
 
     @classmethod
     def _destroy_temp_path(cls, process_alias):
-        from qiime2.core.cache import get_cache
+        from rachis.core.cache import get_cache
 
         cache = get_cache()
         cache.process_pool.remove(str(process_alias))
@@ -418,7 +418,7 @@ class Archiver:
 
         try:
             rec = _Archive.setup(uuid, path, cls.CURRENT_FORMAT_VERSION,
-                                 qiime2.__version__)
+                                 rachis.__version__)
 
             Format = cls.get_format_class(cls.CURRENT_FORMAT_VERSION)
             Format.write(rec, type, format, data_initializer,
@@ -427,7 +427,7 @@ class Archiver:
             process_alias, data_path = cache._rename_to_data(uuid, path)
             rec = ArchiveRecord(data_path, data_path / _Archive.VERSION_FILE,
                                 uuid, cls.CURRENT_FORMAT_VERSION,
-                                qiime2.__version__)
+                                rachis.__version__)
             ref = cls(data_path, process_alias, Format(rec), cache)
             return ref
         # We really just want to kill these paths if anything at all goes wrong

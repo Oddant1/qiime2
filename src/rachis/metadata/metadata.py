@@ -16,9 +16,9 @@ import warnings
 import pandas as pd
 import numpy as np
 
-import qiime2
-from qiime2.core.util import find_duplicates
-import qiime2.core.missing as _missing
+import rachis
+from rachis.core.util import find_duplicates
+import rachis.core.missing as _missing
 from .base import SUPPORTED_COLUMN_TYPES, FORMATTED_ID_HEADERS, is_id_header
 
 
@@ -85,7 +85,7 @@ class _MetadataBase:
 
         Returns
         -------
-        tuple of qiime2.Artifact
+        tuple of rachis.Artifact
             Source artifacts of the metadata.
 
         """
@@ -118,7 +118,7 @@ class _MetadataBase:
     def _add_artifacts(self, artifacts):
         deduped = set(self._artifacts)
         for artifact in artifacts:
-            if not isinstance(artifact, qiime2.Artifact):
+            if not isinstance(artifact, rachis.Artifact):
                 raise TypeError(
                     "Expected Artifact object, received %r" % artifact)
             if artifact in deduped:

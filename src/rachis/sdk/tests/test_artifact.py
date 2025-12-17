@@ -16,22 +16,22 @@ from typing import Union
 
 import pandas as pd
 
-import qiime2.plugin
-import qiime2.core.type
-from qiime2 import Metadata
-from qiime2.sdk import Artifact
-from qiime2.sdk.result import ResultMetadata
-from qiime2.plugin.model import ValidationError
-import qiime2.core.archive as archive
+import rachis.plugin
+import rachis.core.type
+from rachis import Metadata
+from rachis.sdk import Artifact
+from rachis.sdk.result import ResultMetadata
+from rachis.plugin.model import ValidationError
+import rachis.core.archive as archive
 
-from qiime2.core.testing.format import IntSequenceFormat
-from qiime2.core.testing.type import IntSequence1, FourInts, Mapping, SingleInt
-from qiime2.core.testing.util import get_dummy_plugin, ArchiveTestingMixin
+from rachis.core.testing.format import IntSequenceFormat
+from rachis.core.testing.type import IntSequence1, FourInts, Mapping, SingleInt
+from rachis.core.testing.util import get_dummy_plugin, ArchiveTestingMixin
 
 
 def get_data_path(filename):
-    fp = qiime2.util.get_filepath_from_package(
-        'qiime2.sdk.tests', 'data/%s' % filename)
+    fp = rachis.util.get_filepath_from_package(
+        'rachis.sdk.tests', 'data/%s' % filename)
     return str(fp)
 
 
@@ -42,7 +42,7 @@ class TestArtifact(unittest.TestCase, ArchiveTestingMixin):
         get_dummy_plugin()
 
         # TODO standardize temporary directories created by QIIME 2
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.provenance_capture = archive.ImportProvenanceCapture()
 
     def tearDown(self):
@@ -348,7 +348,7 @@ class TestArtifact(unittest.TestCase, ArchiveTestingMixin):
     def test_import_data_invalid_type(self):
         with self.assertRaisesRegex(TypeError,
                                     'concrete semantic type.*Visualization'):
-            Artifact.import_data(qiime2.core.type.Visualization, self.test_dir)
+            Artifact.import_data(rachis.core.type.Visualization, self.test_dir)
 
         with self.assertRaisesRegex(TypeError,
                                     'concrete semantic type.*Visualization'):
@@ -359,7 +359,7 @@ class TestArtifact(unittest.TestCase, ArchiveTestingMixin):
         with open(fp, 'w') as fh:
             fh.write('42\n')
 
-        with self.assertRaisesRegex(qiime2.plugin.ValidationError,
+        with self.assertRaisesRegex(rachis.plugin.ValidationError,
                                     "FourIntsDirectoryFormat.*directory"):
             Artifact.import_data(FourInts, fp)
 
@@ -389,12 +389,12 @@ class TestArtifact(unittest.TestCase, ArchiveTestingMixin):
             Artifact.import_data(FourInts, data_dir)
 
     def test_import_data_with_unreachable_path(self):
-        with self.assertRaisesRegex(qiime2.plugin.ValidationError,
+        with self.assertRaisesRegex(rachis.plugin.ValidationError,
                                     "does not exist"):
             Artifact.import_data(IntSequence1,
                                  os.path.join(self.test_dir.name, 'foo.txt'))
 
-        with self.assertRaisesRegex(qiime2.plugin.ValidationError,
+        with self.assertRaisesRegex(rachis.plugin.ValidationError,
                                     "does not exist"):
             Artifact.import_data(FourInts,
                                  os.path.join(self.test_dir.name, 'bar', ''))
@@ -612,7 +612,7 @@ class TestArtifact(unittest.TestCase, ArchiveTestingMixin):
         A = Artifact.import_data('IntSequence1', [1, 2, 3, 4])
         with self.assertRaisesRegex(TypeError,
                                     'Artifact.*IntSequence1.*cannot be viewed '
-                                    'as QIIME 2 Metadata'):
+                                    'as Rachis Metadata'):
             A.view(Metadata)
 
 

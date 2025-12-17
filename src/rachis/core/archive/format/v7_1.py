@@ -6,7 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2.core.archive.format.v7_0 as v7_0
+import rachis.core.archive.format.v7_0 as v7_0
 
 
 class ArchiveFormat(v7_0.ArchiveFormat):

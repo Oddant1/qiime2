@@ -6,8 +6,8 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2.core.archive.format.v4 as v4
-from qiime2.core.archive.format.util import write_checksums
+import rachis.core.archive.format.v4 as v4
+from rachis.core.archive.format.util import write_checksums
 
 
 class ArchiveFormat(v4.ArchiveFormat):

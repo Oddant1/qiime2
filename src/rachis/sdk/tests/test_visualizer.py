@@ -13,22 +13,22 @@ import tempfile
 import unittest
 import uuid
 
-import qiime2.plugin
-import qiime2.core.type
-from qiime2.core.type import VisualizerSignature, Str, Range
-from qiime2.core.type.visualization import Visualization as VisualizationType
-from qiime2.sdk import Artifact, Visualization, Visualizer, Results
+import rachis.plugin
+import rachis.core.type
+from rachis.core.type import VisualizerSignature, Str, Range
+from rachis.core.type.visualization import Visualization as VisualizationType
+from rachis.sdk import Artifact, Visualization, Visualizer, Results
 
-from qiime2.core.testing.visualizer import (most_common_viz, mapping_viz,
+from rachis.core.testing.visualizer import (most_common_viz, mapping_viz,
                                             params_only_viz, no_input_viz)
-from qiime2.core.testing.type import IntSequence1, IntSequence2, Mapping
-from qiime2.core.testing.util import get_dummy_plugin, ArchiveTestingMixin
+from rachis.core.testing.type import IntSequence1, IntSequence2, Mapping
+from rachis.core.testing.util import get_dummy_plugin, ArchiveTestingMixin
 
 
 class TestVisualizer(unittest.TestCase, ArchiveTestingMixin):
     def setUp(self):
-        # TODO standardize temporary directories created by QIIME 2
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        # TODO standardize temporary directories created by Rachis
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.plugin = get_dummy_plugin()
 
     def tearDown(self):
@@ -51,8 +51,8 @@ class TestVisualizer(unittest.TestCase, ArchiveTestingMixin):
                 'mapping2': Mapping
             },
             parameters={
-                'key_label': qiime2.plugin.Str,
-                'value_label': qiime2.plugin.Str
+                'key_label': rachis.plugin.Str,
+                'value_label': rachis.plugin.Str
             },
         )
         self.assertEqual(visualizer.signature, exp_sig)
@@ -94,8 +94,8 @@ class TestVisualizer(unittest.TestCase, ArchiveTestingMixin):
             params_only_viz,
             inputs={},
             parameters={
-                'name': qiime2.plugin.Str,
-                'age': qiime2.plugin.Int % Range(0, None)
+                'name': rachis.plugin.Str,
+                'age': rachis.plugin.Int % Range(0, None)
             }
         )
         self.assertEqual(visualizer.signature, exp_sig)
@@ -228,11 +228,11 @@ class TestVisualizer(unittest.TestCase, ArchiveTestingMixin):
         result = result[0]
 
         self.assertIsInstance(result, Visualization)
-        self.assertEqual(result.type, qiime2.core.type.Visualization)
+        self.assertEqual(result.type, rachis.core.type.Visualization)
 
         self.assertIsInstance(result.uuid, uuid.UUID)
 
-        # TODO qiime2.sdk.Visualization doesn't have an API to access its
+        # TODO rachis.sdk.Visualization doesn't have an API to access its
         # contents yet. For now, save and assert the correct files are present.
         filepath = os.path.join(self.test_dir.name, 'visualization.qzv')
         result.save(filepath)
@@ -280,11 +280,11 @@ class TestVisualizer(unittest.TestCase, ArchiveTestingMixin):
         result = result[0]
 
         self.assertIsInstance(result, Visualization)
-        self.assertEqual(result.type, qiime2.core.type.Visualization)
+        self.assertEqual(result.type, rachis.core.type.Visualization)
 
         self.assertIsInstance(result.uuid, uuid.UUID)
 
-        # TODO qiime2.sdk.Visualization doesn't have an API to access its
+        # TODO rachis.sdk.Visualization doesn't have an API to access its
         # contents yet. For now, save and assert the correct files are present.
         filepath = os.path.join(self.test_dir.name, 'visualization.qzv')
         result.save(filepath)
@@ -317,7 +317,7 @@ class TestVisualizer(unittest.TestCase, ArchiveTestingMixin):
         result, = params_only_viz()
 
         self.assertIsInstance(result, Visualization)
-        self.assertEqual(result.type, qiime2.core.type.Visualization)
+        self.assertEqual(result.type, rachis.core.type.Visualization)
         self.assertIsInstance(result.uuid, uuid.UUID)
 
         filepath = os.path.join(self.test_dir.name, 'visualization.qzv')
@@ -344,7 +344,7 @@ class TestVisualizer(unittest.TestCase, ArchiveTestingMixin):
         result, = no_input_viz()
 
         self.assertIsInstance(result, Visualization)
-        self.assertEqual(result.type, qiime2.core.type.Visualization)
+        self.assertEqual(result.type, rachis.core.type.Visualization)
         self.assertIsInstance(result.uuid, uuid.UUID)
 
         filepath = os.path.join(self.test_dir.name, 'visualization.qzv')
@@ -386,11 +386,11 @@ class TestVisualizer(unittest.TestCase, ArchiveTestingMixin):
         result = result[0]
 
         self.assertIsInstance(result, Visualization)
-        self.assertEqual(result.type, qiime2.core.type.Visualization)
+        self.assertEqual(result.type, rachis.core.type.Visualization)
 
         self.assertIsInstance(result.uuid, uuid.UUID)
 
-        # TODO qiime2.sdk.Visualization doesn't have an API to access its
+        # TODO rachis.sdk.Visualization doesn't have an API to access its
         # contents yet. For now, save and assert the correct files are present.
         filepath = os.path.join(self.test_dir.name, 'visualization.qzv')
         result.save(filepath)

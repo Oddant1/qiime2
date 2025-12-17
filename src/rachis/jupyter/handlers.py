@@ -12,10 +12,10 @@ import pathlib
 import tornado.web as web
 from notebook.base.handlers import IPythonHandler
 
-from qiime2.core.archive.archiver import ArchiveCheck
+from rachis.core.archive.archiver import ArchiveCheck
 
 
-class QIIME2RedirectHandler(IPythonHandler):
+class RachisRedirectHandler(IPythonHandler):
     """Add a location to location_store for later retrieval"""
     def initialize(self, result_store):
         self.result_store = result_store
@@ -33,7 +33,7 @@ class QIIME2RedirectHandler(IPythonHandler):
         self.redirect('view/%s/' % archive.uuid)
 
 
-class QIIME2ResultHandler(web.StaticFileHandler):
+class RachisResultHandler(web.StaticFileHandler):
     def initialize(self, path, default_filename):
         super().initialize(path, default_filename)
         self.result_store = path  # path is actually result_store

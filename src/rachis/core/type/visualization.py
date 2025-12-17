@@ -6,7 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from qiime2.core.type.template import TypeTemplate
+from rachis.core.type.template import TypeTemplate
 
 
 class _Visualization(TypeTemplate):
@@ -23,9 +23,9 @@ class _Visualization(TypeTemplate):
         return "Visualization"
 
     def is_element(self, value):
-        import qiime2.sdk
+        import rachis.sdk
 
-        return isinstance(value, qiime2.sdk.Visualization)
+        return isinstance(value, rachis.sdk.Visualization)
 
     def validate_field(self, name, field):
         raise TypeError

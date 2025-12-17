@@ -12,7 +12,7 @@ import shutil
 import tempfile
 import unittest
 
-from qiime2.core.path import OwnedPath, OutPath
+from rachis.core.path import OwnedPath, OutPath
 
 
 class TestOwnedPath(unittest.TestCase):

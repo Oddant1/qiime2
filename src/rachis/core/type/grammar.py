@@ -9,7 +9,7 @@
 import itertools
 from abc import ABCMeta, abstractmethod
 
-from qiime2.core.util import tuplize, ImmutableBase
+from rachis.core.util import tuplize, ImmutableBase
 
 
 def maximal_antichain(*types):

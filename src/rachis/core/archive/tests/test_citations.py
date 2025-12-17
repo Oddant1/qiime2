@@ -8,9 +8,9 @@
 
 import unittest
 
-import qiime2
-from qiime2.core.testing.type import IntSequence1
-from qiime2.core.testing.util import get_dummy_plugin
+import rachis
+from rachis.core.testing.type import IntSequence1
+from rachis.core.testing.util import get_dummy_plugin
 
 
 class TestCitationsTracked(unittest.TestCase):
@@ -18,11 +18,11 @@ class TestCitationsTracked(unittest.TestCase):
         self.plugin = get_dummy_plugin()
 
     def test_import(self):
-        data = qiime2.Artifact.import_data(IntSequence1, [1, 2, 3, 4])
+        data = rachis.Artifact.import_data(IntSequence1, [1, 2, 3, 4])
         archiver = data._archiver
 
         expected = [
-            ('framework|qiime2:%s|0' % qiime2.__version__,
+            ('framework|rachis:%s|0' % rachis.__version__,
              'Reproducible, interactive, scalable and extensible microbiome '
              'data science using QIIME 2'),
             ('plugin|dummy-plugin:0.0.0-dev|0',
@@ -48,14 +48,14 @@ class TestCitationsTracked(unittest.TestCase):
             self.assertIn('!cite %r' % key, action_yaml)
 
     def test_action(self):
-        data = qiime2.Artifact.import_data(IntSequence1, [1, 2, 3, 4])
+        data = rachis.Artifact.import_data(IntSequence1, [1, 2, 3, 4])
         action = self.plugin.methods['split_ints']
 
         left, right = action(data)
         archiver = left._archiver
 
         expected = [
-            ('framework|qiime2:%s|0' % qiime2.__version__,
+            ('framework|rachis:%s|0' % rachis.__version__,
              'Reproducible, interactive, scalable and extensible microbiome '
              'data science using QIIME 2'),
             ('action|dummy-plugin:0.0.0-dev|method:split_ints|0',

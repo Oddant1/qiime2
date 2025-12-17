@@ -7,11 +7,11 @@
 # ----------------------------------------------------------------------------
 """
 Software to support scientific reproducibility, attribution, and
-collaboration on the QIIME 2 platform.
+collaboration on the Rachis platform.
 
 Core objects:
-- ProvDAG: A directed, acyclic graph (DAG) describing QIIME 2 provenance
-- ProvNode: Parsed data about a single QIIME 2 Result, generated internally by
+- ProvDAG: A directed, acyclic graph (DAG) describing Rachis provenance
+- ProvNode: Parsed data about a single Rachis Result, generated internally by
   a provenance parser and available through the ProvDAG
 """
 

@@ -7,8 +7,8 @@
 # ----------------------------------------------------------------------------
 
 from .type import SingleInt, Mapping
-from qiime2.sdk.result import ResultCollection
-from qiime2.core.testing.util import PipelineError
+from rachis.sdk.result import ResultCollection
+from rachis.core.testing.util import PipelineError
 
 
 def parameter_only_pipeline(ctx, int1, int2=2, metadata=None, other=False):

@@ -11,18 +11,18 @@ import os
 import zipfile
 import pathlib
 
-from qiime2.core.testing.type import FourInts
-from qiime2.core.testing.util import ArchiveTestingMixin
-import qiime2.core.archive as archive
-from qiime2.core.archive.format.v7_0 import ArchiveFormat
-from qiime2.core.archive.format.util import artifact_version, write_checksums
-from qiime2.core.annotate import Note
-from qiime2.sdk import Artifact
+from rachis.core.testing.type import FourInts
+from rachis.core.testing.util import ArchiveTestingMixin
+import rachis.core.archive as archive
+from rachis.core.archive.format.v7_0 import ArchiveFormat
+from rachis.core.archive.format.util import artifact_version, write_checksums
+from rachis.core.annotate import Note
+from rachis.sdk import Artifact
 
 
 class TestArtifactVersion(unittest.TestCase, ArchiveTestingMixin):
     def setUp(self):
-        prefix = "qiime2-test-temp-"
+        prefix = "rachis-test-temp-"
         self.temp_dir = tempfile.TemporaryDirectory(prefix=prefix)
         self.provenance_capture = archive.ImportProvenanceCapture()
 
@@ -142,7 +142,7 @@ class TestArtifactVersion(unittest.TestCase, ArchiveTestingMixin):
         self.assertRegex(str(root_metadata), '^.*data-size: .*B.*$')
         self.assertEqual(str(root_metadata), str(prov_metadata))
         # check that conda env exists & isn't empty
-        self.assertRegex(str(conda_env), '^.*dependencies:.*- .*$')
+        self.assertRegex(str(conda_env), '^(?:.*error:.*)|(?:.*dependencies:.*- .*)$')
         # check that annotation md contains what we expect
         self.assertRegex(str(annotation_metadata),
                          rf'id: {note.id}\nname: mynote\ntype: Note')

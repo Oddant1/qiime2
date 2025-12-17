@@ -14,22 +14,22 @@ import zipfile
 import pathlib
 import importlib
 
-from qiime2.sdk.result import Result
-from qiime2.core.annotate import Note
-from qiime2.core.archive import Archiver
-from qiime2.core.archive import ImportProvenanceCapture
-from qiime2.core.archive.archiver import _ZipArchive, ArchiveCheck
-from qiime2.core.archive.format.util import artifact_version
-from qiime2.core.archive.provenance_lib.archive_parser import FORMAT_REGISTRY
-from qiime2.core.testing.format import IntSequenceDirectoryFormat
-from qiime2.core.testing.type import IntSequence1
-from qiime2.core.testing.util import ArchiveTestingMixin
-from qiime2.core.util import is_uuid4, set_permissions, OTHER_NO_WRITE
+from rachis.sdk.result import Result
+from rachis.core.annotate import Note
+from rachis.core.archive import Archiver
+from rachis.core.archive import ImportProvenanceCapture
+from rachis.core.archive.archiver import _ZipArchive, ArchiveCheck
+from rachis.core.archive.format.util import artifact_version
+from rachis.core.archive.provenance_lib.archive_parser import FORMAT_REGISTRY
+from rachis.core.testing.format import IntSequenceDirectoryFormat
+from rachis.core.testing.type import IntSequence1
+from rachis.core.testing.util import ArchiveTestingMixin
+from rachis.core.util import is_uuid4, set_permissions, OTHER_NO_WRITE
 
 
 class TestArchiver(unittest.TestCase, ArchiveTestingMixin):
     def setUp(self):
-        prefix = "qiime2-test-temp-"
+        prefix = "rachis-test-temp-"
         self.temp_dir = tempfile.TemporaryDirectory(prefix=prefix)
 
         # Initialize an Archiver. The values passed to the constructor mostly
@@ -406,20 +406,20 @@ class TestArchiver(unittest.TestCase, ArchiveTestingMixin):
         """
         # pull the listed current archive version from the Archiver
         # syntax for this will look like:
-        # qiime2.core.archive.format.vwhatever:ArchiveFormat
+        # rachis.core.archive.format.vwhatever:ArchiveFormat
         current_archive_ver, class_name = \
             Archiver._FORMAT_REGISTRY[
                 Archiver.CURRENT_FORMAT_VERSION].split(':')
 
         # grap all archive format paths
-        from qiime2.core.archive import format
+        from rachis.core.archive import format
         paths = os.listdir(format.__path__[0])
 
         # rip apart each path to grab the format names and import them
         for path in paths:
             if path.endswith('py') and not path.startswith('__init__'):
                 importlib.import_module(
-                    f'qiime2.core.archive.format.{path.split(".py")[0]}'
+                    f'rachis.core.archive.format.{path.split(".py")[0]}'
                     )
 
         # construct the latest ArchiveFormat based on the format registry

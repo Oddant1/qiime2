@@ -268,8 +268,8 @@ def TypeMatch(listing):
 
     Examples
     --------
-    >>> from qiime2.plugin import TypeMatch
-    >>> from qiime2.core.testing.type import Foo, Bar, Baz, C1
+    >>> from rachis.plugin import TypeMatch
+    >>> from rachis.core.testing.type import Foo, Bar, Baz, C1
     >>> T = TypeMatch([Foo, Bar, Baz])
     >>> C1[Foo] <= C1[T]
     True
@@ -302,7 +302,7 @@ def select_variables(expr):
     fragment replaced with the value of `swap`.
 
     e.g.
-    >>> from qiime2.core.type.tests.test_grammar import (MockTemplate,
+    >>> from rachis.core.type.tests.test_grammar import (MockTemplate,
     ...                                                  MockPredicate)
     >>> Example = MockTemplate('Example', fields=('x',))
     >>> Foo = MockTemplate('Foo')

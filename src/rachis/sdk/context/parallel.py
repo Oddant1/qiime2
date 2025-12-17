@@ -8,9 +8,9 @@
 
 from parsl.app.app import python_app
 
-from qiime2.sdk.action import Pipeline
-from qiime2.sdk.proxy import Proxy, ProxyResults
-from qiime2.sdk.parallel_config import PARALLEL_CONFIG
+from rachis.sdk.action import Pipeline
+from rachis.sdk.proxy import Proxy, ProxyResults
+from rachis.sdk.parallel_config import PARALLEL_CONFIG
 
 from .base import Context
 
@@ -119,7 +119,7 @@ class ParallelContext(Context):
         # Parsl will queue up apps with futures as their arguments then not
         # execute the apps until the futures are resolved. This is an extremely
         # handy feature, but QIIME 2 does not play nice with it out of the box.
-        # You can look in qiime2/sdk/proxy.py for some more details on how this
+        # You can look in rachis/sdk/proxy.py for some more details on how this
         # is working, but we are basically taking future QIIME 2 results and
         # mapping them to the correct inputs in the action we are trying to
         # call. This is necessary if we are running a pipeline in particular

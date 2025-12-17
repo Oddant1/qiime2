@@ -18,10 +18,10 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 from ..parse import ProvDAG
 
-import qiime2
-from qiime2 import Artifact, Metadata, ResultCollection
-from qiime2.core.archive import Archiver
-from qiime2.sdk.plugin_manager import PluginManager
+import rachis
+from rachis import Artifact, Metadata, ResultCollection
+from rachis.core.archive import Archiver
+from rachis.sdk.plugin_manager import PluginManager
 
 
 @dataclass
@@ -38,7 +38,7 @@ class DummyArtifacts:
     def __init__(self):
         self.pm = PluginManager()
         self.dp = self.pm.plugins['dummy-plugin']
-        self.tempdir = tempfile.mkdtemp(prefix='qiime2-dummy-artifacts-temp-')
+        self.tempdir = tempfile.mkdtemp(prefix='rachis-dummy-artifacts-temp-')
 
         self.datadir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), 'data'
@@ -311,11 +311,11 @@ def monkeypatch_archive_version(patch_version):
 @contextmanager
 def monkeypatch_framework_version(patch_version):
     try:
-        og_version = qiime2.__version__
-        qiime2.__version__ = patch_version
+        og_version = rachis.__version__
+        rachis.__version__ = patch_version
         yield
     finally:
-        qiime2.__version__ = og_version
+        rachis.__version__ = og_version
 
 
 def write_zip_archive(zfp, unzipped_dir):

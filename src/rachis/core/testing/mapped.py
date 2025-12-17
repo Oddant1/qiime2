@@ -9,7 +9,7 @@
 import os
 
 from .plugin import dummy_plugin, C1, C2, C3, Foo, Bar, Baz, EchoFormat
-from qiime2.plugin import (
+from rachis.plugin import (
     TypeMap, TypeMatch, Properties, Visualization, Bool, Choices)
 
 

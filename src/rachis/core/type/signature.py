@@ -12,9 +12,9 @@ import copy
 import itertools
 import tempfile
 
-import qiime2.sdk
-import qiime2.core.type as qtype
-from qiime2.core.archive.provenance import MetadataInfo
+import rachis.sdk
+import rachis.core.type as qtype
+from rachis.core.archive.provenance import MetadataInfo
 from .grammar import TypeExp, UnionExp
 from .meta import TypeVarExp
 from .collection import List, Set, Collection
@@ -204,7 +204,7 @@ class PipelineSignature:
                             % (list(inputs) + list(parameters)))
 
         if 'return' in callable.__annotations__:
-            output_views = qiime2.core.util.tuplize(
+            output_views = rachis.core.util.tuplize(
                 callable.__annotations__['return'])
 
             if len(output_views) != len(outputs):
@@ -362,11 +362,11 @@ class PipelineSignature:
             _input = self._list_to_dict(_input)
         elif qiime_name == 'List' and \
                 (isinstance(_input, dict) or
-                 isinstance(_input, qiime2.sdk.ResultCollection)):
+                 isinstance(_input, rachis.sdk.ResultCollection)):
             _input = self._dict_to_list(_input)
 
         if isinstance(_input, dict):
-            _input = qiime2.sdk.ResultCollection(_input)
+            _input = rachis.sdk.ResultCollection(_input)
 
         return _input
 
@@ -423,8 +423,8 @@ class PipelineSignature:
             recorder = provenance.transformation_recorder(name)
             # Transform all members of collection into view type
             if qtype.is_collection_type(qiime_type):
-                if isinstance(_input, qiime2.sdk.result.ResultCollection):
-                    transformed_input = qiime2.sdk.result.ResultCollection(
+                if isinstance(_input, rachis.sdk.result.ResultCollection):
+                    transformed_input = rachis.sdk.result.ResultCollection(
                         {k: v._view(spec.view_type,
                                     recorder) for k, v in _input.items()})
                 else:
@@ -469,10 +469,10 @@ class PipelineSignature:
         for output_view, (name, spec) in zip(output_views,
                                              output_types.items()):
             if spec.qiime_type.name == 'Collection':
-                output = qiime2.sdk.ResultCollection()
+                output = rachis.sdk.ResultCollection()
                 size = len(output_view)
 
-                if isinstance(output_view, qiime2.sdk.ResultCollection) or \
+                if isinstance(output_view, rachis.sdk.ResultCollection) or \
                         isinstance(output_view, dict):
                     keys = list(output_view.keys())
                     values = list(output_view.values())
@@ -517,7 +517,7 @@ class PipelineSignature:
         if is_collection_type(qiime_type):
             qiime_type = qiime_type.fields[0]
 
-        artifact = qiime2.sdk.Artifact._from_view(
+        artifact = rachis.sdk.Artifact._from_view(
             qiime_type, view, spec.view_type, prov)
         artifact = ctx.add_reference(artifact)
 
@@ -553,19 +553,19 @@ class PipelineSignature:
                     not (spec.has_default() and spec.default is None
                          and parameter is None)):
 
-                if isinstance(parameter, qiime2.sdk.Visualization):
+                if isinstance(parameter, rachis.sdk.Visualization):
                     raise TypeError(
                         "Parameter %r received a Visualization as an "
                         "argument. Visualizations may not be used as inputs."
                         % name)
 
-                elif isinstance(parameter, qiime2.sdk.Artifact):
+                elif isinstance(parameter, rachis.sdk.Artifact):
                     raise TypeError(
                         "Parameter %r requires an argument of type %r. An "
                         "argument of type %r was passed." % (
                             name, spec.qiime_type, parameter.type))
 
-                elif isinstance(parameter, qiime2.Metadata):
+                elif isinstance(parameter, rachis.Metadata):
                     raise TypeError(
                         "Parameter %r received Metadata as an "
                         "argument, which is incompatible with parameter "
@@ -623,12 +623,12 @@ class PipelineSignature:
             inner = UnionExp((self._infer_type(key, v) for v in value))
             return Set[inner.normalize()]
         if type(value) is dict or \
-                isinstance(value, qiime2.sdk.ResultCollection):
+                isinstance(value, rachis.sdk.ResultCollection):
             inner = UnionExp(
                 (self._infer_type(key, v) for v in value.values()))
             return Collection[inner.normalize()]
         if isinstance(
-                value, (qiime2.sdk.Artifact, qiime2.sdk.proxy.ProxyArtifact)):
+                value, (rachis.sdk.Artifact, rachis.sdk.proxy.ProxyArtifact)):
             return value.type
         else:
             return infer_primitive_type(value)
@@ -752,9 +752,9 @@ class HashableInvocation():
         arbitrarily nested tuple. Turns Artifacts into their uuid and Metadata
         into their md5sum
         """
-        from qiime2 import Artifact
-        from qiime2.sdk import ResultCollection
-        from qiime2.metadata.metadata import _MetadataBase
+        from rachis import Artifact
+        from rachis.sdk import ResultCollection
+        from rachis.metadata.metadata import _MetadataBase
 
         new_collection = []
 

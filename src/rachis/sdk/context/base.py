@@ -7,10 +7,10 @@
 # ----------------------------------------------------------------------------
 import warnings
 
-from qiime2.core.type.util import is_collection_type
-from qiime2.core.type import HashableInvocation
-from qiime2.core.cache import get_cache
-import qiime2.sdk
+from rachis.core.type.util import is_collection_type
+from rachis.core.type import HashableInvocation
+from rachis.core.cache import get_cache
+import rachis.sdk
 
 
 def _validate_collection(collection_order):
@@ -60,7 +60,7 @@ class Context:
         """
         plugin = plugin.replace('_', '-')
 
-        pm = qiime2.sdk.PluginManager()
+        pm = rachis.sdk.PluginManager()
         try:
             plugin_obj = pm.plugins[plugin]
         except KeyError:
@@ -131,7 +131,7 @@ class Context:
 
         for name, _type in self.action_obj.signature.outputs.items():
             if is_collection_type(_type.qiime_type):
-                loaded_collection = qiime2.sdk.ResultCollection()
+                loaded_collection = rachis.sdk.ResultCollection()
                 cached_collection = cached_outputs[name]
 
                 # Get the order we should load collection items in
@@ -152,7 +152,7 @@ class Context:
                 loaded_outputs[name] = \
                     self.cache.named_pool.load(output)
 
-        return qiime2.sdk.Results(
+        return rachis.sdk.Results(
             loaded_outputs.keys(), loaded_outputs.values())
 
     def make_artifact(self, type, view, view_type=None):
@@ -161,12 +161,12 @@ class Context:
         This artifact is automatically tracked and cleaned by the pipeline
         context.
         """
-        artifact = qiime2.sdk.Artifact.import_data(type, view, view_type)
+        artifact = rachis.sdk.Artifact.import_data(type, view, view_type)
         self.add_reference(artifact)
         return artifact
 
     def make_report(self, template, collection):
-        viz = qiime2.sdk.Visualization.make_report(
+        viz = rachis.sdk.Visualization.make_report(
             # wait for any proxies via .result()
             template, {k: v.result() for k, v in collection.items()})
         self.add_reference(viz)

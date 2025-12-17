@@ -10,7 +10,7 @@
 # easiest way to ensure nose/pytest doesn't pick this up during its automatic
 # test discovery
 
-from qiime2.plugins import ArtifactAPIUsage
+from rachis.plugins import ArtifactAPIUsage
 
 import pytest
 
@@ -22,22 +22,22 @@ def _labeler(val):
 
 
 def get_tests():
-    import qiime2.sdk
+    import rachis.sdk
     tests = []
 
     try:
-        pm = qiime2.sdk.PluginManager.reuse_existing()
-    except qiime2.sdk.UninitializedPluginManagerError:
+        pm = rachis.sdk.PluginManager.reuse_existing()
+    except rachis.sdk.UninitializedPluginManagerError:
         import os
 
         if 'MYSTERY_STEW' in os.environ:
             from q2_mystery_stew.plugin_setup import create_plugin
 
             the_stew = create_plugin()
-            pm = qiime2.sdk.PluginManager(add_plugins=False)
+            pm = rachis.sdk.PluginManager(add_plugins=False)
             pm.add_plugin(the_stew)
 
-        pm = qiime2.sdk.PluginManager()
+        pm = rachis.sdk.PluginManager()
 
     try:
         plugin = pm.plugins['mystery-stew']

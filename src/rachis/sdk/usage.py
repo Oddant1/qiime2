@@ -40,9 +40,9 @@ import dataclasses
 import functools
 import re
 
-import qiime2
-from qiime2 import sdk
-from qiime2.core.type import (
+import rachis
+from rachis import sdk
+from rachis.core.type import (
     is_semantic_type, is_visualization_type, is_collection_type
 )
 
@@ -52,7 +52,7 @@ def assert_usage_var_type(usage_variable, *valid_types):
 
     Parameters
     ----------
-    usage_variable : `qiime2.sdk.usage.UsageVariable`
+    usage_variable : `rachis.sdk.usage.UsageVariable`
         The usage variable to test.
     *valid_types : 'artifact', 'artifact_collection', 'visualization',
                    'visualization_collection', 'metadata', 'column', 'format'
@@ -99,7 +99,7 @@ class UsageAction:
 
         Raises
         ------
-        qiime2.sdk.UninitializedPluginManagerError
+        rachis.sdk.UninitializedPluginManagerError
             If there is not an existing plugin manager to define the available
             plugins.
 
@@ -119,7 +119,7 @@ class UsageAction:
         UsageInputs
         UsageOutputNames
         Usage.action
-        qiime2.sdk.PluginManager
+        rachis.sdk.PluginManager
         """
         if plugin_id == '':
             raise ValueError('Must specify a value for plugin_id.')
@@ -156,7 +156,7 @@ class UsageAction:
             (self.plugin_id, self.action_id)
 
     def get_action(self) -> sdk.Action:
-        """Retrieve the actual SDK object (qiime2.sdk.Action)
+        """Retrieve the actual SDK object (rachis.sdk.Action)
 
         Warning
         -------
@@ -165,7 +165,7 @@ class UsageAction:
 
         Returns
         -------
-        action : instance of qiime2.sdk.Action subclass
+        action : instance of rachis.sdk.Action subclass
 
         Raises
         ------
@@ -442,7 +442,7 @@ class UsageOutputNames:
 
 
 class UsageOutputs(sdk.Results):
-    """A vanity class over :class:`qiime2.sdk.Results`.
+    """A vanity class over :class:`rachis.sdk.Results`.
 
     Returned by :meth:`Usage.action` with order defined by
     :class:`UsageOutputNames`.
@@ -674,12 +674,12 @@ class UsageVariable:
         ...
         >>> # A factory which will be used in the example to generate data.
         >>> def factory():
-        ...     import qiime2
+        ...     import rachis
         ...     # This type is only available during testing.
         ...     # A real example would use a real type.
-        ...     a = qiime2.ResultCollection(
-        ...         {'Foo': qiime2.Artifact.import_data('SingleInt', 1),
-        ...          'Bar': qiime2.Artifact.import_data('SingleInt', 2)})
+        ...     a = rachis.ResultCollection(
+        ...         {'Foo': rachis.Artifact.import_data('SingleInt', 1),
+        ...          'Bar': rachis.Artifact.import_data('SingleInt', 2)})
         ...     return a
         ...
         >>> int_collection = use.init_artifact_collection('int_collection6', factory)
@@ -726,12 +726,12 @@ class UsageVariable:
         ...
         >>> # A factory which will be used in the example to generate data.
         >>> def factory():
-        ...     import qiime2
+        ...     import rachis
         ...     # This type is only available during testing.
         ...     # A real example would use a real type.
-        ...     a = qiime2.ResultCollection(
-        ...         {'Foo': qiime2.Artifact.import_data('SingleInt', 1),
-        ...          'Bar': qiime2.Artifact.import_data('SingleInt', 2)})
+        ...     a = rachis.ResultCollection(
+        ...         {'Foo': rachis.Artifact.import_data('SingleInt', 1),
+        ...          'Bar': rachis.Artifact.import_data('SingleInt', 2)})
         ...     return a
         ...
         >>> int_collection = use.init_artifact_collection('int_collection7', factory)
@@ -777,7 +777,7 @@ class Usage:
     There are many methods available for a driver implementation to override.
     For examples of the above pattern, see the source code for the built-in
     implementations of: :class:`DiagnosticUsage`, :class:`ExecutionUsage`, and
-    :class:`qiime2.plugins.ArtifactAPIUsage`
+    :class:`rachis.plugins.ArtifactAPIUsage`
     """
     # these are here for namespace/import convenience
     UsageAction: Type[UsageAction] = UsageAction
@@ -875,7 +875,7 @@ class Usage:
         raise NotImplementedError
 
     def init_artifact(self, name: str,
-                      factory: Callable[[], qiime2.Artifact]) -> UsageVariable:
+                      factory: Callable[[], rachis.Artifact]) -> UsageVariable:
         """Communicate that an artifact will be needed.
 
         Driver implementations may use this to intialize data for an example.
@@ -884,7 +884,7 @@ class Usage:
         ----------
         name : str
             The canonical name of the variable to be returned.
-        factory : Callable which returns :class:`qiime2.sdk.Artifact`
+        factory : Callable which returns :class:`rachis.sdk.Artifact`
             A function which takes no parameters, and returns an artifact.
             This function may do anything internally to create the artifact.
 
@@ -898,10 +898,10 @@ class Usage:
         --------
         >>> # A factory which will be used in the example to generate data.
         >>> def factory():
-        ...     import qiime2
+        ...     import rachis
         ...     # This type is only available during testing.
         ...     # A real example would use a real type.
-        ...     a = qiime2.Artifact.import_data('IntSequence1', [1, 2, 3])
+        ...     a = rachis.Artifact.import_data('IntSequence1', [1, 2, 3])
         ...     return a
         ...
         >>> my_artifact = use.init_artifact('my_artifact', factory)
@@ -912,7 +912,7 @@ class Usage:
 
     def init_artifact_collection(
         self, name: str,
-            factory: Callable[[], qiime2.ResultCollection]) -> UsageVariable:
+            factory: Callable[[], rachis.ResultCollection]) -> UsageVariable:
         """Communicate that a result collection containing artifacts will be needed.
 
         Driver implementations may use this to intialize data for an example.
@@ -921,7 +921,7 @@ class Usage:
         ----------
         name : str
             The canonical name of the variable to be returned.
-        factory : Callable which returns :class:`qiime2.sdk.ResultCollection`
+        factory : Callable which returns :class:`rachis.sdk.ResultCollection`
             A function which takes no parameters, and returns
             a result collection that contains artifacts.
             This function may do anything internally to create
@@ -937,12 +937,12 @@ class Usage:
         --------
         >>> # A factory which will be used in the example to generate data.
         >>> def factory():
-        ...     import qiime2
+        ...     import rachis
         ...     # This type is only available during testing.
         ...     # A real example would use a real type.
-        ...     a = qiime2.ResultCollection(
-        ...         {'Foo': qiime2.Artifact.import_data('IntSequence1', [1, 2, 3]),
-        ...          'Bar': qiime2.Artifact.import_data('IntSequence1', [4, 5, 6])})
+        ...     a = rachis.ResultCollection(
+        ...         {'Foo': rachis.Artifact.import_data('IntSequence1', [1, 2, 3]),
+        ...          'Bar': rachis.Artifact.import_data('IntSequence1', [4, 5, 6])})
         ...     return a
         ...
         >>> int_seq_collection = use.init_artifact_collection('int_seq_collection', factory)
@@ -952,7 +952,7 @@ class Usage:
         return self._usage_variable(name, factory, 'artifact_collection')
 
     def init_metadata(self, name: str,
-                      factory: Callable[[], qiime2.Metadata]) -> UsageVariable:
+                      factory: Callable[[], rachis.Metadata]) -> UsageVariable:
         """Communicate that metadata will be needed.
 
         Driver implementations may use this to intialize data for an example.
@@ -961,7 +961,7 @@ class Usage:
         ----------
         name : str
             The canonical name of the variable to be returned.
-        factory : Callable which returns :class:`qiime2.Metadata`
+        factory : Callable which returns :class:`rachis.Metadata`
             A function which takes no parameters, and returns metadata.
             This function may do anything internally to create the metadata.
 
@@ -974,11 +974,11 @@ class Usage:
         --------
         >>> # A factory which will be used in the example to generate data.
         >>> def factory():
-        ...     import qiime2
+        ...     import rachis
         ...     import pandas as pd
         ...     df = pd.DataFrame({'a':[1, 2, 3]}, index=['a', 'b', 'c'])
         ...     df.index.name = 'id'
-        ...     md = qiime2.Metadata(df)
+        ...     md = rachis.Metadata(df)
         ...     return md
         ...
         >>> my_metadata = use.init_metadata('my_metadata', factory)
@@ -988,7 +988,7 @@ class Usage:
         return self._usage_variable(name, factory, 'metadata')
 
     def init_format(self, name: str,
-                    factory: Callable[[], 'qiime2.core.format.FormatBase'],
+                    factory: Callable[[], 'rachis.core.format.FormatBase'],
                     ext: str = None) -> UsageVariable:
         """Communicate that a file/directory format will be needed.
 
@@ -1013,8 +1013,8 @@ class Usage:
         --------
         >>> # A factory which will be used in the example to generate data.
         >>> def factory():
-        ...     from qiime2.core.testing.format import IntSequenceFormat
-        ...     from qiime2.plugin.util import transform
+        ...     from rachis.core.testing.format import IntSequenceFormat
+        ...     from rachis.plugin.util import transform
         ...     ff = transform([1, 2, 3], to_type=IntSequenceFormat)
         ...
         ...     ff.validate()  # good practice
@@ -1058,9 +1058,9 @@ class Usage:
             The canonical name of the variable to be returned.
         url : str
             The url of the Artifact that should be downloaded for the
-            example. If a QIIME 2 epoch (e.g., 2022.11) is part of the URL, as
+            example. If a Rachis epoch (e.g., 2022.11) is part of the URL, as
             might be the case if obtaining an Artifact from docs.qiime2.org,
-            it can be templated in by including `{qiime2.__release__}` in an
+            it can be templated in by including `{rachis.__release__}` in an
             F-string defining the URL.
 
         Returns
@@ -1073,15 +1073,15 @@ class Usage:
         # plugin manager can handle.
         # Examples
         # --------
-        # >>> import qiime2
-        # >>> url = (f'https://data.qiime2.org/{qiime2.__release__}/data/'
+        # >>> import rachis
+        # >>> url = (f'https://data.qiime2.org/{rachis.__release__}/data/'
         # ...        'tutorials/moving-pictures/table.qza')
         # >>> mvp_table = use.init_artifact_from_url('mvp_table', url)
         # >>> mvp_table
         # <ExecutionUsageVariable name='mvp_table', var_type='artifact'>
         def factory():
             import tempfile
-            import qiime2
+            import rachis
 
             data = self._request_url(url)
 
@@ -1089,7 +1089,7 @@ class Usage:
                 f.write(data.read())
                 f.flush()
                 try:
-                    result = qiime2.Artifact.load(f.name)
+                    result = rachis.Artifact.load(f.name)
                 except ValueError as ex:
                     raise ValueError(
                         'Could not load Artifact from URL data: %s\n'
@@ -1112,9 +1112,9 @@ class Usage:
             The canonical name of the variable to be returned.
         url : str
             The url of the Artifact that should be downloaded for the
-            example. If a QIIME 2 epoch (e.g., 2022.11) is part of the URL, as
+            example. If a Rachis epoch (e.g., 2022.11) is part of the URL, as
             might be the case if obtaining an Artifact from docs.qiime2.org,
-            it can be templated in by including `{qiime2.__release__}` in an
+            it can be templated in by including `{rachis.__release__}` in an
             F-string defining the URL.
 
         Returns
@@ -1125,7 +1125,7 @@ class Usage:
 
         Examples
         --------
-        >>> import qiime2
+        >>> import rachis
         >>> url = ('https://data.qiime2.org/usage-examples/moving-pictures/'
         ...        'sample-metadata.tsv')
         >>> print(url)
@@ -1145,8 +1145,8 @@ class Usage:
                 f.write(data.read())
                 f.flush()
                 try:
-                    md = qiime2.Metadata.load(f.name)
-                except qiime2.metadata.io.MetadataFileError as ex:
+                    md = rachis.Metadata.load(f.name)
+                except rachis.metadata.io.MetadataFileError as ex:
                     raise ValueError(
                         'Could not load Metadata from URL data: %s\n'
                         ' Original exception: %s'
@@ -1158,7 +1158,7 @@ class Usage:
 
     def import_from_format(self, name: str, semantic_type: str,
                            variable: UsageVariable,
-                           view_type: 'qiime2.core.format.FormatBase' = None
+                           view_type: 'rachis.core.format.FormatBase' = None
                            ) -> UsageVariable:
         """Communicate that an import should be done.
 
@@ -1184,8 +1184,8 @@ class Usage:
         --------
         >>> # A factory which will be used in the example to generate data.
         >>> def factory():
-        ...     from qiime2.core.testing.format import IntSequenceFormat
-        ...     from qiime2.plugin.util import transform
+        ...     from rachis.core.testing.format import IntSequenceFormat
+        ...     from rachis.plugin.util import transform
         ...     ff = transform([1, 2, 3], to_type=IntSequenceFormat)
         ...
         ...     ff.validate()  # good practice
@@ -1208,7 +1208,7 @@ class Usage:
         assert_usage_var_type(variable, 'format')
 
         def factory():
-            from qiime2 import Artifact
+            from rachis import Artifact
 
             fmt = variable.execute()
             artifact = Artifact.import_data(
@@ -1274,7 +1274,7 @@ class Usage:
             raise ValueError(msg)
 
         def factory():
-            from qiime2 import ResultCollection
+            from rachis import ResultCollection
             # NOTE: these usage variables are assumed to have been
             # materialized at this point
             members_dict = {
@@ -1355,19 +1355,19 @@ class Usage:
         Examples
         --------
         >>> def factory1():
-        ...     import qiime2
+        ...     import rachis
         ...     import pandas as pd
         ...     df = pd.DataFrame({'a':[0]}, index=['0'])
         ...     df.index.name = 'id'
-        ...     md = qiime2.Metadata(df)
+        ...     md = rachis.Metadata(df)
         ...     return md
         ...
         >>> def factory2():
-        ...     import qiime2
+        ...     import rachis
         ...     import pandas as pd
         ...     df = pd.DataFrame({'b':[10]}, index=['0'])
         ...     df.index.name = 'id'
-        ...     md = qiime2.Metadata(df)
+        ...     md = rachis.Metadata(df)
         ...     return md
         ...
         >>> some_artifact, = use.action(
@@ -1425,12 +1425,12 @@ class Usage:
         Examples
         --------
         >>> def factory():
-        ...     import qiime2
+        ...     import rachis
         ...     import pandas as pd
         ...     df = pd.DataFrame({'column_a':[1, 2, 3]},
         ...                       index=['a', 'b', 'c'])
         ...     df.index.name = 'id'
-        ...     return qiime2.Metadata(df)
+        ...     return rachis.Metadata(df)
         ...
         >>> md_for_column = use.init_metadata('md_for_column', factory)
         >>> md_for_column
@@ -1492,7 +1492,7 @@ class Usage:
         assert_usage_var_type(variable, 'artifact')
 
         def factory():
-            from qiime2 import Metadata
+            from rachis import Metadata
             return variable.execute().view(Metadata)
         return self._usage_variable(name, factory, 'metadata')
 
@@ -1514,8 +1514,8 @@ class Usage:
         Examples
         --------
         >>> def factory():
-        ...     import qiime2
-        ...     return qiime2.Artifact.import_data('IntSequence1', [1, 2, 3])
+        ...     import rachis
+        ...     return rachis.Artifact.import_data('IntSequence1', [1, 2, 3])
         ...
         >>> a_boo = use.init_artifact('a_boo', factory)
         >>> use.peek(a_boo)
@@ -1538,7 +1538,7 @@ class Usage:
         """
         pass
 
-    def help(self, action: 'qiime2.sdk.usage.UsageAction'):
+    def help(self, action: 'rachis.sdk.usage.UsageAction'):
         """Communicate that help text should be displayed.
 
         Default implementation is to do nothing.
@@ -1555,10 +1555,10 @@ class Usage:
         pass
 
     def action(self,
-               action: 'qiime2.sdk.usage.UsageAction',
-               inputs: 'qiime2.sdk.usage.UsageInputs',
-               outputs: 'qiime2.sdk.usage.UsageOutputNames'
-               ) -> 'qiime2.sdk.usage.UsageOutputs':
+               action: 'rachis.sdk.usage.UsageAction',
+               inputs: 'rachis.sdk.usage.UsageInputs',
+               outputs: 'rachis.sdk.usage.UsageOutputNames'
+               ) -> 'rachis.sdk.usage.UsageOutputs':
         """Communicate that some action should be performed.
 
         Parameters
@@ -1575,7 +1575,7 @@ class Usage:
         Returns
         -------
         UsageOutputs
-            A wrapper around the usual :class:`qiime2.sdk.Results` object.
+            A wrapper around the usual :class:`rachis.sdk.Results` object.
             Unpacking this output can be seen in the examples below.
 
         Examples
@@ -1827,8 +1827,8 @@ class ExecutionUsage(Usage):
         ----------
         asynchronous : bool
             Whether to execute actions via
-            :meth:`qiime2.sdk.Action.asynchronous` or
-            :meth:`qiime2.sdk.Action.__call__`
+            :meth:`rachis.sdk.Action.asynchronous` or
+            :meth:`rachis.sdk.Action.__call__`
         """
         super().__init__(asynchronous)
         # This is here for testing-purposes

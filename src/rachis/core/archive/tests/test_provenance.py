@@ -12,10 +12,10 @@ import unittest.mock as mock
 
 import pandas as pd
 
-import qiime2
-from qiime2.plugins import dummy_plugin
-from qiime2.core.testing.type import IntSequence1, Mapping
-import qiime2.core.archive.provenance as provenance
+import rachis
+from rachis.plugins import dummy_plugin
+from rachis.core.testing.type import IntSequence1, Mapping
+import rachis.core.archive.provenance as provenance
 
 
 class TestProvenanceIntegration(unittest.TestCase):
@@ -23,16 +23,16 @@ class TestProvenanceIntegration(unittest.TestCase):
         df = pd.DataFrame({'a': ['1', '2', '3']},
                           index=pd.Index(['0', '1', '2'], name='feature ID'))
 
-        a = qiime2.Artifact.import_data('IntSequence1', [1, 2, 3])
-        m = qiime2.Metadata(df)
-        mc = qiime2.CategoricalMetadataColumn(df['a'])
+        a = rachis.Artifact.import_data('IntSequence1', [1, 2, 3])
+        m = rachis.Metadata(df)
+        mc = rachis.CategoricalMetadataColumn(df['a'])
 
         b = dummy_plugin.actions.identity_with_metadata(a, m).out
         c = dummy_plugin.actions.identity_with_metadata_column(b, mc).out
 
         p_dir = c._archiver.provenance_dir
 
-        new_m = qiime2.Metadata.load(
+        new_m = rachis.Metadata.load(
             str(p_dir / 'artifacts' / str(b.uuid) / 'action' / 'metadata.tsv'))
 
         pd.testing.assert_frame_equal(m.to_dataframe(), new_m.to_dataframe())
@@ -43,14 +43,14 @@ class TestProvenanceIntegration(unittest.TestCase):
                 'feature ID\ta\n#q2:types\tcategorical\n0\t1\n1\t2\n2\t3\n')
 
     def test_chain_with_artifact_metadata(self):
-        metadata_artifact_1 = qiime2.Artifact.import_data(
+        metadata_artifact_1 = rachis.Artifact.import_data(
             'Mapping', {'a': 'foo', 'b': 'bar'})
-        metadata_artifact_2 = qiime2.Artifact.import_data(
+        metadata_artifact_2 = rachis.Artifact.import_data(
             'Mapping', {'c': 'baz'})
-        m = metadata_artifact_1.view(qiime2.Metadata)
-        mc = metadata_artifact_2.view(qiime2.Metadata).get_column('c')
+        m = metadata_artifact_1.view(rachis.Metadata)
+        mc = metadata_artifact_2.view(rachis.Metadata).get_column('c')
 
-        a = qiime2.Artifact.import_data('IntSequence1', [1, 2, 3])
+        a = rachis.Artifact.import_data('IntSequence1', [1, 2, 3])
 
         b = dummy_plugin.actions.identity_with_metadata(a, m).out
         c = dummy_plugin.actions.identity_with_metadata_column(b, mc).out
@@ -68,7 +68,7 @@ class TestProvenanceIntegration(unittest.TestCase):
             self.assertIn(m_yaml_value, fh.read())
 
         # Check that metadata is written out fully
-        new_m = qiime2.Metadata.load(
+        new_m = rachis.Metadata.load(
             str(p_dir / 'artifacts' / str(b.uuid) / 'action' / 'metadata.tsv'))
 
         pd.testing.assert_frame_equal(m.to_dataframe(), new_m.to_dataframe())
@@ -80,16 +80,16 @@ class TestProvenanceIntegration(unittest.TestCase):
                          'action' / 'action.yaml').exists())
 
     def test_chain_with_merged_artifact_metadata(self):
-        md_artifact1 = qiime2.Artifact.import_data(
+        md_artifact1 = rachis.Artifact.import_data(
             'Mapping', {'a': 'foo', 'b': 'bar'})
-        md_artifact2 = qiime2.Artifact.import_data(
+        md_artifact2 = rachis.Artifact.import_data(
             'Mapping', {'c': 'baz'})
-        md1 = md_artifact1.view(qiime2.Metadata)
-        md2 = md_artifact2.view(qiime2.Metadata)
+        md1 = md_artifact1.view(rachis.Metadata)
+        md2 = md_artifact2.view(rachis.Metadata)
         merged_md = md1.merge(md2)
         merged_mdc = merged_md.get_column('c')
 
-        a = qiime2.Artifact.import_data('IntSequence1', [1, 2, 3])
+        a = rachis.Artifact.import_data('IntSequence1', [1, 2, 3])
 
         b = dummy_plugin.actions.identity_with_metadata(a, merged_md).out
         c = dummy_plugin.actions.identity_with_metadata_column(
@@ -112,7 +112,7 @@ class TestProvenanceIntegration(unittest.TestCase):
             self.assertEqual(fh.read(),
                              'id\tc\n#q2:types\tcategorical\n0\tbaz\n')
 
-        new_merged_md = qiime2.Metadata.load(
+        new_merged_md = rachis.Metadata.load(
             str(p_dir / 'artifacts' / str(b.uuid) / 'action' / 'metadata.tsv'))
         pd.testing.assert_frame_equal(new_merged_md.to_dataframe(),
                                       merged_md.to_dataframe())
@@ -124,8 +124,8 @@ class TestProvenanceIntegration(unittest.TestCase):
                          'action' / 'action.yaml').exists())
 
     def test_with_optional_artifacts(self):
-        ints1 = qiime2.Artifact.import_data(IntSequence1, [0, 42, 43])
-        ints2 = qiime2.Artifact.import_data(IntSequence1, [99, -22])
+        ints1 = rachis.Artifact.import_data(IntSequence1, [0, 42, 43])
+        ints2 = rachis.Artifact.import_data(IntSequence1, [99, -22])
 
         # One optional artifact is provided (`optional1`) while `optional2` is
         # omitted.
@@ -148,7 +148,7 @@ class TestProvenanceIntegration(unittest.TestCase):
                          'action' / 'action.yaml').exists())
 
     def test_output_name_different(self):
-        ints = qiime2.Artifact.import_data(IntSequence1, [0, 1, 2, 3])
+        ints = rachis.Artifact.import_data(IntSequence1, [0, 1, 2, 3])
 
         left, right = dummy_plugin.actions.split_ints(ints)
 
@@ -174,15 +174,15 @@ class TestProvenanceIntegration(unittest.TestCase):
             self.assertIn('output-name: visualization', fh.read())
 
     def test_no_output_name_import(self):
-        ints = qiime2.Artifact.import_data(IntSequence1, [0, 2, 4])
+        ints = rachis.Artifact.import_data(IntSequence1, [0, 2, 4])
         ints_p_dir = ints._archiver.provenance_dir
 
         with (ints_p_dir / 'action' / 'action.yaml').open() as fh:
             self.assertNotIn('output-name:', fh.read())
 
     def test_pipeline_alias_of(self):
-        ints = qiime2.Artifact.import_data(IntSequence1, [1, 2, 3])
-        mapping = qiime2.Artifact.import_data(Mapping, {'foo': '42'})
+        ints = rachis.Artifact.import_data(IntSequence1, [1, 2, 3])
+        mapping = rachis.Artifact.import_data(Mapping, {'foo': '42'})
         r = dummy_plugin.actions.typical_pipeline(ints, mapping, False)
 
         # mapping is a pass-through
@@ -200,8 +200,8 @@ class TestProvenanceIntegration(unittest.TestCase):
         self.assertIn('alias-of: %s' % mapping.uuid, new_mapping_yaml)
 
     def test_nested_pipeline_alias_of(self):
-        ints = qiime2.Artifact.import_data(IntSequence1, [1, 2, 3])
-        mapping = qiime2.Artifact.import_data(Mapping, {'foo': '42'})
+        ints = rachis.Artifact.import_data(IntSequence1, [1, 2, 3])
+        mapping = rachis.Artifact.import_data(Mapping, {'foo': '42'})
         r = dummy_plugin.actions.pipelines_in_pipeline(ints, mapping)
 
         right_p_dir = r.right._archiver.provenance_dir
@@ -250,7 +250,7 @@ class TestProvenanceIntegration(unittest.TestCase):
         self.assertIn('foo: 3', prov_yml)
         self.assertIn('bar: 2', prov_yml)
 
-    @mock.patch('qiime2.core.archive.provenance.tzlocal.get_localzone',
+    @mock.patch('rachis.core.archive.provenance.tzlocal.get_localzone',
                 side_effect=ValueError())
     def test_ts_to_date(self, mocked_tzlocal):
         q2_paper_date = 1563984000
@@ -267,7 +267,7 @@ class TestProvenanceIntegration(unittest.TestCase):
         viz_p_dir = viz._archiver.provenance_dir
         self.assertTrue(viz_p_dir.exists())
 
-    @mock.patch('qiime2.core.path.ProvenancePath.rename',
+    @mock.patch('rachis.core.path.ProvenancePath.rename',
                 side_effect=FileExistsError)
     def test_prov_rename_file_exists(self, _):
         viz, = dummy_plugin.actions.no_input_viz()

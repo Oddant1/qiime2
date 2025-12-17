@@ -12,16 +12,16 @@ import inspect
 import unittest
 import uuid
 
-import qiime2.plugin
-from qiime2.sdk.util import view_collection
-from qiime2.core.type import MethodSignature, Int
-from qiime2.sdk import Artifact, Method, Results, ResultCollection
+import rachis.plugin
+from rachis.sdk.util import view_collection
+from rachis.core.type import MethodSignature, Int
+from rachis.sdk import Artifact, Method, Results, ResultCollection
 
-from qiime2.core.testing.method import (concatenate_ints, merge_mappings,
+from rachis.core.testing.method import (concatenate_ints, merge_mappings,
                                         params_only_method, no_input_method)
-from qiime2.core.testing.type import (
+from rachis.core.testing.type import (
     IntSequence1, IntSequence2, SingleInt, Mapping)
-from qiime2.core.testing.util import get_dummy_plugin
+from rachis.core.testing.util import get_dummy_plugin
 
 
 # TODO refactor these tests along with Visualizer tests to remove duplication.
@@ -43,8 +43,8 @@ class TestMethod(unittest.TestCase):
                 'ints3': IntSequence2
             },
             parameters={
-                'int1': qiime2.plugin.Int,
-                'int2': qiime2.plugin.Int
+                'int1': rachis.plugin.Int,
+                'int2': rachis.plugin.Int
             },
             outputs=[
                 ('concatenated_ints', IntSequence1)
@@ -119,8 +119,8 @@ class TestMethod(unittest.TestCase):
             params_only_method,
             inputs={},
             parameters={
-                'name': qiime2.plugin.Str,
-                'age': qiime2.plugin.Int
+                'name': rachis.plugin.Str,
+                'age': rachis.plugin.Int
             },
             outputs=[
                 ('out', Mapping)
@@ -564,7 +564,7 @@ class TestMethod(unittest.TestCase):
             'long_description_method']
         docstring_order_method = self.plugin.methods['docstring_order_method']
 
-        self.assertEqual(merge_mappings.__doc__, 'QIIME 2 Method')
+        self.assertEqual(merge_mappings.__doc__, 'Rachis Method')
 
         merge_calldoc = merge_mappings.__call__.__doc__
         self.assertEqual(exp_merge_calldoc, merge_calldoc)

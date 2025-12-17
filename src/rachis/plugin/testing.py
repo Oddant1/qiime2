@@ -12,12 +12,12 @@ import shutil
 import pathlib
 import itertools
 
-import qiime2
+import rachis
 
-from qiime2.sdk import usage
-from qiime2.sdk.parallel_config import ParallelConfig
-from qiime2.plugin.util import transform
-from qiime2.plugin.model.base import FormatBase
+from rachis.sdk import usage
+from rachis.sdk.parallel_config import ParallelConfig
+from rachis.plugin.util import transform
+from rachis.plugin.model.base import FormatBase
 
 # This is to be used by plugins with parallel testing that do not set QIIMETEST
 # it uses a ThreadPoolExecutor only to avoid the HighThroughputExecutor issues
@@ -54,7 +54,7 @@ class TestPluginBase(unittest.TestCase):
     """
 
     package = None
-    test_dir_prefix = 'qiime2-plugin'
+    test_dir_prefix = 'rachis-plugin'
     test_config = ParallelConfig(NON_QIIMETEST_TEST_CONFIG)
 
     def setUp(self):
@@ -74,17 +74,18 @@ class TestPluginBase(unittest.TestCase):
         # plugins are keyed by their names, so a search inside the plugin
         # object is required to match to the correct plugin
         plugin = None
-        for name, plugin_ in qiime2.sdk.PluginManager().plugins.items():
+        for name, plugin_ in rachis.sdk.PluginManager().plugins.items():
             if plugin_.package == package:
                 plugin = plugin_
 
         if plugin is not None:
             self.plugin = plugin
         else:
-            self.fail('%s is not a registered QIIME 2 plugin.' % package)
+            self.fail('%s is not a registered Rachis plugin.' % package)
 
-        # TODO use qiime2 temp dir when ported to framework, and when the
+        # TODO use rachis temp dir when ported to framework, and when the
         # configurable temp dir exists
+        # NOTE: it exists now, so switching would be good
         self.temp_dir = tempfile.TemporaryDirectory(
             prefix='%s-test-temp-' % self.test_dir_prefix)
 
@@ -120,7 +121,7 @@ class TestPluginBase(unittest.TestCase):
             The materialized filepath to the requested test data.
 
         """
-        fp = qiime2.util.get_filepath_from_package(
+        fp = rachis.util.get_filepath_from_package(
             self.package, 'data/%s' % filename)
         if result_as_str:
             return str(fp)
@@ -246,7 +247,7 @@ class TestPluginBase(unittest.TestCase):
 
         """
 
-        # Guard any non-QIIME2 Format sources from being tested
+        # Guard any non-Rachis Format sources from being tested
         if not issubclass(source_format, FormatBase):
             raise ValueError("`source_format` must be a subclass of "
                              "FormatBase.")

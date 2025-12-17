@@ -8,10 +8,10 @@
 
 import unittest
 
-import qiime2.core.type.semantic as semantic
-import qiime2.core.type.grammar as grammar
-import qiime2.core.type.primitive as primitive
-import qiime2.core.type.visualization as visualization
+import rachis.core.type.semantic as semantic
+import rachis.core.type.grammar as grammar
+import rachis.core.type.primitive as primitive
+import rachis.core.type.visualization as visualization
 
 
 class TestIsSemanticType(unittest.TestCase):

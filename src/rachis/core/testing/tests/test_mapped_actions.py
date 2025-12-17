@@ -8,8 +8,8 @@
 
 import unittest
 
-from qiime2 import Artifact
-from qiime2.core.testing.util import get_dummy_plugin
+from rachis import Artifact
+from rachis.core.testing.util import get_dummy_plugin
 
 from ..type import IntSequence1, IntSequence2
 

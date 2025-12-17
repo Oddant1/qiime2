@@ -10,20 +10,20 @@ import unittest
 import tempfile
 
 
-from qiime2.core.testing.format import SingleIntFormat
-from qiime2.core.testing.util import get_dummy_plugin
-from qiime2.plugin.testing import TestPluginBase
+from rachis.core.testing.format import SingleIntFormat
+from rachis.core.testing.util import get_dummy_plugin
+from rachis.plugin.testing import TestPluginBase
 
 
 class TestTesting(TestPluginBase):
-    package = 'qiime2.sdk.tests'
+    package = 'rachis.sdk.tests'
 
     def setUp(self):
         self.plugin = get_dummy_plugin()
 
         # TODO standardize temporary directories created by QIIME 2
         # create a temporary data_dir for sample Visualizations
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
 
     def tearDown(self):
         self.test_dir.cleanup()

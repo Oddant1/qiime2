@@ -8,7 +8,7 @@
 
 import pandas as pd
 
-from qiime2 import Artifact, Metadata, ResultCollection
+from rachis import Artifact, Metadata, ResultCollection
 
 from .type import IntSequence1, IntSequence2, Mapping, SingleInt
 

@@ -8,19 +8,19 @@
 
 
 def load_jupyter_server_extension(nb_server):
-    from .handlers import QIIME2RedirectHandler, QIIME2ResultHandler
+    from .handlers import RachisRedirectHandler, RachisResultHandler
     from notebook.utils import url_path_join
 
     result_store = {}
     app = nb_server.web_app
 
     def route(path):
-        return url_path_join(app.settings['base_url'], 'qiime2', path)
+        return url_path_join(app.settings['base_url'], 'rachis', path)
 
     app.add_handlers(r'.*', [
-        (route(r'redirect'), QIIME2RedirectHandler,
+        (route(r'redirect'), RachisRedirectHandler,
          {'result_store': result_store}),
-        (route(r'view/(.*)'), QIIME2ResultHandler,
+        (route(r'view/(.*)'), RachisResultHandler,
          # This *is* odd, but it's because we are tricking StaticFileHandler
          {'path': result_store,
           'default_filename': 'index.html'})

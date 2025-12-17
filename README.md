@@ -1,4 +1,4 @@
-# QIIME 2 Framework (Q2F)
+# Rachis Framework (Formery Known as QIIME 2 Framework (Q2F))
 
 ![](https://github.com/qiime2/qiime2/workflows/ci-dev/badge.svg)
 

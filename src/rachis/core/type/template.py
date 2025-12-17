@@ -11,7 +11,7 @@ import itertools
 import inspect
 
 
-from qiime2.core.type.grammar import (IncompleteExp, TypeExp, PredicateExp,
+from rachis.core.type.grammar import (IncompleteExp, TypeExp, PredicateExp,
                                       IntersectionExp)
 
 

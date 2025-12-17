@@ -8,22 +8,22 @@
 
 import unittest
 
-import qiime2
-import qiime2.sdk
+import rachis
+import rachis.sdk
 
-from qiime2.sdk.util import validate_result_collection_keys
+from rachis.sdk.util import validate_result_collection_keys
 
 
 class TestUtil(unittest.TestCase):
     def test_artifact_actions(self):
-        obs = qiime2.sdk.util.actions_by_input_type(None)
+        obs = rachis.sdk.util.actions_by_input_type(None)
         self.assertEqual(obs, [])
 
         # For simplicity, we are gonna test the names of the plugin and
         # the actions
-        # raise ValueError(qiime2.sdk.util.actions_by_input_type('SingleInt'))
+        # raise ValueError(rachis.sdk.util.actions_by_input_type('SingleInt'))
         obs = [(x.name, set([yy.name for yy in y]))
-               for x, y in qiime2.sdk.util.actions_by_input_type('SingleInt')]
+               for x, y in rachis.sdk.util.actions_by_input_type('SingleInt')]
         exp = [('dummy-plugin', set([
             'To be resumed',
             'Do stuff normally, but override this one step sometimes',
@@ -33,12 +33,12 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(obs, exp)
 
         obs = [(x.name, [yy.name for yy in y])
-               for x, y in qiime2.sdk.util.actions_by_input_type(
+               for x, y in rachis.sdk.util.actions_by_input_type(
                'Kennel[Cat]')]
         self.assertEqual(obs, [])
 
         obs = [(x.name, [yy.name for yy in y])
-               for x, y in qiime2.sdk.util.actions_by_input_type(
+               for x, y in rachis.sdk.util.actions_by_input_type(
                'IntSequence1')]
         exp = [('dummy-plugin', [
             'A typical pipeline with the potential to raise an error',

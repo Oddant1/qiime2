@@ -11,8 +11,8 @@ import warnings
 from typing import Optional, Tuple
 from zipfile import ZipFile
 
-from qiime2.core.util import checksum_directory_zip, from_checksum_format
-from qiime2.core.archive.archiver import ChecksumDiff
+from rachis.core.util import checksum_directory_zip, from_checksum_format
+from rachis.core.archive.archiver import ChecksumDiff
 
 from .util import get_root_uuid, parse_version
 

@@ -18,20 +18,20 @@ import pathlib
 import json
 from typing import Union, get_args, get_origin
 
-from qiime2.core.format import report
-import qiime2.metadata
-import qiime2.plugin
-import qiime2.sdk
-import qiime2.core.type
-import qiime2.core.transform as transform
-import qiime2.core.archive as archive
-import qiime2.plugin.model as model
-import qiime2.core.util as util
-import qiime2.core.exceptions as exceptions
+from rachis.core.format import report
+import rachis.metadata
+import rachis.plugin
+import rachis.sdk
+import rachis.core.type
+import rachis.core.transform as transform
+import rachis.core.archive as archive
+import rachis.plugin.model as model
+import rachis.core.util as util
+import rachis.core.exceptions as exceptions
 
-from qiime2.sdk.iresult import IResult
-from qiime2.core.annotate import (Annotation, ANNOTATION_TYPE_DICT)
-from qiime2.core.util import (sha512_file_hex, gpg_find_key,
+from rachis.sdk.iresult import IResult
+from rachis.core.annotate import (Annotation, ANNOTATION_TYPE_DICT)
+from rachis.core.util import (sha512_file_hex, gpg_find_key,
                               normalize_fingerprint, unix_gpg_terminal_helper)
 
 # Note: Result, Artifact, and Visualization classes are in this file to avoid
@@ -75,7 +75,7 @@ class Result(IResult):
     @classmethod
     def load(cls, filepath):
         """Factory for loading Artifacts and Visualizations."""
-        from qiime2.core.cache import get_cache
+        from rachis.core.cache import get_cache
 
         # Check if the data is already in the cache (if the uuid is in
         # cache.data) and load it from the cache if it is. Avoids unzipping the
@@ -276,7 +276,7 @@ class Result(IResult):
             into.rmdir()
             try:
                 shutil.copytree(str(self._archiver.data_dir), str(into),
-                                copy_function=qiime2.util.duplicate)
+                                copy_function=rachis.util.duplicate)
             except shutil.Error:
                 # Try again with full copy not links
                 shutil.copytree(str(self._archiver.data_dir), str(into),
@@ -609,7 +609,7 @@ class Artifact(Result):
 
     @classmethod
     def _is_valid_type(cls, type_):
-        if qiime2.core.type.is_semantic_type(type_) and type_.is_concrete():
+        if rachis.core.type.is_semantic_type(type_) and type_.is_concrete():
             return True
         else:
             return False
@@ -623,26 +623,26 @@ class Artifact(Result):
 
         is_format = False
         if isinstance(type_, str):
-            type_ = qiime2.sdk.parse_type(type_)
+            type_ = rachis.sdk.parse_type(type_)
 
         if isinstance(view_type, str):
-            view_type = qiime2.sdk.parse_format(view_type)
+            view_type = rachis.sdk.parse_format(view_type)
             is_format = True
         # This ensures that when view_type is provided as a python class
         # or base class, the checksum is still performed
         elif (isinstance(view_type, type) and
-              issubclass(view_type, qiime2.core.format.FormatBase)):
+              issubclass(view_type, rachis.core.format.FormatBase)):
             is_format = True
 
         if view_type is None:
             if type(view) is str or isinstance(view, pathlib.PurePath):
                 is_format = True
-                pm = qiime2.sdk.PluginManager()
+                pm = rachis.sdk.PluginManager()
                 output_dir_fmt = pm.get_directory_format(type_)
                 if pathlib.Path(view).is_file():
                     if not issubclass(output_dir_fmt,
                                       model.SingleFileDirectoryFormatBase):
-                        raise qiime2.plugin.ValidationError(
+                        raise rachis.plugin.ValidationError(
                             "Importing %r requires a directory, not %s"
                             % (output_dir_fmt.__name__, view))
                     view_type = output_dir_fmt.file.format
@@ -654,7 +654,7 @@ class Artifact(Result):
         format_ = None
         md5sums = None
         if is_format:
-            if issubclass(view_type, qiime2.core.format.FormatBase):
+            if issubclass(view_type, rachis.core.format.FormatBase):
                 path = pathlib.Path(str(view))
             else:
                 path = pathlib.Path(view)
@@ -664,7 +664,7 @@ class Artifact(Result):
             elif path.is_dir():
                 md5sums = util.checksum_directory(path, checksum_type='md5')
             else:
-                raise qiime2.plugin.ValidationError(
+                raise rachis.plugin.ValidationError(
                     "Path '%s' does not exist." % path)
             format_ = view_type
 
@@ -677,14 +677,14 @@ class Artifact(Result):
                    validate_level='min'):
         type_raw = type
         if isinstance(type, str):
-            type = qiime2.sdk.parse_type(type)
+            type = rachis.sdk.parse_type(type)
 
         if not cls._is_valid_type(type):
             raise TypeError(
                 "An artifact requires a concrete semantic type, not type %r."
                 % type)
 
-        pm = qiime2.sdk.PluginManager()
+        pm = rachis.sdk.PluginManager()
         output_dir_fmt = pm.get_directory_format(type)
 
         if view_type is None:
@@ -715,9 +715,9 @@ class Artifact(Result):
         return self._view(view_type)
 
     def _view(self, view_type, recorder=None):
-        if view_type is qiime2.Metadata and not self.has_metadata():
+        if view_type is rachis.Metadata and not self.has_metadata():
             raise TypeError(
-                "Artifact %r cannot be viewed as QIIME 2 Metadata." % self)
+                "Artifact %r cannot be viewed as Rachis Metadata." % self)
 
         from_type = transform.ModelType.from_view_type(self.format)
 
@@ -746,7 +746,7 @@ class Artifact(Result):
                                                            recorder=recorder)
         result = transformation(self._archiver.data_dir)
 
-        if view_type is qiime2.Metadata:
+        if view_type is rachis.Metadata:
             result._add_artifacts([self])
 
         to_type.set_user_owned(result, True)
@@ -759,11 +759,11 @@ class Artifact(Result):
         -------
         bool
            True if the artifact has metadata (i.e. can be viewed as
-           ``qiime2.Metadata``), False otherwise.
+           ``rachis.Metadata``), False otherwise.
 
         """
         from_type = transform.ModelType.from_view_type(self.format)
-        to_type = transform.ModelType.from_view_type(qiime2.Metadata)
+        to_type = transform.ModelType.from_view_type(rachis.Metadata)
         return from_type.has_transformation(to_type)
 
     def validate(self, level='max'):
@@ -784,7 +784,7 @@ class Visualization(Result):
 
     @classmethod
     def _is_valid_type(cls, type_):
-        return type_ == qiime2.core.type.Visualization
+        return type_ == rachis.core.type.Visualization
 
     @classmethod
     def _from_data_dir(cls, data_dir, provenance_capture):
@@ -795,7 +795,7 @@ class Visualization(Result):
 
         viz = cls.__new__(cls)
         viz._archiver = archive.Archiver.from_data(
-            qiime2.core.type.Visualization, None,
+            rachis.core.type.Visualization, None,
             data_initializer=data_initializer,
             provenance_capture=provenance_capture)
         return viz
@@ -893,7 +893,7 @@ class Visualization(Result):
 
         viz = cls.__new__(cls)
         viz._archiver = archive.Archiver.from_data(
-            qiime2.core.type.Visualization, report,
+            rachis.core.type.Visualization, report,
             data_initializer=data_initializer,
             provenance_capture=provenance_capture
         )
@@ -917,7 +917,7 @@ class Visualization(Result):
         return result
 
     def _repr_html_(self):
-        from qiime2.jupyter import make_html
+        from rachis.jupyter import make_html
         return make_html(str(self._archiver.path))
 
 
@@ -993,7 +993,7 @@ class ResultCollection:
         if collection is None:
             self.collection = {}
         elif isinstance(collection, dict):
-            qiime2.sdk.util.validate_result_collection_keys(*collection.keys())
+            rachis.sdk.util.validate_result_collection_keys(*collection.keys())
 
             self.collection = collection
         else:
@@ -1018,7 +1018,7 @@ class ResultCollection:
         yield self.collection.__iter__()
 
     def __setitem__(self, key, item):
-        qiime2.sdk.util.validate_result_collection_keys(key)
+        rachis.sdk.util.validate_result_collection_keys(key)
         self.collection[key] = item
 
     def __getitem__(self, key):
@@ -1029,10 +1029,10 @@ class ResultCollection:
 
     @property
     def type(self):
-        inner_type = qiime2.core.type.grammar.UnionExp(
+        inner_type = rachis.core.type.grammar.UnionExp(
             v.type for v in self.collection.values()).normalize()
 
-        return qiime2.core.type.Collection[inner_type]
+        return rachis.core.type.Collection[inner_type]
 
     @property
     def extension(self):

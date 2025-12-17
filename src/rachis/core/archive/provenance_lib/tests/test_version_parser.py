@@ -13,11 +13,11 @@ import unittest
 import zipfile
 import contextlib
 
-import qiime2
-from qiime2 import Artifact
-from qiime2.sdk.plugin_manager import PluginManager
-from qiime2.core.archive.archiver import Archiver
-from qiime2.core.archive.provenance_lib.archive_parser import (FORMAT_REGISTRY,
+import rachis
+from rachis import Artifact
+from rachis.sdk.plugin_manager import PluginManager
+from rachis.core.archive.archiver import Archiver
+from rachis.core.archive.provenance_lib.archive_parser import (FORMAT_REGISTRY,
                                                                ArchiveParser)
 
 from .testing_utilities import (
@@ -46,9 +46,9 @@ class TestVersionParser(unittest.TestCase):
         self.pm = PluginManager()
         self.dp = self.pm.plugins['dummy-plugin']
         self.tempdir = tempfile.mkdtemp(
-            prefix='qiime2-test-version-parser-temp-'
+            prefix='rachis-test-version-parser-temp-'
         )
-        self.framework_version_exp = qiime2.__version__
+        self.framework_version_exp = rachis.__version__
         self.archive_version_exp = Archiver.CURRENT_FORMAT_VERSION
 
     def tearDown(self):

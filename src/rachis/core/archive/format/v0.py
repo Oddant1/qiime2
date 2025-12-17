@@ -11,7 +11,7 @@ import uuid as _uuid
 
 import yaml
 
-import qiime2.sdk as sdk
+import rachis.sdk as sdk
 
 # Allow OrderedDict to be serialized for YAML representation
 yaml.add_representer(collections.OrderedDict, lambda dumper, data:

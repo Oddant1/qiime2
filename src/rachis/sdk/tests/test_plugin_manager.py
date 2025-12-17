@@ -8,19 +8,19 @@
 
 import unittest
 
-import qiime2.plugin
-import qiime2.sdk
-from qiime2.plugin.plugin import (SemanticTypeRecord, FormatRecord,
+import rachis.plugin
+import rachis.sdk
+from rachis.plugin.plugin import (SemanticTypeRecord, FormatRecord,
                                   ArtifactClassRecord)
-from qiime2.sdk.plugin_manager import GetFormatFilters
+from rachis.sdk.plugin_manager import GetFormatFilters
 
-from qiime2.core.testing.type import (IntSequence1, IntSequence2, IntSequence3,
+from rachis.core.testing.type import (IntSequence1, IntSequence2, IntSequence3,
                                       Mapping, FourInts, Kennel, Dog, Cat,
                                       SingleInt, C1, C2, C3, Foo, Bar, Baz,
                                       AscIntSequence, Squid, Octopus,
                                       Cuttlefish)
 
-from qiime2.core.testing.format import (Cephalapod, IntSequenceDirectoryFormat,
+from rachis.core.testing.format import (Cephalapod, IntSequenceDirectoryFormat,
                                         MappingDirectoryFormat,
                                         IntSequenceV2DirectoryFormat,
                                         IntSequenceFormatV2,
@@ -34,19 +34,19 @@ from qiime2.core.testing.format import (Cephalapod, IntSequenceDirectoryFormat,
                                         ImportableOnlyFormat,
                                         ExportableOnlyFormat)
 
-from qiime2.core.testing.validator import (validator_example_null1,
+from rachis.core.testing.validator import (validator_example_null1,
                                            validate_ascending_seq,
                                            validator_example_null2)
 
-from qiime2.core.testing.util import get_dummy_plugin
+from rachis.core.testing.util import get_dummy_plugin
 
-from qiime2.core.testing.plugin import is1_use, is2_use
+from rachis.core.testing.plugin import is1_use, is2_use
 
 
 class TestPluginManager(unittest.TestCase):
     def setUp(self):
         # PluginManager is a singleton so there's no issue creating it again.
-        self.pm = qiime2.sdk.PluginManager()
+        self.pm = rachis.sdk.PluginManager()
         self.plugin = get_dummy_plugin()
         self.other_plugin = self.pm.plugins['other-plugin']
 

@@ -9,7 +9,7 @@
 import psutil
 import subprocess
 
-from qiime2.core.transform import ModelType
+from rachis.core.transform import ModelType
 
 
 def transform(data, *, from_type=None, to_type):

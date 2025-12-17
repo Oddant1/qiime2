@@ -11,12 +11,12 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from qiime2.plugin import model
-from qiime2.plugin.model import SingleFileDirectoryFormat
-import qiime2.util
+from rachis.plugin import model
+from rachis.plugin.model import SingleFileDirectoryFormat
+import rachis.util
 
-from qiime2.core.testing.format import IntSequenceFormat
-from qiime2.core.exceptions import ValidationError
+from rachis.core.testing.format import IntSequenceFormat
+from rachis.core.exceptions import ValidationError
 
 
 # Define dummy plugin formats to test with
@@ -46,7 +46,7 @@ class OptionalDirFmt(model.DirectoryFormat):
 
 
 class TestDirectoryFormat(unittest.TestCase):
-    package = 'qiime2.plugin.model.tests'
+    package = 'rachis.plugin.model.tests'
 
     def get_data_path(self, filename):
         """Convenience method for getting a data asset while testing.
@@ -65,7 +65,7 @@ class TestDirectoryFormat(unittest.TestCase):
             The materialized filepath to the requested test data.
 
         """
-        fp = qiime2.util.get_filepath_from_package(
+        fp = rachis.util.get_filepath_from_package(
             self.package, 'data/%s' % filename)
         return str(fp)
 

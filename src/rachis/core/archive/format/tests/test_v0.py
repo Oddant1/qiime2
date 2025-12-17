@@ -11,15 +11,15 @@ import uuid as _uuid
 import pathlib
 import io
 
-from qiime2.core.testing.type import IntSequence1
-from qiime2.core.testing.format import IntSequenceDirectoryFormat
-from qiime2.core.archive.archiver import _ZipArchive, ArchiveRecord
-from qiime2.core.archive.format.v0 import ArchiveFormat
+from rachis.core.testing.type import IntSequence1
+from rachis.core.testing.format import IntSequenceDirectoryFormat
+from rachis.core.archive.archiver import _ZipArchive, ArchiveRecord
+from rachis.core.archive.format.v0 import ArchiveFormat
 
 
 class TestArchiveFormat(unittest.TestCase):
     def setUp(self):
-        prefix = "qiime2-test-temp-"
+        prefix = "rachis-test-temp-"
         self.temp_dir = tempfile.TemporaryDirectory(prefix=prefix)
 
     def tearDown(self):

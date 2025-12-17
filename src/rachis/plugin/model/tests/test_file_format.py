@@ -10,15 +10,15 @@ import os
 import unittest
 import tempfile
 
-import qiime2.plugin.model as model
-from qiime2.core.testing.plugin import SingleIntFormat
+import rachis.plugin.model as model
+from rachis.core.testing.plugin import SingleIntFormat
 
 
 class TestTextFileFormat(unittest.TestCase):
     PAYLOAD = "Somewhere over the rainbow."
 
     def setUp(self):
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
 
     def tearDown(self):
         self.test_dir.cleanup()
@@ -62,7 +62,7 @@ class TestTextFileFormat(unittest.TestCase):
 
 class TestFileFormat(unittest.TestCase):
     def setUp(self):
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
 
         path = os.path.join(self.test_dir.name, 'int')
         with open(path, 'w') as fh:

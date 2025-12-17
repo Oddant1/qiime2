@@ -86,7 +86,7 @@ class ParserResults():
 
 class ProvNode:
     '''
-    One node of a provenance DAG, describing one QIIME2 Result.
+    One node of a provenance DAG, describing one Rachis Result.
     '''
 
     @property
@@ -176,7 +176,7 @@ class ProvNode:
             for input in inputs:
                 (name, value), = input.items()
                 # value is usually a uuid, but may be a collection of uuids
-                # the following are specced in qiime2/core/type/collection
+                # the following are specced in rachis/core/type/collection
                 if type(value) in (set, list, tuple):
                     for i in range(len(value)):
                         # Make these unique in case the single-item dicts get
@@ -336,7 +336,7 @@ class ProvNode:
 
 
 class _Action:
-    '''Provenance data from action.yaml for a single QIIME2 Result.'''
+    '''Provenance data from action.yaml for a single Rachis Result.'''
 
     @property
     def action_id(self) -> str:
@@ -548,7 +548,7 @@ class _Action:
 
 class _Citations:
     '''
-    Citations for a single QIIME2 Result, as a dict of citation dicts keyed
+    Citations for a single Rachis Result, as a dict of citation dicts keyed
     on the citation's bibtex ID.
     '''
 
@@ -562,7 +562,7 @@ class _Citations:
 
 
 class _ResultMetadata:
-    '''Basic metadata about a single QIIME2 Result from metadata.yaml.'''
+    '''Basic metadata about a single Rachis Result from metadata.yaml.'''
 
     def __init__(self, zf: ZipFile, md_fp: str):
         _md_dict = yaml.safe_load(zf.read(md_fp))
@@ -663,7 +663,7 @@ class ParserV0(ArchiveParser):
     '''
     Parser for V0 archives. V0 archives have no ancestral provenance.
     '''
-    # These are files we expect will be present in every QIIME2 archive with
+    # These are files we expect will be present in every Rachis archive with
     # this format. "Optional" filenames (like Metadata, which may or may
     # not be present in an archive) should not be included here.
     expected_files_root_only = tuple()
@@ -1129,7 +1129,7 @@ class ParserV7(ParserV6):
 
 
 FORMAT_REGISTRY = {
-    # NOTE: update for new format versions in qiime2.core.archive.Archiver
+    # NOTE: update for new format versions in rachis.core.archive.Archiver
     '0': ParserV0,
     '1': ParserV1,
     '2': ParserV2,

@@ -9,9 +9,9 @@
 import os
 import pathlib
 
-import qiime2.core.archive.format.v1 as v1
-import qiime2.core.archive.format.v6 as v6
-from qiime2.core.archive.format.util import write_checksums
+import rachis.core.archive.format.v1 as v1
+import rachis.core.archive.format.v6 as v6
+from rachis.core.archive.format.util import write_checksums
 
 
 class ArchiveFormat(v6.ArchiveFormat):

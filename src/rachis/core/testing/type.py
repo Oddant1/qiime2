@@ -6,7 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2.plugin as plugin
+import rachis.plugin as plugin
 
 
 IntSequence1 = plugin.SemanticType('IntSequence1')

@@ -9,17 +9,17 @@
 import types
 import unittest
 
-import qiime2.plugin
-import qiime2.sdk
-import qiime2.util
+import rachis.plugin
+import rachis.sdk
+import rachis.util
 
-from qiime2.core.testing.type import (IntSequence1, IntSequence2, Mapping,
+from rachis.core.testing.type import (IntSequence1, IntSequence2, Mapping,
                                       FourInts, Kennel, Dog, Cat, SingleInt)
-from qiime2.core.testing.format import (IntSequenceDirectoryFormat,
+from rachis.core.testing.format import (IntSequenceDirectoryFormat,
                                         IntSequenceV2DirectoryFormat)
-from qiime2.core.testing.util import get_dummy_plugin
-from qiime2.core.testing.plugin import is1_use, is2_use
-from qiime2.plugin.testing import assert_no_nans_in_tables
+from rachis.core.testing.util import get_dummy_plugin
+from rachis.core.testing.plugin import is1_use, is2_use
+from rachis.plugin.testing import assert_no_nans_in_tables
 
 
 class TestPlugin(unittest.TestCase):
@@ -27,8 +27,8 @@ class TestPlugin(unittest.TestCase):
         self.plugin = get_dummy_plugin()
 
     def get_data_path(self, filename):
-        fp = qiime2.util.get_filepath_from_package(
-            'qiime2.plugin.tests', 'data/%s' % filename)
+        fp = rachis.util.get_filepath_from_package(
+            'rachis.plugin.tests', 'data/%s' % filename)
         return str(fp)
 
     def test_name(self):
@@ -42,7 +42,7 @@ class TestPlugin(unittest.TestCase):
                          'https://github.com/qiime2/qiime2')
 
     def test_package(self):
-        self.assertEqual(self.plugin.package, 'qiime2.core.testing')
+        self.assertEqual(self.plugin.package, 'rachis.core.testing')
 
     def test_citations(self):
         self.assertEqual(self.plugin.citations[0].type, 'article')
@@ -60,19 +60,19 @@ class TestPlugin(unittest.TestCase):
                          'Description of dummy plugin.')
 
     def test_citations_default(self):
-        plugin = qiime2.plugin.Plugin(
+        plugin = rachis.plugin.Plugin(
             name='local-dummy-plugin',
             version='0.0.0-dev',
             website='https://github.com/qiime2/qiime2',
-            package='qiime2.core.testing')
+            package='rachis.core.testing')
         self.assertEqual(plugin.citations, ())
 
     def test_user_support_text_default(self):
-        plugin = qiime2.plugin.Plugin(
+        plugin = rachis.plugin.Plugin(
             name='local-dummy-plugin',
             version='0.0.0-dev',
             website='https://github.com/qiime2/qiime2',
-            package='qiime2.core.testing')
+            package='rachis.core.testing')
         self.assertTrue(plugin.user_support_text.startswith('Please post'))
         self.assertTrue(plugin.user_support_text.endswith(
                             'https://forum.qiime2.org'))
@@ -130,7 +130,7 @@ class TestPlugin(unittest.TestCase):
                           'return_many_ints'
                           })
         for action in actions.values():
-            self.assertIsInstance(action, qiime2.sdk.Action)
+            self.assertIsInstance(action, rachis.sdk.Action)
 
         # Read-only dict.
         with self.assertRaises(TypeError):
@@ -175,7 +175,7 @@ class TestPlugin(unittest.TestCase):
                           'return_four_ints', 'return_many_ints'
                           })
         for method in methods.values():
-            self.assertIsInstance(method, qiime2.sdk.Method)
+            self.assertIsInstance(method, rachis.sdk.Method)
 
     def test_visualizers(self):
         visualizers = self.plugin.visualizers
@@ -184,7 +184,7 @@ class TestPlugin(unittest.TestCase):
                          {'most_common_viz', 'mapping_viz', 'params_only_viz',
                           'no_input_viz', 'constrained_input_visualization'})
         for viz in visualizers.values():
-            self.assertIsInstance(viz, qiime2.sdk.Visualizer)
+            self.assertIsInstance(viz, rachis.sdk.Visualizer)
 
     def test_pipelines(self):
         pipelines = self.plugin.pipelines
@@ -202,7 +202,7 @@ class TestPlugin(unittest.TestCase):
                           'collection_pipeline', 'failing_pipeline',
                           'viz_collection_pipeline'})
         for pipeline in pipelines.values():
-            self.assertIsInstance(pipeline, qiime2.sdk.Pipeline)
+            self.assertIsInstance(pipeline, rachis.sdk.Pipeline)
 
     # TODO test registration of directory formats.
 
@@ -237,11 +237,11 @@ class TestPlugin(unittest.TestCase):
         self.assertNotIn(Kennel, types)
 
     def test_register_semantic_type_to_format_deprecated_parameter_name(self):
-        plugin = qiime2.plugin.Plugin(
+        plugin = rachis.plugin.Plugin(
             name='local-dummy-plugin',
             version='0.0.0-dev',
             website='https://github.com/qiime2/qiime2',
-            package='qiime2.core.testing')
+            package='rachis.core.testing')
 
         # both the new (directory_format) and old (artifact_format) names for
         # the format work
@@ -267,11 +267,11 @@ class TestPlugin(unittest.TestCase):
 
         # errors are raised when both or neither the new or old names for the
         # format are provided
-        plugin = qiime2.plugin.Plugin(
+        plugin = rachis.plugin.Plugin(
             name='local-dummy-plugin',
             version='0.0.0-dev',
             website='https://github.com/qiime2/qiime2',
-            package='qiime2.core.testing')
+            package='rachis.core.testing')
 
         regex = r'ory_format and artifact_for.*IntSequence1'
         with self.assertRaisesRegex(ValueError, regex):
@@ -284,11 +284,11 @@ class TestPlugin(unittest.TestCase):
             plugin.register_semantic_type_to_format(IntSequence1)
 
     def test_register_artifact_class(self):
-        plugin = qiime2.plugin.Plugin(
+        plugin = rachis.plugin.Plugin(
             name='local-dummy-plugin',
             version='0.0.0-dev',
             website='https://github.com/qiime2/qiime2',
-            package='qiime2.core.testing')
+            package='rachis.core.testing')
         plugin.register_artifact_class(IntSequence1,
                                        IntSequenceDirectoryFormat)
 
@@ -341,11 +341,11 @@ class TestPlugin(unittest.TestCase):
                          plugin.artifact_classes['IntSequence2'])
 
     def test_duplicate_artifact_class_registration_disallowed(self):
-        plugin = qiime2.plugin.Plugin(
+        plugin = rachis.plugin.Plugin(
             name='local-dummy-plugin',
             version='0.0.0-dev',
             website='https://github.com/qiime2/qiime2',
-            package='qiime2.core.testing')
+            package='rachis.core.testing')
         plugin.register_artifact_class(IntSequence1,
                                        IntSequenceDirectoryFormat)
 
@@ -370,11 +370,11 @@ class TestPlugin(unittest.TestCase):
                 IntSequence1, IntSequenceV2DirectoryFormat)
 
     def test_register_artifact_class_w_annotations(self):
-        plugin = qiime2.plugin.Plugin(
+        plugin = rachis.plugin.Plugin(
             name='local-dummy-plugin',
             version='0.0.0-dev',
             website='https://github.com/qiime2/qiime2',
-            package='qiime2.core.testing')
+            package='rachis.core.testing')
         plugin.register_artifact_class(
             IntSequence1, IntSequenceDirectoryFormat,
             description="A sequence of integers.",
@@ -401,11 +401,11 @@ class TestPlugin(unittest.TestCase):
                          types.MappingProxyType({'Import ex': is2_use}))
 
     def test_register_artifact_class_multiple(self):
-        plugin = qiime2.plugin.Plugin(
+        plugin = rachis.plugin.Plugin(
             name='local-dummy-plugin',
             version='0.0.0-dev',
             website='https://github.com/qiime2/qiime2',
-            package='qiime2.core.testing')
+            package='rachis.core.testing')
 
         # multiple artifact_classes can be registered using the original
         # approach, since default descriptions and examples are used
@@ -458,7 +458,7 @@ class TestPlugin(unittest.TestCase):
                 inputs={},
                 parameters={},
                 outputs={
-                    'bad_output': qiime2.plugin.List[IntSequence1]
+                    'bad_output': rachis.plugin.List[IntSequence1]
                 },
                 name='Output is registered as returning a List which is bad.',
                 description='Output is registered as returning a List which is'

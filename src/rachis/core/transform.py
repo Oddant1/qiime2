@@ -7,9 +7,9 @@
 # ----------------------------------------------------------------------------
 import pathlib
 
-from qiime2 import sdk
-from qiime2.plugin import model
-from qiime2.core import util
+from rachis import sdk
+from rachis.plugin import model
+from rachis.core import util
 
 
 def identity_transformer(view):

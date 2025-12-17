@@ -6,12 +6,12 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2.core.path as qpath
+import rachis.core.path as qpath
 
 
 class FormatBase:
     def __init__(self, path=None, mode='w'):
-        import qiime2.plugin.model as model
+        import rachis.plugin.model as model
         if path is None:
             if mode != 'w':
                 raise ValueError("A path must be provided when reading.")

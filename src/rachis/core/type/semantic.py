@@ -10,9 +10,9 @@ import types
 import collections.abc
 import itertools
 
-from qiime2.core.type.grammar import IncompleteExp, UnionExp, IntersectionExp
-from qiime2.core.type.template import TypeTemplate, PredicateTemplate
-from qiime2.core.type.util import is_semantic_type, is_qiime_type
+from rachis.core.type.grammar import IncompleteExp, UnionExp, IntersectionExp
+from rachis.core.type.template import TypeTemplate, PredicateTemplate
+from rachis.core.type.util import is_semantic_type, is_qiime_type
 
 _RESERVED_NAMES = {
     # Predicates:
@@ -199,9 +199,9 @@ class SemanticTemplate(TypeTemplate):
         return self.field_names
 
     def is_element_expr(self, self_expr, value):
-        import qiime2.sdk
-        if not (isinstance(value, qiime2.sdk.Artifact) or
-                isinstance(value, qiime2.sdk.proxy.ProxyArtifact)):
+        import rachis.sdk
+        if not (isinstance(value, rachis.sdk.Artifact) or
+                isinstance(value, rachis.sdk.proxy.ProxyArtifact)):
             return False
         return value.type <= self_expr
 
@@ -267,7 +267,7 @@ class Properties(PredicateTemplate):
 
         Examples
         --------
-        >>> from qiime2.plugin import Properties
+        >>> from rachis.plugin import Properties
 
         Properties must match:
 

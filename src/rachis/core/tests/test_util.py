@@ -16,8 +16,8 @@ import datetime
 import os
 import dateutil.relativedelta as relativedelta
 
-import qiime2.core.util as util
-from qiime2.core.testing.type import Foo, Bar, Baz
+import rachis.core.util as util
+from rachis.core.testing.type import Foo, Bar, Baz
 
 
 class TestFindDuplicates(unittest.TestCase):
@@ -135,7 +135,7 @@ class ChecksumTestMixin:
     hashfunc = None
 
     def setUp(self):
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.test_path = pathlib.Path(self.test_dir.name)
 
     def tearDown(self):
@@ -189,7 +189,7 @@ class ChecksumDirectoryMixin:
     hashfunc = None
 
     def setUp(self):
-        self.tempdir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.tempdir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.test_path = pathlib.Path(self.tempdir.name)
 
     def tearDown(self):

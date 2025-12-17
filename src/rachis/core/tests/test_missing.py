@@ -12,7 +12,7 @@ import pandas as pd
 import pandas.testing as pdt
 
 
-from qiime2.core.missing import series_encode_missing, series_extract_missing
+from rachis.core.missing import series_encode_missing, series_extract_missing
 
 
 class RoundTripMixin:

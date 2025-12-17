@@ -223,7 +223,7 @@ def checksum_directory_zip(zf: zipfile.ZipFile, checksum_type: str) -> dict:
 
     The root dir has been removed from these filepaths. This mimics the output
     in checksums.md5 (without sorted descent), but is not generalizable beyond
-    QIIME 2 archives.
+    Rachis archives.
     """
     sums = dict()
     for file in zf.namelist():

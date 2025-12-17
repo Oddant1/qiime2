@@ -6,9 +6,9 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from qiime2.core.exceptions import ValidationError, ImplementationError
-from qiime2.core.transform import ModelType
-from qiime2.core.util import sorted_poset
+from rachis.core.exceptions import ValidationError, ImplementationError
+from rachis.core.transform import ModelType
+from rachis.core.util import sorted_poset
 
 
 class ValidationObject:
@@ -54,7 +54,7 @@ class ValidationObject:
         ----------
         validator_record: ValidatorRecord
             ValidatorRecord is a collections.namedtuple found in
-            `qiime2/plugin/plugin.py`.
+            `rachis/plugin/plugin.py`.
 
         Notes
         -----
@@ -177,7 +177,7 @@ class ValidationObject:
 
         Notes
         -----
-        Called by `qiime2.sdk.PluginManager._consistency_check` to ensure
+        Called by `rachis.sdk.PluginManager._consistency_check` to ensure
         the transformers required to run the validators are defined.
 
         """

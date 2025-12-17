@@ -14,8 +14,8 @@ import re
 import numpy as np
 import pandas as pd
 
-from qiime2.core.util import find_duplicates
-import qiime2.core.missing as _missing
+from rachis.core.util import find_duplicates
+import rachis.core.missing as _missing
 from .base import SUPPORTED_COLUMN_TYPES, FORMATTED_ID_HEADERS, is_id_header
 from .metadata import Metadata, MetadataColumn
 
@@ -24,17 +24,17 @@ class MetadataFileError(Exception):
     _suffix = (
         "There may be more errors present in the metadata file. To get a full "
         "report, sample/feature metadata files can be validated with Keemei: "
-        "https://keemei.qiime2.org\n\nFind details on QIIME 2 metadata "
+        "https://keemei.qiime2.org\n\nFind details on Rachis metadata "
         "requirements here: https://docs.qiime2.org/%s/tutorials/metadata/")
 
     def __init__(self, message, include_suffix=True):
-        # Lazy import because `qiime2.__release__` is available at runtime but
+        # Lazy import because `rachis.__release__` is available at runtime but
         # not at import time (otherwise the release value could be interpolated
         # into `_suffix` in the class definition above).
-        import qiime2
+        import rachis
 
         if include_suffix:
-            message = message + '\n\n' + self._suffix % qiime2.__release__
+            message = message + '\n\n' + self._suffix % rachis.__release__
         super().__init__(message)
 
 

@@ -6,14 +6,14 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from qiime2.core.exceptions import ValidationError, ImplementationError
+from rachis.core.exceptions import ValidationError, ImplementationError
 import unittest
-from qiime2.core.validate import ValidationObject
-from qiime2.sdk import PluginManager
-from qiime2.plugin.plugin import ValidatorRecord, Plugin
-from qiime2.core.testing.type import (IntSequence1, AscIntSequence,
+from rachis.core.validate import ValidationObject
+from rachis.sdk import PluginManager
+from rachis.plugin.plugin import ValidatorRecord, Plugin
+from rachis.core.testing.type import (IntSequence1, AscIntSequence,
                                       Kennel, Dog, Squid, Octopus)
-from qiime2.core.testing.format import IntSequenceFormat, Cephalapod
+from rachis.core.testing.format import IntSequenceFormat, Cephalapod
 
 
 class TestValidationObject(unittest.TestCase):
@@ -228,7 +228,7 @@ class TestValidatorIntegration(unittest.TestCase):
         self.test_plugin = Plugin(name='validator_test_plugin',
                                   version='0.0.1',
                                   website='test.com',
-                                  package='qiime2.core.tests',
+                                  package='rachis.core.tests',
                                   project_name='validator_test')
 
         self.pm = PluginManager()
@@ -271,7 +271,7 @@ class TestValidatorRegistration(unittest.TestCase):
         self.test_plugin = Plugin(name='validator_test_plugin',
                                   version='0.0.1',
                                   website='test.com',
-                                  package='qiime2.core.tests',
+                                  package='rachis.core.tests',
                                   project_name='validator_test')
 
     def test_catch_missing_validator_arg(self):

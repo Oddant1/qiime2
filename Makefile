@@ -14,14 +14,10 @@ test: all
 
 # for parallel, pip install pytest-xdist
 mystery-stew: all
-	MYSTERY_STEW= pytest qiime2/tests/mystery_stew.py -n auto
+	MYSTERY_STEW= pytest rachis/tests/mystery_stew.py -n auto
 
 install: all
-	$(PYTHON) -m pip install -v . && \
-	mkdir -p $(PREFIX)/etc/conda/activate.d && \
-	cp hooks/00_activate_qiime2_envs.sh $(PREFIX)/etc/conda/activate.d/ && \
-	mkdir -p $(PREFIX)/etc/conda/deactivate.d && \
-	cp hooks/00_deactivate_qiime2_envs.sh $(PREFIX)/etc/conda/deactivate.d/
+	$(PYTHON) -m pip install -v .
 
 dev: all
 	pip install -e .

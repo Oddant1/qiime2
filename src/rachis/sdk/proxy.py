@@ -6,10 +6,10 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from qiime2.sdk.iresult import IResult
+from rachis.sdk.iresult import IResult
 
-import qiime2.core.transform as transform
-from qiime2.core.type.util import is_visualization_type, is_collection_type
+import rachis.core.transform as transform
+from rachis.core.type.util import is_visualization_type, is_collection_type
 
 
 class Proxy:
@@ -73,7 +73,7 @@ class ProxyResult(Proxy, IResult):
 
     @property
     def format(self):
-        from qiime2.sdk import PluginManager
+        from rachis.sdk import PluginManager
 
         pm = PluginManager()
         return pm.get_directory_format(self.type)
@@ -92,7 +92,7 @@ class ProxyResult(Proxy, IResult):
     def _get_element_(self, results):
         """Get the result we want off of the future we have
         """
-        from qiime2.sdk import Results
+        from rachis.sdk import Results
 
         if isinstance(results, Results):
             return getattr(results, self._selector_)
@@ -123,7 +123,7 @@ class ProxyArtifact(ProxyResult):
         return self.result().view(view_type)
 
     def has_metadata(self):
-        from qiime2 import Metadata
+        from rachis import Metadata
 
         from_type = transform.ModelType.from_view_type(self.format)
         to_type = transform.ModelType.from_view_type(Metadata)

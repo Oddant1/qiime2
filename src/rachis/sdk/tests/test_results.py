@@ -9,7 +9,7 @@
 import pickle
 import unittest
 
-from qiime2.sdk import Results
+from rachis.sdk import Results
 
 
 class TestResults(unittest.TestCase):

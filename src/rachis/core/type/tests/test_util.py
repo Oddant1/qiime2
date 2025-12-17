@@ -8,7 +8,7 @@
 
 import unittest
 
-from qiime2.core.type import (
+from rachis.core.type import (
     parse_primitive, Int, Float, Bool, Str, List, Set, Collection, Metadata,
     MetadataColumn)
 

@@ -33,9 +33,9 @@ from .testing_utilities import (
     is_root_provnode_data, generate_archive_with_file_removed, DummyArtifacts
 )
 
-from qiime2 import Artifact
-from qiime2.core.archive.archiver import ChecksumDiff
-from qiime2.core.archive.provenance_lib.tests.testing_utilities import (
+from rachis import Artifact
+from rachis.core.archive.archiver import ChecksumDiff
+from rachis.core.archive.provenance_lib.tests.testing_utilities import (
     write_zip_file
 )
 
@@ -848,7 +848,7 @@ class ProvDAGTests(unittest.TestCase):
 
 class EmptyParserTests(unittest.TestCase):
     def setUp(self):
-        self.tempdir = tempfile.mkdtemp(prefix='qiime2-test-parse-temp-')
+        self.tempdir = tempfile.mkdtemp(prefix='rachis-test-parse-temp-')
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)

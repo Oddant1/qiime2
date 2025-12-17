@@ -13,10 +13,10 @@ import warnings
 import pandas as pd
 import numpy as np
 
-from qiime2 import Artifact
-from qiime2.metadata import (Metadata, CategoricalMetadataColumn,
+from rachis import Artifact
+from rachis.metadata import (Metadata, CategoricalMetadataColumn,
                              NumericMetadataColumn)
-from qiime2.core.testing.util import get_dummy_plugin, ReallyEqualMixin
+from rachis.core.testing.util import get_dummy_plugin, ReallyEqualMixin
 
 
 class TestInvalidMetadataConstruction(unittest.TestCase):

@@ -14,15 +14,15 @@ import uuid
 import collections
 import pathlib
 
-import qiime2.core.type
-from qiime2.sdk import Visualization, Artifact
-from qiime2.sdk.result import ResultMetadata
-import qiime2.core.archive as archive
+import rachis.core.type
+from rachis.sdk import Visualization, Artifact
+from rachis.sdk.result import ResultMetadata
+import rachis.core.archive as archive
 
-from qiime2.core.testing.type import Mapping, IntSequence1
-from qiime2.core.testing.visualizer import (
+from rachis.core.testing.type import Mapping, IntSequence1
+from rachis.core.testing.visualizer import (
     mapping_viz, most_common_viz, multi_html_viz)
-from qiime2.core.testing.util import ArchiveTestingMixin, get_dummy_plugin
+from rachis.core.testing.util import ArchiveTestingMixin, get_dummy_plugin
 
 
 class TestVisualization(unittest.TestCase, ArchiveTestingMixin):
@@ -33,7 +33,7 @@ class TestVisualization(unittest.TestCase, ArchiveTestingMixin):
 
     def setUp(self):
         # TODO standardize temporary directories created by QIIME 2
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
 
         # Using `mapping_viz` because it produces multiple files, including a
         # nested directory.
@@ -67,7 +67,7 @@ class TestVisualization(unittest.TestCase, ArchiveTestingMixin):
         visualization = Visualization._from_data_dir(
             self.data_dir, self.make_provenance_capture())
 
-        self.assertEqual(visualization.type, qiime2.core.type.Visualization)
+        self.assertEqual(visualization.type, rachis.core.type.Visualization)
         self.assertIsInstance(visualization.uuid, uuid.UUID)
 
     def test_from_data_dir_and_save(self):
@@ -101,7 +101,7 @@ class TestVisualization(unittest.TestCase, ArchiveTestingMixin):
 
         visualization = Visualization.load(fp)
 
-        self.assertEqual(visualization.type, qiime2.core.type.Visualization)
+        self.assertEqual(visualization.type, rachis.core.type.Visualization)
         self.assertEqual(visualization.uuid, saved_visualization.uuid)
 
     def test_load_and_save(self):
@@ -392,7 +392,7 @@ class TestVisualization(unittest.TestCase, ArchiveTestingMixin):
 
 class TestMakeReport(unittest.TestCase):
     def setUp(self):
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         # load dummy plugin
         self.plugin = get_dummy_plugin()
         # create visualizations via the dummy plugin visualizers once for

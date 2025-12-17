@@ -13,10 +13,10 @@ import unittest
 import pandas as pd
 import numpy as np
 
-from qiime2 import Artifact
-from qiime2.metadata import (MetadataColumn, CategoricalMetadataColumn,
+from rachis import Artifact
+from rachis.metadata import (MetadataColumn, CategoricalMetadataColumn,
                              NumericMetadataColumn)
-from qiime2.core.testing.util import get_dummy_plugin, ReallyEqualMixin
+from rachis.core.testing.util import get_dummy_plugin, ReallyEqualMixin
 
 
 # Dummy class for testing MetadataColumn ABC
@@ -453,7 +453,7 @@ class TestEqualityOperators(unittest.TestCase, ReallyEqualMixin):
 class TestSave(unittest.TestCase):
     def setUp(self):
         self.temp_dir_obj = tempfile.TemporaryDirectory(
-            prefix='qiime2-metadata-tests-temp-')
+            prefix='rachis-metadata-tests-temp-')
         self.temp_dir = self.temp_dir_obj.name
 
         self.filepath = os.path.join(self.temp_dir, 'metadata.tsv')

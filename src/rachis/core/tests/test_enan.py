@@ -8,7 +8,7 @@
 
 import unittest
 
-from qiime2.core.enan import get_payload_from_nan, make_nan_with_payload
+from rachis.core.enan import get_payload_from_nan, make_nan_with_payload
 
 
 class TestNanPayloads(unittest.TestCase):

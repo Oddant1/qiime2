@@ -11,12 +11,12 @@ import os
 import importlib.metadata
 import enum
 
-import qiime2.core.type
-from qiime2.core.format import FormatBase
-from qiime2.plugin.model import SingleFileDirectoryFormatBase
-from qiime2.core.validate import ValidationObject
-from qiime2.sdk.util import parse_type
-from qiime2.core.type import is_semantic_type
+import rachis.core.type
+from rachis.core.format import FormatBase
+from rachis.plugin.model import SingleFileDirectoryFormatBase
+from rachis.core.validate import ValidationObject
+from rachis.sdk.util import parse_type
+from rachis.core.type import is_semantic_type
 
 
 class GetFormatFilters(enum.Flag):
@@ -29,7 +29,7 @@ class UninitializedPluginManagerError(Exception):
 
 
 class PluginManager:
-    entry_point_group = 'qiime2.plugins'
+    entry_point_group = 'rachis.plugins'
     __instance = None
 
     @classmethod
@@ -50,6 +50,9 @@ class PluginManager:
             else:
                 if entry_point.name not in ('dummy-plugin', 'other-plugin'):
                     yield entry_point
+        # backwards compatibility
+        for entry_point in importlib.metadata.entry_points(group='qiime2.plugins'):
+            yield entry_point
 
     @classmethod
     def reuse_existing(cls):
@@ -58,7 +61,7 @@ class PluginManager:
         raise UninitializedPluginManagerError
 
     # This class is a singleton as it is slow to create, represents the
-    # state of a qiime2 installation, and is needed *everywhere*
+    # state of a rachis installation, and is needed *everywhere*
     def __new__(cls, add_plugins=True):
         if cls.__instance is None:
             self = super().__new__(cls)
@@ -186,7 +189,7 @@ class PluginManager:
             fmt = record.format
 
             if issubclass(
-                    fmt, qiime2.plugin.model.SingleFileDirectoryFormatBase):
+                    fmt, rachis.plugin.model.SingleFileDirectoryFormatBase):
                 if fmt.file.format in self._ff_to_sfdf.keys():
                     self._ff_to_sfdf[fmt.file.format].add(fmt)
                 else:
@@ -367,7 +370,7 @@ class PluginManager:
         return self.get_semantic_types()
 
     def get_directory_format(self, semantic_type):
-        if not qiime2.core.type.is_semantic_type(semantic_type):
+        if not rachis.core.type.is_semantic_type(semantic_type):
             raise TypeError(
                 "Must provide a semantic type via `semantic_type`, not %r" %
                 semantic_type)

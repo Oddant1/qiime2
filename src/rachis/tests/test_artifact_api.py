@@ -12,9 +12,9 @@ import tempfile
 import types
 import unittest
 
-import qiime2.sdk
-from qiime2.core.testing.util import get_dummy_plugin
-from qiime2.plugins import ArtifactAPIUsage
+import rachis.sdk
+from rachis.core.testing.util import get_dummy_plugin
+from rachis.plugins import ArtifactAPIUsage
 
 
 class TestImports(unittest.TestCase):
@@ -42,88 +42,88 @@ class TestImports(unittest.TestCase):
         self.assertEqual(module.__spec__.submodule_search_locations,
                          [] if is_package else None)
         self.assertFalse(module.__spec__.has_location)
-        self.assertIn('generated QIIME 2 API', repr(module))
+        self.assertIn('generated Rachis API', repr(module))
 
     def _check_plugin(self, module):
-        self._check_spec(module, 'qiime2.plugins.dummy_plugin', True)
+        self._check_spec(module, 'rachis.plugins.dummy_plugin', True)
         self._check_methods(module.methods)
         self._check_visualizers(module.visualizers)
         self.assertEqual(set(x for x in dir(module) if not x.startswith('_')),
                          {'visualizers', 'methods', 'actions', 'pipelines'})
 
     def _check_methods(self, module):
-        self._check_spec(module, 'qiime2.plugins.dummy_plugin.methods', False)
+        self._check_spec(module, 'rachis.plugins.dummy_plugin.methods', False)
         self.assertTrue(hasattr(module, 'concatenate_ints'))
         self.assertFalse(hasattr(module, 'most_common_viz'))
 
-        self.assertIsInstance(module.concatenate_ints, qiime2.sdk.Action)
+        self.assertIsInstance(module.concatenate_ints, rachis.sdk.Action)
 
     def _check_visualizers(self, module):
         self._check_spec(
-            module, 'qiime2.plugins.dummy_plugin.visualizers', False)
+            module, 'rachis.plugins.dummy_plugin.visualizers', False)
         self.assertTrue(hasattr(module, 'most_common_viz'))
         self.assertFalse(hasattr(module, 'concatenate_ints'))
-        self.assertIsInstance(module.most_common_viz, qiime2.sdk.Action)
+        self.assertIsInstance(module.most_common_viz, rachis.sdk.Action)
 
     def test_import_root(self):
-        import qiime2.plugins.dummy_plugin
-        self._check_plugin(qiime2.plugins.dummy_plugin)
+        import rachis.plugins.dummy_plugin
+        self._check_plugin(rachis.plugins.dummy_plugin)
 
     def test_import_root_from(self):
-        from qiime2.plugins import dummy_plugin
+        from rachis.plugins import dummy_plugin
         self._check_plugin(dummy_plugin)
 
     def test_import_methods(self):
-        import qiime2.plugins.dummy_plugin.methods
-        self._check_methods(qiime2.plugins.dummy_plugin.methods)
+        import rachis.plugins.dummy_plugin.methods
+        self._check_methods(rachis.plugins.dummy_plugin.methods)
 
     def test_import_visualizers(self):
-        import qiime2.plugins.dummy_plugin.visualizers
-        self._check_visualizers(qiime2.plugins.dummy_plugin.visualizers)
+        import rachis.plugins.dummy_plugin.visualizers
+        self._check_visualizers(rachis.plugins.dummy_plugin.visualizers)
 
     def test_import_methods_from(self):
-        from qiime2.plugins.dummy_plugin import methods
+        from rachis.plugins.dummy_plugin import methods
         self._check_methods(methods)
 
     def test_import_visualizers_from(self):
-        from qiime2.plugins.dummy_plugin import visualizers
+        from rachis.plugins.dummy_plugin import visualizers
         self._check_visualizers(visualizers)
 
     def test_import_non_plugin(self):
         with self.assertRaises(ImportError):
-            import qiime2.plugins.dummy_not_plugin  # noqa
+            import rachis.plugins.dummy_not_plugin  # noqa
 
     def test_import_non_action(self):
         with self.assertRaises(ImportError):
-            import qiime2.plugins.dummy_plugin.non_action  # noqa
+            import rachis.plugins.dummy_plugin.non_action  # noqa
 
     def test_import_side_module(self):
         # Certain implementations of __PATH__ can cause a module to load
         # siblings (__PATH__ = ['.'] for example)
-        import qiime2.metadata
-        self.assertIsInstance(qiime2.metadata, types.ModuleType)
+        import rachis.metadata
+        self.assertIsInstance(rachis.metadata, types.ModuleType)
         with self.assertRaises(ImportError):
-            import qiime2.plugins.metadata  # noqa
+            import rachis.plugins.metadata  # noqa
 
     def test_import_too_deep(self):
         with self.assertRaises(ImportError):
-            import qiime2.plugins.dummy_plugin.methods.too_deep  # noqa
+            import rachis.plugins.dummy_plugin.methods.too_deep  # noqa
 
     def test_import_non_module(self):
         with self.assertRaises(ImportError):
-            import qiime2.plugins.dummy_plugin.methods.concatenate_ints  # noqa
+            import rachis.plugins.dummy_plugin.methods.concatenate_ints  # noqa
 
     def test_reload_fails(self):
-        import qiime2.plugins.dummy_plugin
+        import rachis.plugins.dummy_plugin
         with self.assertRaises(ImportError):
-            importlib.reload(qiime2.plugins.dummy_plugin)
+            importlib.reload(rachis.plugins.dummy_plugin)
 
     def test_import_base_format_stores_checksums(self):
-        from qiime2 import Artifact
-        from qiime2.core.testing.type import IntSequence2
-        from qiime2.core.testing.format import IntSequenceFormat
-        from qiime2.core.util import load_action_yaml
-        from qiime2.plugin.util import transform
+        from rachis import Artifact
+        from rachis.core.testing.type import IntSequence2
+        from rachis.core.testing.format import IntSequenceFormat
+        from rachis.core.util import load_action_yaml
+        from rachis.plugin.util import transform
 
         ff = transform([1, 2, 3,], to_type=IntSequenceFormat)
         ff2 = Artifact.import_data(IntSequence2, ff,
@@ -141,7 +141,7 @@ class TestImports(unittest.TestCase):
 class TestArtifactAPIUsage(unittest.TestCase):
     def setUp(self):
         # TODO standardize temporary directories created by QIIME 2
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.plugin = get_dummy_plugin()
 
     def tearDown(self):
@@ -152,7 +152,7 @@ class TestArtifactAPIUsage(unittest.TestCase):
         use = ArtifactAPIUsage()
         action.examples['concatenate_ints_simple'](use)
         exp = """\
-import qiime2.plugins.dummy_plugin.actions as dummy_plugin_actions
+import rachis.plugins.dummy_plugin.actions as dummy_plugin_actions
 
 # This example demonstrates basic usage.
 ints_d, = dummy_plugin_actions.concatenate_ints(
@@ -169,7 +169,7 @@ ints_d, = dummy_plugin_actions.concatenate_ints(
         use = ArtifactAPIUsage()
         action.examples['concatenate_ints_complex'](use)
         exp = """\
-import qiime2.plugins.dummy_plugin.actions as dummy_plugin_actions
+import rachis.plugins.dummy_plugin.actions as dummy_plugin_actions
 
 # This example demonstrates chained usage (pt 1).
 ints_d, = dummy_plugin_actions.concatenate_ints(
@@ -194,7 +194,7 @@ concatenated_ints, = dummy_plugin_actions.concatenate_ints(
         use = ArtifactAPIUsage()
         action.examples['typical_pipeline_simple'](use)
         exp = """\
-import qiime2.plugins.dummy_plugin.actions as dummy_plugin_actions
+import rachis.plugins.dummy_plugin.actions as dummy_plugin_actions
 
 action_results = dummy_plugin_actions.typical_pipeline(
     int_sequence=ints,
@@ -213,7 +213,7 @@ right_viz_viz = action_results.right_viz"""
         use = ArtifactAPIUsage()
         action.examples['typical_pipeline_complex'](use)
         exp = """\
-import qiime2.plugins.dummy_plugin.actions as dummy_plugin_actions
+import rachis.plugins.dummy_plugin.actions as dummy_plugin_actions
 
 action_results = dummy_plugin_actions.typical_pipeline(
     int_sequence=ints1,
@@ -242,7 +242,7 @@ right_viz2_viz = action_results.right_viz"""
         use = ArtifactAPIUsage()
         action.examples['identity_with_metadata_merging'](use)
         exp = """\
-import qiime2.plugins.dummy_plugin.actions as dummy_plugin_actions
+import rachis.plugins.dummy_plugin.actions as dummy_plugin_actions
 
 md3_md = md1_md.merge(md2_md)
 out, = dummy_plugin_actions.identity_with_metadata(
@@ -256,7 +256,7 @@ out, = dummy_plugin_actions.identity_with_metadata(
         use = ArtifactAPIUsage()
         action.examples['identity_with_metadata_column_get_mdc'](use)
         exp = """\
-import qiime2.plugins.dummy_plugin.actions as dummy_plugin_actions
+import rachis.plugins.dummy_plugin.actions as dummy_plugin_actions
 
 mdc_mdc = md_md.get_column('a')
 out, = dummy_plugin_actions.identity_with_metadata_column(
@@ -270,7 +270,7 @@ out, = dummy_plugin_actions.identity_with_metadata_column(
         use = ArtifactAPIUsage()
         action.examples['optional_inputs'](use)
         exp = """\
-import qiime2.plugins.dummy_plugin.actions as dummy_plugin_actions
+import rachis.plugins.dummy_plugin.actions as dummy_plugin_actions
 
 output1, = dummy_plugin_actions.optional_artifacts_method(
     ints=ints,
@@ -300,7 +300,7 @@ output4, = dummy_plugin_actions.optional_artifacts_method(
         use = ArtifactAPIUsage(enable_assertions=True)
         action.examples['collection_dict_of_ints'](use)
         exp = """\
-import qiime2.plugins.dummy_plugin.actions as dummy_plugin_actions
+import rachis.plugins.dummy_plugin.actions as dummy_plugin_actions
 import re
 
 out_artifact_collection, = dummy_plugin_actions.dict_of_ints(
@@ -322,7 +322,7 @@ if match is None:
         use = ArtifactAPIUsage(enable_assertions=True)
         action.examples['collection_of_visualizations'](use)
         exp = """\
-import qiime2.plugins.dummy_plugin.actions as dummy_plugin_actions
+import rachis.plugins.dummy_plugin.actions as dummy_plugin_actions
 
 visualizations_viz_collection, = dummy_plugin_actions.viz_collection_pipeline(
     ints=ints,
@@ -337,8 +337,8 @@ if str(visualizations_viz_collection.type) != 'Collection[Visualization]':
         use = ArtifactAPIUsage()
         action.examples['construct_and_access_collection'](use)
         exp = """\
-from qiime2 import ResultCollection
-import qiime2.plugins.dummy_plugin.actions as dummy_plugin_actions
+from rachis import ResultCollection
+import rachis.plugins.dummy_plugin.actions as dummy_plugin_actions
 
 rc_in_artifact_collection = ResultCollection({
     'a': ints_a,

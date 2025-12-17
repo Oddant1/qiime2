@@ -9,7 +9,7 @@
 from itertools import product, chain
 import networkx as nx
 import copy
-import qiime2
+import rachis
 
 
 def get_next_arguments(action, type="input"):
@@ -18,7 +18,7 @@ def get_next_arguments(action, type="input"):
 
     Parameters
     ----------
-    action : Qiime2.action
+    action : Rachis Action
 
     type : {"input", "param", "output"}
         Delineates if getting the action input, param, or output types
@@ -60,7 +60,7 @@ def unravel(list_):
 
     Parameters
     ----------
-    list : list of Qiime2.types
+    list : list of Rachis Types
 
     Returns
     -------
@@ -95,7 +95,7 @@ def generate_nodes_by_action(action, opt=False):
 
     Parameters
     ----------
-    method : Qiime2.action
+    method : Rachis Action
     opt : {True, False}
         Delineates if optional types should be included
 
@@ -140,8 +140,8 @@ def build_graph(action_list=[], opt=False):
 
     Parameters
     ----------
-    action_list : list of Qiime2.action
-        If list is empty, will pull from all methods in the Qiime2 plugin
+    action_list : list of Rachis Actions 
+        If list is empty, will pull from all methods in the Rachis plugin
     opt : {True, False}
         Delineates if optional types should be included in the graph
 
@@ -155,7 +155,7 @@ def build_graph(action_list=[], opt=False):
     G.edges(data=True)
 
     # get all actions or specifc actions if specified in sigs
-    pm = qiime2.sdk.PluginManager()
+    pm = rachis.sdk.PluginManager()
     if not action_list:
         for _, pg in pm.plugins.items():
             action_list += list(pg.actions.values())

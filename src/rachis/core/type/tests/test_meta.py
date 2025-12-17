@@ -9,9 +9,9 @@
 import unittest
 import pickle
 
-import qiime2.core.type.collection as col
-import qiime2.core.type.meta as meta
-from qiime2.core.type.tests.test_grammar import MockTemplate, MockPredicate
+import rachis.core.type.collection as col
+import rachis.core.type.meta as meta
+from rachis.core.type.tests.test_grammar import MockTemplate, MockPredicate
 
 
 class TestSelect(unittest.TestCase):

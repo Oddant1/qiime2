@@ -6,8 +6,8 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from qiime2.core.format import FormatBase
-from qiime2.core.exceptions import ValidationError
+from rachis.core.format import FormatBase
+from rachis.core.exceptions import ValidationError
 
 
 __all__ = ['FormatBase', 'ValidationError', '_check_validation_level']

@@ -11,26 +11,26 @@ import inspect
 
 import pandas as pd
 
-import qiime2
-import qiime2.sdk
-from qiime2.core.testing.util import get_dummy_plugin
-from qiime2.core.testing.type import IntSequence1, SingleInt, Mapping
-from qiime2.plugin import Visualization, Int, Bool
-import qiime2.sdk.parallel_config
+import rachis
+import rachis.sdk
+from rachis.core.testing.util import get_dummy_plugin
+from rachis.core.testing.type import IntSequence1, SingleInt, Mapping
+from rachis.plugin import Visualization, Int, Bool
+import rachis.sdk.parallel_config
 
 
 class TestPipeline(unittest.TestCase):
     def setUp(self):
         self.plugin = get_dummy_plugin()
-        self.single_int = qiime2.Artifact.import_data(SingleInt, -1)
-        self.int_sequence = qiime2.Artifact.import_data(IntSequence1,
+        self.single_int = rachis.Artifact.import_data(SingleInt, -1)
+        self.int_sequence = rachis.Artifact.import_data(IntSequence1,
                                                         [1, 2, 3])
-        self.mapping = qiime2.Artifact.import_data(Mapping, {'foo': '42'})
+        self.mapping = rachis.Artifact.import_data(Mapping, {'foo': '42'})
 
     def test_private_constructor(self):
         with self.assertRaisesRegex(NotImplementedError,
                                     'Pipeline constructor.*private'):
-            qiime2.sdk.Pipeline()
+            rachis.sdk.Pipeline()
 
     def test_from_function_spot_check(self):
         typical_pipeline = self.plugin.pipelines['typical_pipeline']
@@ -95,10 +95,10 @@ class TestPipeline(unittest.TestCase):
     def test_list_pipeline(self):
         list_pipeline = self.plugin.pipelines['list_pipeline']
 
-        int_list = [qiime2.Artifact.import_data(IntSequence1, [0, 1, 2]),
-                    qiime2.Artifact.import_data(IntSequence1, [3, 4, 5])]
-        int_dict = {'1': qiime2.Artifact.import_data(IntSequence1, [0, 1, 2]),
-                    '2': qiime2.Artifact.import_data(IntSequence1, [3, 4, 5])}
+        int_list = [rachis.Artifact.import_data(IntSequence1, [0, 1, 2]),
+                    rachis.Artifact.import_data(IntSequence1, [3, 4, 5])]
+        int_dict = {'1': rachis.Artifact.import_data(IntSequence1, [0, 1, 2]),
+                    '2': rachis.Artifact.import_data(IntSequence1, [3, 4, 5])}
 
         list_out = list_pipeline(int_list)
         dict_out = list_pipeline(int_dict)
@@ -106,8 +106,8 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(len(list_out), 1)
         self.assertEqual(len(dict_out), 1)
 
-        self.assertIsInstance(list_out.output, qiime2.sdk.ResultCollection)
-        self.assertIsInstance(dict_out.output, qiime2.sdk.ResultCollection)
+        self.assertIsInstance(list_out.output, rachis.sdk.ResultCollection)
+        self.assertIsInstance(dict_out.output, rachis.sdk.ResultCollection)
 
         self.assertEqual(list(list_out.output.keys()), ['0', '1'])
         self.assertEqual(list(dict_out.output.keys()), ['0', '1'])
@@ -120,10 +120,10 @@ class TestPipeline(unittest.TestCase):
     def test_collection_pipeline(self):
         collection_pipeline = self.plugin.pipelines['collection_pipeline']
 
-        int_list = [qiime2.Artifact.import_data(IntSequence1, [0, 1, 2]),
-                    qiime2.Artifact.import_data(IntSequence1, [3, 4, 5])]
-        int_dict = {'1': qiime2.Artifact.import_data(IntSequence1, [0, 1, 2]),
-                    '2': qiime2.Artifact.import_data(IntSequence1, [3, 4, 5])}
+        int_list = [rachis.Artifact.import_data(IntSequence1, [0, 1, 2]),
+                    rachis.Artifact.import_data(IntSequence1, [3, 4, 5])]
+        int_dict = {'1': rachis.Artifact.import_data(IntSequence1, [0, 1, 2]),
+                    '2': rachis.Artifact.import_data(IntSequence1, [3, 4, 5])}
 
         list_out = collection_pipeline(int_list)
         dict_out = collection_pipeline(int_dict)
@@ -131,8 +131,8 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(len(list_out), 1)
         self.assertEqual(len(dict_out), 1)
 
-        self.assertIsInstance(list_out.output, qiime2.sdk.ResultCollection)
-        self.assertIsInstance(dict_out.output, qiime2.sdk.ResultCollection)
+        self.assertIsInstance(list_out.output, rachis.sdk.ResultCollection)
+        self.assertIsInstance(dict_out.output, rachis.sdk.ResultCollection)
 
         self.assertEqual(list(list_out.output.keys()), ['key1', 'key2'])
         self.assertEqual(list(dict_out.output.keys()), ['key1', 'key2'])
@@ -150,7 +150,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(len(result), 1)
 
         output = result.output
-        self.assertIsInstance(output, qiime2.sdk.ResultCollection)
+        self.assertIsInstance(output, rachis.sdk.ResultCollection)
 
         expected = {'0': {'foo': '42'}, '1': {'foo': '42'}}
         observed = {}
@@ -163,14 +163,14 @@ class TestPipeline(unittest.TestCase):
         de_facto_collection_pipeline = \
             self.plugin.pipelines['de_facto_collection_pipeline']
 
-        with qiime2.sdk.parallel_config.ParallelConfig():
+        with rachis.sdk.parallel_config.ParallelConfig():
             result = de_facto_collection_pipeline.parallel()._result()
 
         self.assertEqual(len(result), 1)
 
         output = result.output
 
-        self.assertIsInstance(output, qiime2.sdk.ResultCollection)
+        self.assertIsInstance(output, rachis.sdk.ResultCollection)
 
         expected = {'0': {'foo': '42'}, '1': {'foo': '42'}}
         observed = {}
@@ -188,7 +188,7 @@ class TestPipeline(unittest.TestCase):
     def test_parameter_only_pipeline(self):
         index = pd.Index(['a', 'b', 'c'], name='id', dtype=object)
         df = pd.DataFrame({'col1': ['2', '1', '3']}, index=index, dtype=object)
-        metadata = qiime2.Metadata(df)
+        metadata = rachis.Metadata(df)
         for call in self.iter_callables('parameter_only_pipeline'):
             results = call(100)
             self.assertEqual(results.foo.view(list), [100, 2, 3])
@@ -216,7 +216,7 @@ class TestPipeline(unittest.TestCase):
             self.assertEqual(results.right.view(list), [2, 3])
 
             with self.assertRaisesRegex(ValueError, 'Bad mapping'):
-                m = qiime2.Artifact.import_data(Mapping, {'a': 1})
+                m = rachis.Artifact.import_data(Mapping, {'a': 1})
                 call(self.int_sequence, m, False)
 
     def test_optional_artifact_pipeline(self):
@@ -243,7 +243,7 @@ class TestPipeline(unittest.TestCase):
             self.assertEqual(len(results), 8)
 
             with self.assertRaisesRegex(ValueError, 'Bad mapping'):
-                m = qiime2.Artifact.import_data(Mapping, {1: 1})
+                m = rachis.Artifact.import_data(Mapping, {1: 1})
                 call(self.int_sequence, m)
 
     def test_pointless_pipeline(self):
@@ -258,7 +258,7 @@ class TestPipeline(unittest.TestCase):
         exp = {'0': 0, '1': 1, '2': 2}
 
         ret = pipeline()
-        obs = qiime2.sdk.util.view_collection(ret.output, int)
+        obs = rachis.sdk.util.view_collection(ret.output, int)
 
         self.assertEqual(obs, exp)
 
@@ -267,10 +267,10 @@ class TestPipeline(unittest.TestCase):
 
         exp = {'0': 0, '1': 1, '2': 2}
 
-        with qiime2.sdk.parallel_config.ParallelConfig():
+        with rachis.sdk.parallel_config.ParallelConfig():
             ret = pipeline.parallel()._result()
 
-        obs = qiime2.sdk.util.view_collection(ret.output, int)
+        obs = rachis.sdk.util.view_collection(ret.output, int)
 
         self.assertEqual(obs, exp)
 
@@ -280,7 +280,7 @@ class TestPipeline(unittest.TestCase):
         exp = {'0': 0, '1': 1, '2': 2}
 
         ret = pipeline(kwarg=True)
-        obs = qiime2.sdk.util.view_collection(ret.output, int)
+        obs = rachis.sdk.util.view_collection(ret.output, int)
 
         self.assertEqual(obs, exp)
 
@@ -289,10 +289,10 @@ class TestPipeline(unittest.TestCase):
 
         exp = {'0': 0, '1': 1, '2': 2}
 
-        with qiime2.sdk.parallel_config.ParallelConfig():
+        with rachis.sdk.parallel_config.ParallelConfig():
             ret = pipeline.parallel(kwarg=True)._result()
 
-        obs = qiime2.sdk.util.view_collection(ret.output, int)
+        obs = rachis.sdk.util.view_collection(ret.output, int)
 
         self.assertEqual(obs, exp)
 
@@ -302,7 +302,7 @@ class TestPipeline(unittest.TestCase):
         exp = {'1': 0, '2': 1, '3': 2}
 
         ret = pipeline()
-        obs = qiime2.sdk.util.view_collection(ret.output, int)
+        obs = rachis.sdk.util.view_collection(ret.output, int)
 
         self.assertEqual(obs, exp)
 
@@ -311,10 +311,10 @@ class TestPipeline(unittest.TestCase):
 
         exp = {'1': 0, '2': 1, '3': 2}
 
-        with qiime2.sdk.parallel_config.ParallelConfig():
+        with rachis.sdk.parallel_config.ParallelConfig():
             ret = pipeline.parallel()._result()
 
-        obs = qiime2.sdk.util.view_collection(ret.output, int)
+        obs = rachis.sdk.util.view_collection(ret.output, int)
 
         self.assertEqual(obs, exp)
 
@@ -324,7 +324,7 @@ class TestPipeline(unittest.TestCase):
         exp = {'1': 0, '2': 1, '3': 2}
 
         ret = pipeline(kwarg=True)
-        obs = qiime2.sdk.util.view_collection(ret.output, int)
+        obs = rachis.sdk.util.view_collection(ret.output, int)
 
         self.assertEqual(obs, exp)
 
@@ -333,10 +333,10 @@ class TestPipeline(unittest.TestCase):
 
         exp = {'1': 0, '2': 1, '3': 2}
 
-        with qiime2.sdk.parallel_config.ParallelConfig():
+        with rachis.sdk.parallel_config.ParallelConfig():
             ret = pipeline.parallel(kwarg=True)._result()
 
-        obs = qiime2.sdk.util.view_collection(ret.output, int)
+        obs = rachis.sdk.util.view_collection(ret.output, int)
 
         self.assertEqual(obs, exp)
 
@@ -347,10 +347,10 @@ class TestPipeline(unittest.TestCase):
         '''
         pipeline = self.plugin.pipelines['pipelines_in_pipeline']
 
-        ints = qiime2.Artifact.import_data(IntSequence1, [1, 2, 3])
-        mapping = qiime2.Artifact.import_data(Mapping, {'foo': '42'})
+        ints = rachis.Artifact.import_data(IntSequence1, [1, 2, 3])
+        mapping = rachis.Artifact.import_data(Mapping, {'foo': '42'})
 
-        with qiime2.sdk.parallel_config.ParallelConfig():
+        with rachis.sdk.parallel_config.ParallelConfig():
             pipeline.parallel(ints, mapping)._result()
 
         self.assertTrue(True)

@@ -8,7 +8,7 @@
 
 import unittest
 
-from qiime2.core.type import (
+from rachis.core.type import (
     is_collection_type, is_primitive_type, is_semantic_type, Set, List,
     SemanticType, Int, Metadata, MetadataColumn, Categorical, Numeric, Range)
 

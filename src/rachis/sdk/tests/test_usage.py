@@ -10,15 +10,15 @@ import unittest.mock as mock
 import unittest
 import tempfile
 
-from qiime2.core.testing.util import get_dummy_plugin
-import qiime2.core.testing.examples as examples
-from qiime2.sdk import usage, action, UninitializedPluginManagerError
-from qiime2 import Metadata, Artifact, ResultCollection
+from rachis.core.testing.util import get_dummy_plugin
+import rachis.core.testing.examples as examples
+from rachis.sdk import usage, action, UninitializedPluginManagerError
+from rachis import Metadata, Artifact, ResultCollection
 
 
 class TestCaseUsage(unittest.TestCase):
     def setUp(self):
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.plugin = get_dummy_plugin()
 
     def tearDown(self):
@@ -68,7 +68,7 @@ class TestUsageAction(TestCaseUsage):
                                     'No action.*concatenate_spleens'):
             ua.get_action()
 
-    @mock.patch('qiime2.sdk.PluginManager.reuse_existing',
+    @mock.patch('rachis.sdk.PluginManager.reuse_existing',
                 side_effect=UninitializedPluginManagerError)
     def test_uninitialized_plugin_manager(self, _):
         with self.assertRaisesRegex(UninitializedPluginManagerError,

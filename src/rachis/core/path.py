@@ -94,7 +94,7 @@ class OutPath(OwnedPath):
         """
         Create a tempfile, return pathlib.Path reference to it.
         """
-        from qiime2.core.cache import get_cache
+        from rachis.core.cache import get_cache
 
         cache = get_cache()
         tmp_path = cache.get_tmp_path()
@@ -118,7 +118,7 @@ class OutPath(OwnedPath):
 
 
 class InternalDirectory(_ConcretePath):
-    DEFAULT_PREFIX = 'qiime2-'
+    DEFAULT_PREFIX = 'rachis-'
 
     @classmethod
     def __new(cls, *args):
@@ -133,7 +133,7 @@ class InternalDirectory(_ConcretePath):
             # for pickling.
             return cls.__new(*args)
         else:
-            from qiime2.core.cache import get_cache
+            from rachis.core.cache import get_cache
 
             cache = get_cache()
             tmp_path = cache.get_tmp_path()
@@ -157,8 +157,8 @@ class InternalDirectory(_ConcretePath):
 
 
 class ArchivePath(InternalDirectory):
-    DEFAULT_PREFIX = 'qiime2-archive-'
+    DEFAULT_PREFIX = 'rachis-archive-'
 
 
 class ProvenancePath(InternalDirectory):
-    DEFAULT_PREFIX = 'qiime2-provenance-'
+    DEFAULT_PREFIX = 'rachis-provenance-'

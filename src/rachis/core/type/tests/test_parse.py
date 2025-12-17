@@ -8,9 +8,9 @@
 
 import unittest
 
-from qiime2.core.type.parse import ast_to_type, string_to_ast
-from qiime2.core.testing.type import Foo, Bar, C1, C2
-from qiime2.plugin import (Int, Float, Str, Bool, Range, Choices, TypeMap,
+from rachis.core.type.parse import ast_to_type, string_to_ast
+from rachis.core.testing.type import Foo, Bar, C1, C2
+from rachis.plugin import (Int, Float, Str, Bool, Range, Choices, TypeMap,
                            Properties, List, Set, Visualization, Metadata,
                            MetadataColumn, Categorical, Numeric)
 

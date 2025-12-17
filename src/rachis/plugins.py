@@ -11,16 +11,16 @@ import re
 import sys
 import importlib.machinery
 
-from qiime2.sdk import usage
+from rachis.sdk import usage
 
 __all__ = ['available_plugins', 'ArtifactAPIUsage']
 __path__ = []
 
 
 def available_plugins():
-    import qiime2.sdk
-    pm = qiime2.sdk.PluginManager()
-    return set('qiime2.plugins.' + s.replace('-', '_') for s in pm.plugins)
+    import rachis.sdk
+    pm = rachis.sdk.PluginManager()
+    return set('rachis.plugins.' + s.replace('-', '_') for s in pm.plugins)
 
 
 class ArtifactAPIUsageVariable(usage.UsageVariable):
@@ -121,7 +121,7 @@ class ArtifactAPIUsage(usage.Usage):
         Parameters
         ----------
         enable_assertions : bool
-            Whether :class:`qiime2.sdk.usage.UsageVariable` assertions should
+            Whether :class:`rachis.sdk.usage.UsageVariable` assertions should
             be rendered. Note that these are not executed, rather code that
             would assert is templated by :meth:`render`.
         action_collection_size : int
@@ -202,7 +202,7 @@ class ArtifactAPIUsage(usage.Usage):
             lines.append(self.INDENT + f"'{key}': {member.name},")
         lines.append('})')
 
-        self._update_imports(from_='qiime2', import_='ResultCollection')
+        self._update_imports(from_='rachis', import_='ResultCollection')
         self._add(lines)
 
         return variable
@@ -265,7 +265,7 @@ class ArtifactAPIUsage(usage.Usage):
 
         lines.append(')')
 
-        self._update_imports(from_='qiime2', import_='Artifact')
+        self._update_imports(from_='rachis', import_='Artifact')
         self._add(lines)
 
         return imported_var
@@ -306,7 +306,7 @@ class ArtifactAPIUsage(usage.Usage):
 
         lines = ['%r = %r.view(Metadata)' % (to_name, from_name)]
 
-        self._update_imports(from_='qiime2', import_='Metadata')
+        self._update_imports(from_='rachis', import_='Metadata')
         self._add(lines)
 
         return to_variable
@@ -439,30 +439,30 @@ def _canonical_module(obj):
     return None
 
 
-class QIIMEArtifactAPIImporter:
+class RachisArtifactAPIImporter:
     def _plugin_lookup(self, plugin_name):
-        import qiime2.sdk
-        pm = qiime2.sdk.PluginManager()
+        import rachis.sdk
+        pm = rachis.sdk.PluginManager()
         lookup = {s.replace('-', '_'): s for s in pm.plugins}
         if plugin_name not in lookup:
             return None
         return pm.plugins[lookup[plugin_name]]
 
     def find_spec(self, name, path=None, target=None):
-        # Don't waste time doing anything if it's not a qiime2 plugin
-        if not name.startswith('qiime2.plugins.'):
+        # Don't waste time doing anything if it's not a qiime2/rachis plugin
+        if not name.startswith('qiime2.plugins.') and not name.startswith('rachis.plugins.'):
             return None
 
         if target is not None:
             # TODO: experiment with this to see if it is possible
-            raise ImportError("Reloading the QIIME 2 Artifact API is not"
+            raise ImportError("Reloading the Rachis Artifact API is not"
                               " currently supported.")
 
         # We couldn't care less about path, it is useless to us
         # (It is the __path__ of the parent module)
 
         fqn = name.split('.')
-        plugin_details = fqn[2:]  # fqn[len(['qiime2', 'plugins']):]
+        plugin_details = fqn[2:]  # fqn[len(['rachis', 'plugins']):]
         plugin_name = plugin_details[0]
 
         plugin = self._plugin_lookup(plugin_name)
@@ -488,7 +488,7 @@ class QIIMEArtifactAPIImporter:
         return importlib.machinery.ModuleSpec(
             name,
             loader=self,
-            origin='generated QIIME 2 API',
+            origin='generated Rachis API',
             loader_state={'plugin': plugin, 'action_types': action_types},
             is_package=action_types is None
         )
@@ -519,4 +519,4 @@ class QIIMEArtifactAPIImporter:
                     setattr(module, key, value)
 
 
-sys.meta_path += [QIIMEArtifactAPIImporter()]
+sys.meta_path += [RachisArtifactAPIImporter()]

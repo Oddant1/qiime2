@@ -13,9 +13,9 @@ import zipfile
 
 import pytest
 
-from qiime2 import Artifact
-from qiime2.core.archive.archiver import ChecksumDiff
-from qiime2.sdk.plugin_manager import PluginManager
+from rachis import Artifact
+from rachis.core.archive.archiver import ChecksumDiff
+from rachis.sdk.plugin_manager import PluginManager
 
 from .._checksum_validator import validate_checksums, ValidationCode
 from .testing_utilities import write_zip_archive
@@ -26,7 +26,7 @@ class ValidateChecksumTests(unittest.TestCase):
         self.pm = PluginManager()
         self.dp = self.pm.plugins['dummy-plugin']
         self.tempdir = tempfile.mkdtemp(
-            prefix='qiime2-test-checksum-validator-temp-'
+            prefix='rachis-test-checksum-validator-temp-'
         )
 
     def tearDown(self):

@@ -10,9 +10,9 @@ import os
 import tempfile
 import unittest
 
-from qiime2.core.annotate import Note, Annotation
-from qiime2.core.testing.type import FourInts
-from qiime2.sdk.result import Artifact
+from rachis.core.annotate import Note, Annotation
+from rachis.core.testing.type import FourInts
+from rachis.sdk.result import Artifact
 
 
 class TestAnnotationClass(unittest.TestCase):
@@ -62,7 +62,7 @@ class TestAnnotationEndpoints(unittest.TestCase):
     # setup for endpoint testing
     def setUp(self):
         # Create Artifact
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.artifact = Artifact.import_data(FourInts, [-1, 42, 0, 43])
 
         # Create Notes

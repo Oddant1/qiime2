@@ -12,13 +12,13 @@ import unittest
 
 import pandas as pd
 
-import qiime2
-from qiime2.core.cache import Cache
-from qiime2.core.testing.type import IntSequence1, SingleInt
-from qiime2.core.testing.util import get_dummy_plugin, PipelineError
-from qiime2.sdk.result import Artifact
-from qiime2.sdk.parallel_config import ParallelConfig
-from qiime2.core.util import load_action_yaml
+import rachis
+from rachis.core.cache import Cache
+from rachis.core.testing.type import IntSequence1, SingleInt
+from rachis.core.testing.util import get_dummy_plugin, PipelineError
+from rachis.sdk.result import Artifact
+from rachis.sdk.parallel_config import ParallelConfig
+from rachis.core.util import load_action_yaml
 
 
 def _load_alias_uuid(result):
@@ -27,7 +27,7 @@ def _load_alias_uuid(result):
 
 def _load_nested_alias_uuid(result, cache):
     alias_uuid = _load_alias_uuid(result)
-    aliased_result = qiime2.sdk.Result.load(
+    aliased_result = rachis.sdk.Result.load(
         os.path.join(cache.data, alias_uuid))
     return _load_alias_uuid(aliased_result)
 
@@ -49,7 +49,7 @@ def _load_nested_alias_uuids(collection, cache):
     alias_results = {}
     for idx, alias_uuid in enumerate(alias_uuids):
         alias_results[idx] = \
-            qiime2.sdk.Result.load(os.path.join(cache.data, alias_uuid))
+            rachis.sdk.Result.load(os.path.join(cache.data, alias_uuid))
 
     return _load_alias_uuids(alias_results)
 
@@ -63,7 +63,7 @@ class TestPipelineResumption(unittest.TestCase):
             self.plugin.pipelines['resumable_nested_varied_pipeline']
 
         # Create temp test dir
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
 
         # Create cache and pool
         self.cache = Cache(os.path.join(self.test_dir.name, 'cache'))
@@ -82,10 +82,10 @@ class TestPipelineResumption(unittest.TestCase):
         # Create metadata
         df1 = pd.DataFrame({'a': ['1', '2', '3']},
                            index=pd.Index(['0', '1', '2'], name='feature ID'))
-        self.md1 = qiime2.Metadata(df1)
+        self.md1 = rachis.Metadata(df1)
         df2 = pd.DataFrame({'b': ['4', '5', '6']},
                            index=pd.Index(['0', '1', '2'], name='feature ID'))
-        self.md2 = qiime2.Metadata(df2)
+        self.md2 = rachis.Metadata(df2)
 
     def tearDown(self):
         """Remove our cache and all that from last test

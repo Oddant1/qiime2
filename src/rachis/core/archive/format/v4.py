@@ -6,9 +6,9 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2.core.archive.format.v3 as v3
+import rachis.core.archive.format.v3 as v3
 
-from qiime2.core.cite import Citations
+from rachis.core.cite import Citations
 
 
 class ArchiveFormat(v3.ArchiveFormat):

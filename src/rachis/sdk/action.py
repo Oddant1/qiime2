@@ -17,10 +17,10 @@ import dill
 from typing import Mapping, TypedDict, Union
 from types import MappingProxyType
 
-import qiime2.sdk
-import qiime2.core.type as qtype
-import qiime2.core.archive as archive
-from qiime2.core.util import (LateBindingAttribute, DropFirstParameter,
+import rachis.sdk
+import rachis.core.type as qtype
+import rachis.core.archive as archive
+from rachis.core.util import (LateBindingAttribute, DropFirstParameter,
                               tuplize, create_collection_name)
 
 
@@ -33,14 +33,14 @@ def _coerce_pipeline_outputs(ctx, outputs):
     for output in outputs:
         # Ensure collection outputs are ResultCollection
         if isinstance(output, dict) or isinstance(output, list):
-            output = qiime2.sdk.ResultCollection(output)
+            output = rachis.sdk.ResultCollection(output)
 
         # Handle proxy outputs if root
         if ctx._parent is None and output is not None:
             output = output.result()
 
             # Handle proxies as elements of collections
-            if isinstance(output, qiime2.sdk.ResultCollection):
+            if isinstance(output, rachis.sdk.ResultCollection):
                 for key, value in output.items():
                     output[key] = value.result()
 
@@ -123,7 +123,7 @@ class Action(metaclass=abc.ABCMeta):
         Parameters
         ----------
         callable : callable
-        signature : qiime2.core.type.Signature
+        signature : rachis.core.type.Signature
         plugin_id : str
         name : str
             Human-readable name for this action.
@@ -182,7 +182,7 @@ class Action(metaclass=abc.ABCMeta):
         return markdown_source_template % {'source': source}
 
     def get_import_path(self, include_self=True):
-        path = f'qiime2.plugins.{self.plugin_id}.{self.type}s'
+        path = f'rachis.plugins.{self.plugin_id}.{self.type}s'
         if include_self:
             path += f'.{self.id}'
         return path
@@ -243,11 +243,11 @@ class Action(metaclass=abc.ABCMeta):
                 self.type, self.plugin_id, self.id, execution_ctx)
 
             if self.deprecated:
-                with qiime2.core.util.warning() as warn:
+                with rachis.core.util.warning() as warn:
                     warn(self._build_deprecation_message(), FutureWarning)
 
             if self.migrated:
-                with qiime2.core.util.warning() as warn:
+                with rachis.core.util.warning() as warn:
                     warn(self._build_migration_message(), FutureWarning)
 
             # Type management
@@ -273,7 +273,7 @@ class Action(metaclass=abc.ABCMeta):
 
             # Wrap in a Results object mapping output name to value so
             # users have access to outputs by name or position.
-            results = qiime2.sdk.Results(
+            results = rachis.sdk.Results(
                 self.signature.outputs.keys(), outputs)
 
             return results
@@ -286,13 +286,13 @@ class Action(metaclass=abc.ABCMeta):
     def _callable_action_wrapper(self):
         # This is a "root" level invocation (not a nested call within a
         # pipeline), so no special factory is needed.
-        callable_wrapper = self._bind(lambda: qiime2.sdk.Context(self))
+        callable_wrapper = self._bind(lambda: rachis.sdk.Context(self))
         self._set_wrapper_name(callable_wrapper, '__call__')
         return callable_wrapper
 
     def _get_async_wrapper(self):
         def async_wrapper(*args, **kwargs):
-            return qiime2.sdk.AsynchronousContext(self)._dispatch_(
+            return rachis.sdk.AsynchronousContext(self)._dispatch_(
                 *args, **kwargs)
 
         async_wrapper = self._rewrite_wrapper_signature(async_wrapper)
@@ -307,7 +307,7 @@ class Action(metaclass=abc.ABCMeta):
                 raise ValueError('Only pipelines may be run in parallel')
 
             # TODO: could call callable_action here instead and do index check
-            return qiime2.sdk.ParallelContext(self)._dispatch_(*args, **kwargs)
+            return rachis.sdk.ParallelContext(self)._dispatch_(*args, **kwargs)
 
         parsl_wrapper = self._rewrite_wrapper_signature(parsl_wrapper)
         self._set_wrapper_properties(parsl_wrapper)
@@ -420,7 +420,7 @@ class Action(metaclass=abc.ABCMeta):
 
 
 class Method(Action):
-    """QIIME 2 Method"""
+    """Rachis Method"""
 
     type = 'method'
 
@@ -466,7 +466,7 @@ class Method(Action):
 
 
 class Visualizer(Action):
-    """QIIME 2 Visualizer"""
+    """Rachis Visualizer"""
 
     type = 'visualizer'
 
@@ -476,17 +476,14 @@ class Visualizer(Action):
         return DropFirstParameter.from_function(callable)
 
     def _callable_executor_(self, ctx, view_args, output_types, provenance):
-        # TODO use qiime2.plugin.OutPath when it exists, and update visualizers
-        # to work with OutPath instead of str. Visualization._from_data_dir
-        # will also need to be updated to support OutPath instead of str.
-        with tempfile.TemporaryDirectory(prefix='qiime2-temp-') as temp_dir:
+        with tempfile.TemporaryDirectory(prefix='rachis-temp-') as temp_dir:
             ret_val = self._callable(output_dir=temp_dir, **view_args)
             if ret_val is not None:
                 raise TypeError(
                     "Visualizer %r should not return anything. "
                     "Received %r as a return value." % (self, ret_val))
             provenance.output_name = 'visualization'
-            viz = qiime2.sdk.Visualization._from_data_dir(temp_dir,
+            viz = rachis.sdk.Visualization._from_data_dir(temp_dir,
                                                           provenance)
             viz = ctx.add_reference(viz)
 
@@ -504,7 +501,7 @@ class Visualizer(Action):
 
 
 class Pipeline(Action):
-    """QIIME 2 Pipeline"""
+    """Rachis Pipeline"""
     type = 'pipeline'
     _ProvCaptureCls = archive.PipelineProvenanceCapture
 
@@ -533,11 +530,11 @@ class Pipeline(Action):
 
         message = "Pipelines must return `Result` objects, not %s"
         for output in outputs:
-            if isinstance(output, qiime2.sdk.ResultCollection):
+            if isinstance(output, rachis.sdk.ResultCollection):
                 for elem in output.values():
-                    if not isinstance(elem, qiime2.sdk.IResult):
+                    if not isinstance(elem, rachis.sdk.IResult):
                         raise TypeError(message % type(elem))
-            elif not isinstance(output, qiime2.sdk.IResult):
+            elif not isinstance(output, rachis.sdk.IResult):
                 raise TypeError(message % type(output))
 
         results = []
@@ -549,7 +546,7 @@ class Pipeline(Action):
             if spec.qiime_type.name == 'Collection' and \
                     output.collection in spec.qiime_type:
                 size = len(output)
-                aliased_output = qiime2.sdk.ResultCollection()
+                aliased_output = rachis.sdk.ResultCollection()
 
                 for idx, (key, value) in enumerate(output.items()):
                     collection_name = create_collection_name(

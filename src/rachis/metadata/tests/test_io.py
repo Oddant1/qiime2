@@ -14,14 +14,14 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from qiime2.metadata import (Metadata, CategoricalMetadataColumn,
+from rachis.metadata import (Metadata, CategoricalMetadataColumn,
                              NumericMetadataColumn, MetadataFileError)
-import qiime2.util
+import rachis.util
 
 
 def get_data_path(filename):
-    return qiime2.util.get_filepath_from_package(
-        'qiime2.metadata.tests', 'data/%s' % filename)
+    return rachis.util.get_filepath_from_package(
+        'rachis.metadata.tests', 'data/%s' % filename)
 
 # NOTE: many of the test files in the `data` directory intentionally have
 # leading/trailing whitespace characters on some lines, as well as mixed usage
@@ -40,7 +40,7 @@ class TestLoadErrors(unittest.TestCase):
         with self.assertRaisesRegex(MetadataFileError,
                                     "Metadata file path doesn't exist"):
             Metadata.load(
-                '/qiime2/unit/tests/hopefully/this/path/does/not/exist')
+                '/rachis/unit/tests/hopefully/this/path/does/not/exist')
 
     def test_path_is_directory(self):
         fp = get_data_path('valid')
@@ -301,7 +301,7 @@ class TestLoadErrors(unittest.TestCase):
 class TestLoadSuccess(unittest.TestCase):
     def setUp(self):
         self.temp_dir_obj = tempfile.TemporaryDirectory(
-            prefix='qiime2-metadata-tests-temp-')
+            prefix='rachis-metadata-tests-temp-')
         self.temp_dir = self.temp_dir_obj.name
 
         # This Metadata object is compared against observed Metadata objects in
@@ -886,7 +886,7 @@ class TestLoadSuccess(unittest.TestCase):
 class TestSave(unittest.TestCase):
     def setUp(self):
         self.temp_dir_obj = tempfile.TemporaryDirectory(
-            prefix='qiime2-metadata-tests-temp-')
+            prefix='rachis-metadata-tests-temp-')
         self.temp_dir = self.temp_dir_obj.name
 
         self.filepath = os.path.join(self.temp_dir, 'metadata.tsv')
@@ -1501,7 +1501,7 @@ class TestSave(unittest.TestCase):
 class TestRoundtrip(unittest.TestCase):
     def setUp(self):
         self.temp_dir_obj = tempfile.TemporaryDirectory(
-            prefix='qiime2-metadata-tests-temp-')
+            prefix='rachis-metadata-tests-temp-')
         self.temp_dir = self.temp_dir_obj.name
 
         self.filepath = os.path.join(self.temp_dir, 'metadata.tsv')

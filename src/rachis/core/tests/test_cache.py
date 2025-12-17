@@ -23,13 +23,13 @@ from contextlib import contextmanager
 import pytest
 from flufl.lock import LockState
 
-import qiime2
-from qiime2.core.cache import (Cache, _exit_cleanup, get_cache, _get_user,
+import rachis
+from rachis.core.cache import (Cache, _exit_cleanup, get_cache, _get_user,
                                _VERSION_TEMPLATE)
-from qiime2.core.testing.type import IntSequence1, IntSequence2, SingleInt
-from qiime2.core.testing.util import get_dummy_plugin
-from qiime2.sdk.result import Artifact
-from qiime2.core.util import load_action_yaml
+from rachis.core.testing.type import IntSequence1, IntSequence2, SingleInt
+from rachis.core.testing.util import get_dummy_plugin
+from rachis.sdk.result import Artifact
+from rachis.core.util import load_action_yaml
 
 # NOTE: If you see an error after all of your tests have ran saying that a pool
 # called __TEST_FAILURE__ doesn't exist and you were running tests in multiple
@@ -132,7 +132,7 @@ class TestCache(unittest.TestCase):
     def setUp(self):
         self.plugin = get_dummy_plugin()
         # Create temp test dir
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
 
         # Create artifact and cache
         self.art1 = Artifact.import_data(IntSequence1, [0, 1, 2])
@@ -217,7 +217,7 @@ class TestCache(unittest.TestCase):
             self.assertEqual(lines[0], 'QIIME 2\n')
             self.assertEqual(lines[1],
                              f'cache: {self.cache.CURRENT_FORMAT_VERSION}\n')
-            self.assertEqual(lines[2], f'framework: {qiime2.__version__}\n')
+            self.assertEqual(lines[2], f'framework: {rachis.__version__}\n')
 
     def test_roundtrip(self):
         # Save artifact to cache
@@ -670,7 +670,7 @@ class TestCache(unittest.TestCase):
         future_version = "9001"
 
         with open(self.cache.version, 'w') as fh:
-            fh.write(_VERSION_TEMPLATE % (future_version, qiime2.__version__))
+            fh.write(_VERSION_TEMPLATE % (future_version, rachis.__version__))
 
         with self.assertRaisesRegex(
             ValueError, f"The cache at `{self.cache.path}`.*`{future_version}`"
@@ -690,9 +690,9 @@ class TestCache(unittest.TestCase):
         cache3 = Cache(os.path.join(self.test_dir.name, 'new_cache3'))
 
         with cache2:
-            art1 = qiime2.sdk.Result.load(art1_path)
+            art1 = rachis.sdk.Result.load(art1_path)
             self.assertEqual(art1._annotations, {})
-            Note1 = qiime2.core.annotate.Note(name='annotation-1', text='1')
+            Note1 = rachis.core.annotate.Note(name='annotation-1', text='1')
             art1.add_annotation(Note1)
             self.cache.save(art1, 'annotation-1')
             art1_annotation1 = self.cache.load('annotation-1')
@@ -701,9 +701,9 @@ class TestCache(unittest.TestCase):
             set(art1_annotation1._annotations.keys()), set(['annotation-1']))
 
         with cache3:
-            art1_copy = qiime2.sdk.Result.load(art1_copy_path)
+            art1_copy = rachis.sdk.Result.load(art1_copy_path)
             self.assertEqual(art1_copy._annotations, {})
-            Note2 = qiime2.core.annotate.Note(name='annotation-2', text='2')
+            Note2 = rachis.core.annotate.Note(name='annotation-2', text='2')
             art1_copy.add_annotation(Note2)
             self.cache.save(art1_copy, 'annotation-2')
             art1_both_annotations = self.cache.load('annotation-2')
@@ -725,8 +725,8 @@ class TestCache(unittest.TestCase):
         cache3 = Cache(os.path.join(self.test_dir.name, 'new_cache3'))
 
         with cache2:
-            art1 = qiime2.sdk.Result.load(art1_path)
-            Note1 = qiime2.core.annotate.Note(name='annotation-1', text='1')
+            art1 = rachis.sdk.Result.load(art1_path)
+            Note1 = rachis.core.annotate.Note(name='annotation-1', text='1')
             art1.add_annotation(Note1)
             self.cache.save(art1, 'annotation-1')
             art1_annotation1 = self.cache.load('annotation-1')
@@ -735,8 +735,8 @@ class TestCache(unittest.TestCase):
             set(art1_annotation1._annotations.keys()), set(['annotation-1']))
 
         with cache3:
-            art1_copy = qiime2.sdk.Result.load(art1_copy_path)
-            Note2 = qiime2.core.annotate.Note(
+            art1_copy = rachis.sdk.Result.load(art1_copy_path)
+            Note2 = rachis.core.annotate.Note(
                 name='annotation-1', text='1 again')
             art1_copy.add_annotation(Note2)
             with self.assertWarnsRegex(Warning, 'Duplicate name annotation-1'):

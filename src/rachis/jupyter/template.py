@@ -10,7 +10,7 @@ import urllib.parse
 
 
 def make_html(location):
-    url = "/qiime2/redirect?location={location}".format(
+    url = "/rachis/redirect?location={location}".format(
         location=urllib.parse.quote(location))
     # This is dark magic. An image has an onload handler, which let's me
     # grab the parent dom in an anonymous way without needing to scope the
@@ -37,8 +37,8 @@ if (typeof require !== 'undefined') {
 url = baseURL + url;
 fetch(url).then(function(res) {
     if (res.status === 404) {
-        div.innerHTML = 'Install QIIME 2 Jupyter extension with:<br />' +
-                        '<code>jupyter server extension enable --py qiime2' +
+        div.innerHTML = 'Install Rachis Jupyter extension with:<br />' +
+                        '<code>jupyter server extension enable --py rachis' +
                         ' --sys-prefix</code><br />then restart your server.' +
                         '<br /><br />(Interactive output not available on ' +
                         'static notebook viewer services like nbviewer.)';

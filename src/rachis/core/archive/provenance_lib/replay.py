@@ -22,9 +22,9 @@ from .parse import ProvDAG
 from .usage_drivers import build_header, build_footer
 from ..provenance import MetadataInfo
 
-from qiime2.sdk import PluginManager
-from qiime2.sdk.usage import Usage, UsageVariable
-from qiime2.sdk.util import camel_to_snake
+from rachis.sdk import PluginManager
+from rachis.sdk.usage import Usage, UsageVariable
+from rachis.sdk.util import camel_to_snake
 
 
 @dataclass
@@ -1032,7 +1032,7 @@ def init_md_from_recorded_md(
     md_df = node.metadata[param_name]
 
     def factory():
-        from qiime2 import Metadata
+        from rachis import Metadata
         return Metadata(md_df)
 
     cwd = pathlib.Path.cwd()
@@ -1348,7 +1348,7 @@ def dedupe_citations(citations: List[Dict]) -> List[Dict]:
     Citations are not guaranteed to be truly unique after deduplicating based
     on these values.
 
-    Ensures only one qiime2 framework citation.
+    Ensures only one Rachis framework citation.
 
     Parameters
     ----------
@@ -1371,7 +1371,7 @@ def dedupe_citations(citations: List[Dict]) -> List[Dict]:
         if 'framework|qiime2' in citation_id:
             if not is_framework_cited:
                 with importlib.resources.open_text(
-                        'qiime2', 'citations.bib') as bibtex_file:
+                        'rachis', 'citations.bib') as bibtex_file:
                     q2_entry = bp.load(bibtex_file).entries.pop()
 
                 q2_entry['ID'] = citation_id

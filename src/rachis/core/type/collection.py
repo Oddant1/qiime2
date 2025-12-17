@@ -8,7 +8,7 @@
 
 import json
 
-from qiime2.core.type.template import TypeTemplate
+from rachis.core.type.template import TypeTemplate
 
 
 class _CollectionBase(TypeTemplate):
@@ -80,7 +80,7 @@ class _List(_1DCollectionBase):
         """Since this is a dictionary, we often need to make sure to use its
         values not its keys.
         """
-        from qiime2 import ResultCollection
+        from rachis import ResultCollection
 
         contained_expr = self_expr.fields[0]
 
@@ -120,7 +120,7 @@ class _Collection(_1DCollectionBase):
         """Since this is a dictionary, we often need to make sure to use its
         values not its keys.
         """
-        from qiime2 import ResultCollection
+        from rachis import ResultCollection
 
         contained_expr = self_expr.fields[0]
 

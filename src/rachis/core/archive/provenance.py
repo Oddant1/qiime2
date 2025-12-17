@@ -26,9 +26,9 @@ import yaml
 import tzlocal
 import dateutil.relativedelta as relativedelta
 
-import qiime2
-import qiime2.core.util as util
-from qiime2.core.cite import Citations
+import rachis
+import rachis.core.util as util
+from rachis.core.cite import Citations
 
 
 def _ts_to_date(ts):
@@ -122,7 +122,7 @@ def citation_key_constructor(loader, node) -> str:
     <domain>|<package>:<version>|[<identifier>|]<index>
 
     and frequently look like this (note no identifier):
-    framework|qiime2:2020.6.0.dev0|0
+    framework|rachis:2020.6.0.dev0|0
     """
     value = loader.construct_scalar(node)
     return value
@@ -152,7 +152,7 @@ class MetadataInfo(NamedTuple):
         The filepath of the metadata file relative to the action.yaml file.
     md5sum_hash : str
         The md5sum hash of the contents of the corresponding metadata file,
-        needed by qiime2.core.cache to tell if two metadata inputs are equal.
+        needed by rachis.core.cache to tell if two metadata inputs are equal.
     """
     input_artifact_uuids: List[str]
     relative_fp: str
@@ -290,7 +290,7 @@ class ProvenanceCapture:
         self.citations = Citations()
         self._framework_citations = []
 
-        for idx, citation in enumerate(qiime2.__citations__):
+        for idx, citation in enumerate(rachis.__citations__):
             citation_key = self.make_citation_key('framework')
             self.citations[citation_key.key] = citation
             self._framework_citations.append(citation_key)
@@ -302,7 +302,7 @@ class ProvenanceCapture:
         return self.path._destructor
 
     def _build_paths(self):
-        self.path = qiime2.core.path.ProvenancePath()
+        self.path = rachis.core.path.ProvenancePath()
 
         self.ancestor_dir = self.path / self.ANCESTOR_DIR
         self.ancestor_dir.mkdir()
@@ -355,7 +355,7 @@ class ProvenanceCapture:
     def make_citation_key(self, domain, package=None, identifier=None,
                           index=0):
         if domain == 'framework':
-            package, version = 'qiime2', qiime2.__version__
+            package, version = 'rachis', rachis.__version__
         else:
             package, version = package.name, package.version
         id_block = [] if identifier is None else [identifier]
@@ -475,7 +475,7 @@ class ProvenanceCapture:
         env['python'] = LiteralString('\n'.join(line.strip() for line in
                                       sys.version.split('\n')))
         env['framework'] = self.make_software_entry(
-            qiime2.__version__, qiime2.__website__, self._framework_citations)
+            rachis.__version__, rachis.__website__, self._framework_citations)
         env['plugins'] = self.plugins
 
         # sort pkgs alphabetically, ignoring upper/lower casing
@@ -563,7 +563,7 @@ class ImportProvenanceCapture(ProvenanceCapture):
 
 class ActionProvenanceCapture(ProvenanceCapture):
     def __init__(self, action_type, plugin_id, action_id, execution_context):
-        from qiime2.sdk import PluginManager
+        from rachis.sdk import PluginManager
 
         super().__init__()
         self._plugin = PluginManager().get_plugin(id=plugin_id)
@@ -618,7 +618,7 @@ class ActionProvenanceCapture(ProvenanceCapture):
     def add_input(self, name, input):
         if input is None:
             self.inputs[name] = None
-        elif isinstance(input, qiime2.sdk.result.ResultCollection):
+        elif isinstance(input, rachis.sdk.result.ResultCollection):
             # If we took a Collection input, we will have a ResultCollection,
             # and we want the keys to line up with the processed values we were
             # given, so we can maintain the order of the artifacts

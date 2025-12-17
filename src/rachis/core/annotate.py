@@ -16,7 +16,7 @@ import shutil
 from collections import OrderedDict
 from datetime import datetime
 
-from qiime2.core.util import (find_root_fp, sha512_file_hex,
+from rachis.core.util import (find_root_fp, sha512_file_hex,
                               gpg_find_key, format_algorithm,
                               unix_gpg_terminal_helper)
 
@@ -247,14 +247,14 @@ class Annotation():
 
 class UnknownAnnotation(Annotation):
     """Utility sub-class that handles loading newer Annotation types on an
-    older version of QIIME 2 that supports Annotations.
+    older version of Rachis/QIIME 2 that supports Annotations.
     """
     annotation_type = 'Unknown'
 
     def __init__(*args):
         raise NotImplementedError('`UnknownAnnotation` is an abstract class'
                                   ' used for handling Annotations associated'
-                                  ' with future versions of QIIME 2.'
+                                  ' with future versions of Rachis'
                                   ' It should not be instantiated directly.')
 
     _write_meta_yaml = __init__

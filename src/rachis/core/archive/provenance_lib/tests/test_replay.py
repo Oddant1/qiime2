@@ -15,10 +15,10 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from qiime2 import Artifact
-from qiime2.sdk import PluginManager
-from qiime2.sdk.usage import Usage, UsageVariable
-from qiime2.plugins import ArtifactAPIUsageVariable
+from rachis import Artifact
+from rachis.sdk import PluginManager
+from rachis.sdk.usage import Usage, UsageVariable
+from rachis.plugins import ArtifactAPIUsageVariable
 
 from ..parse import ProvDAG
 from ..replay import (
@@ -34,7 +34,7 @@ from .testing_utilities import CustomAssertions, DummyArtifacts
 from ..usage_drivers import ReplayPythonUsage
 from ...provenance import MetadataInfo
 
-from qiime2.sdk.util import camel_to_snake
+from rachis.sdk.util import camel_to_snake
 
 
 class ReplayNamespacesTests(unittest.TestCase):
@@ -114,10 +114,10 @@ class ReplayProvenanceTests(unittest.TestCase):
             with open(out_fn, 'r') as fp:
                 rendered = fp.read()
 
-            self.assertIn('from qiime2 import Artifact', rendered)
-            self.assertIn('from qiime2 import Metadata', rendered)
+            self.assertIn('from rachis import Artifact', rendered)
+            self.assertIn('from rachis import Metadata', rendered)
             self.assertIn(
-                'import qiime2.plugins.dummy_plugin.actions as '
+                'import rachis.plugins.dummy_plugin.actions as '
                 'dummy_plugin_actions',
                 rendered
             )
@@ -196,10 +196,10 @@ class ReplayProvenanceTests(unittest.TestCase):
             with open(out_fn, 'r') as fp:
                 rendered = fp.read()
 
-            self.assertIn('from qiime2 import Artifact', rendered)
-            self.assertIn('from qiime2 import Metadata', rendered)
+            self.assertIn('from rachis import Artifact', rendered)
+            self.assertIn('from rachis import Metadata', rendered)
             self.assertIn(
-                'import qiime2.plugins.dummy_plugin.actions as '
+                'import rachis.plugins.dummy_plugin.actions as '
                 'dummy_plugin_actions',
                 rendered
             )
@@ -266,12 +266,12 @@ class ReplayProvenanceTests(unittest.TestCase):
 class MultiplePluginTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from qiime2.sdk.plugin_manager import PluginManager
-        from qiime2 import Artifact
+        from rachis.sdk.plugin_manager import PluginManager
+        from rachis import Artifact
 
         cls.dp = PluginManager().plugins['dummy-plugin']
         cls.op = PluginManager().plugins['other-plugin']
-        cls.tempdir = tempfile.mkdtemp(prefix='qiime2-other-plugin-temp-')
+        cls.tempdir = tempfile.mkdtemp(prefix='rachis-other-plugin-temp-')
 
         int_seq = Artifact.import_data('IntSequence1', [1, 2, 3, 4])
         concat_ints = cls.op.methods['concatenate_ints']
@@ -299,14 +299,14 @@ class MultiplePluginTests(unittest.TestCase):
             with open(out_fp, 'r') as fp:
                 rendered = fp.read()
 
-        self.assertIn('from qiime2 import Artifact', rendered)
+        self.assertIn('from rachis import Artifact', rendered)
         self.assertIn(
-            'import qiime2.plugins.dummy_plugin.actions as '
+            'import rachis.plugins.dummy_plugin.actions as '
             'dummy_plugin_actions',
             rendered
         )
         self.assertIn(
-            'import qiime2.plugins.other_plugin.actions as '
+            'import rachis.plugins.other_plugin.actions as '
             'other_plugin_actions',
             rendered
         )
@@ -349,12 +349,12 @@ class ReplayProvDAGDirectoryTests(unittest.TestCase):
         self.assertIn(self.das.single_int2.uuid, dir_dag.dag)
 
         exp_1 = (
-            '(?s)from qiime2 import Artifact.*'
+            '(?s)from rachis import Artifact.*'
             'single_int_0 = Artifact.import_data.*'
             '<your data here>.*'
         )
         exp_2 = (
-            '(?s)from qiime2 import Artifact.*'
+            '(?s)from rachis import Artifact.*'
             'single_int_1 = Artifact.import_data.*'
             '<your data here>.*'
         )
@@ -382,9 +382,9 @@ class BuildUsageExamplesTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.das.free()
 
-    @patch('qiime2.core.archive.provenance_lib.replay.build_action_usage')
-    @patch('qiime2.core.archive.provenance_lib.replay.build_import_usage')
-    @patch('qiime2.core.archive.provenance_lib.replay.'
+    @patch('rachis.core.archive.provenance_lib.replay.build_action_usage')
+    @patch('rachis.core.archive.provenance_lib.replay.build_import_usage')
+    @patch('rachis.core.archive.provenance_lib.replay.'
            'build_no_provenance_node_usage')
     def test_build_usage_examples(self, n_p_builder, imp_builder, act_builder):
         ns = ReplayNamespaces()
@@ -398,9 +398,9 @@ class BuildUsageExamplesTests(unittest.TestCase):
         self.assertEqual(imp_builder.call_count, 3)
         self.assertEqual(act_builder.call_count, 2)
 
-    @patch('qiime2.core.archive.provenance_lib.replay.build_action_usage')
-    @patch('qiime2.core.archive.provenance_lib.replay.build_import_usage')
-    @patch('qiime2.core.archive.provenance_lib.replay.'
+    @patch('rachis.core.archive.provenance_lib.replay.build_action_usage')
+    @patch('rachis.core.archive.provenance_lib.replay.build_import_usage')
+    @patch('rachis.core.archive.provenance_lib.replay.'
            'build_no_provenance_node_usage')
     def test_build_usage_examples_lone_v0(
             self, n_p_builder, imp_builder, act_builder
@@ -422,9 +422,9 @@ class BuildUsageExamplesTests(unittest.TestCase):
         imp_builder.assert_not_called()
         act_builder.assert_not_called()
 
-    @patch('qiime2.core.archive.provenance_lib.replay.build_action_usage')
-    @patch('qiime2.core.archive.provenance_lib.replay.build_import_usage')
-    @patch('qiime2.core.archive.provenance_lib.replay.'
+    @patch('rachis.core.archive.provenance_lib.replay.build_action_usage')
+    @patch('rachis.core.archive.provenance_lib.replay.build_import_usage')
+    @patch('rachis.core.archive.provenance_lib.replay.'
            'build_no_provenance_node_usage')
     def test_build_usage_examples_mixed(
             self, n_p_builder, imp_builder, act_builder
@@ -450,9 +450,9 @@ class BuildUsageExamplesTests(unittest.TestCase):
         self.assertEqual(imp_builder.call_count, 2)
         act_builder.assert_called_once()
 
-    @patch('qiime2.core.archive.provenance_lib.replay.build_action_usage')
-    @patch('qiime2.core.archive.provenance_lib.replay.build_import_usage')
-    @patch('qiime2.core.archive.provenance_lib.replay.'
+    @patch('rachis.core.archive.provenance_lib.replay.build_action_usage')
+    @patch('rachis.core.archive.provenance_lib.replay.build_import_usage')
+    @patch('rachis.core.archive.provenance_lib.replay.'
            'build_no_provenance_node_usage')
     def test_build_usage_examples_big(
             self, n_p_builder, imp_builder, act_builder):
@@ -663,7 +663,7 @@ class InitializerTests(unittest.TestCase):
         self.assertEqual(var.var_type, 'metadata')
         rendered = var.use.render()
 
-        self.assertIn('from qiime2 import Metadata', rendered)
+        self.assertIn('from rachis import Metadata', rendered)
         self.assertIn('thing1_a_0_md = thing1.view(Metadata)', rendered)
 
     def test_init_md_from_artifacts_many(self):
@@ -692,7 +692,7 @@ class InitializerTests(unittest.TestCase):
         self.assertEqual(var.var_type, 'metadata')
         rendered = var.use.render()
 
-        self.assertIn('from qiime2 import Metadata', rendered)
+        self.assertIn('from rachis import Metadata', rendered)
         self.assertIn('thing1_a_0_md = thing1.view(Metadata)', rendered)
         self.assertIn('thing2_a_0_md = thing2.view(Metadata)', rendered)
         self.assertIn('thing3_a_0_md = thing3.view(Metadata)', rendered)
@@ -718,7 +718,7 @@ class InitializerTests(unittest.TestCase):
         var = init_md_from_md_file(md_node, param_name, md_id, ns, cfg)
 
         rendered = var.use.render()
-        self.assertIn('from qiime2 import Metadata', rendered)
+        self.assertIn('from rachis import Metadata', rendered)
         self.assertIn(
             'metadata_0_md = Metadata.load(<your metadata filepath>)',
             rendered
@@ -752,7 +752,7 @@ class InitializerTests(unittest.TestCase):
         self.assertEqual(var.var_type, 'metadata')
 
         rendered = cfg.use.render()
-        self.assertIn('from qiime2 import Metadata', rendered)
+        self.assertIn('from rachis import Metadata', rendered)
         self.assertIn('metadata_0_md = Metadata.load', rendered)
         self.assertIn(
             'recorded_metadata/identity_with_metadata/metadata_0', rendered
@@ -786,7 +786,7 @@ class InitializerTests(unittest.TestCase):
         self.assertEqual(var.var_type, 'column')
 
         rendered = cfg.use.render()
-        self.assertIn('from qiime2 import Metadata', rendered)
+        self.assertIn('from rachis import Metadata', rendered)
         self.assertIn('metadata_0_md = Metadata.load', rendered)
         self.assertIn('.get_column(', rendered)
         self.assertIn('recorded_metadata/identity_with_metadata_column/'
@@ -919,7 +919,7 @@ class BuildImportUsageTests(CustomAssertions):
 
         rendered = cfg.use.render()
         out_name = usg_var.to_interface_name()
-        self.assertRegex(rendered, 'from qiime2 import Artifact')
+        self.assertRegex(rendered, 'from rachis import Artifact')
         self.assertRegex(rendered, rf'{out_name} = Artifact.import_data\(')
         self.assertRegex(rendered, import_node.type)
         self.assertRegex(rendered, '<your data here>')
@@ -1261,7 +1261,7 @@ class BuildActionUsageTests(CustomAssertions):
             self.assertEqual(usg_var.name, 'out_0')
 
             rendered = cfg.use.render()
-            self.assertIn('from qiime2 import Metadata', rendered)
+            self.assertIn('from rachis import Metadata', rendered)
             self.assertIn('.view(Metadata)', rendered)
             self.assertIn(f'.{action}(', rendered)
 

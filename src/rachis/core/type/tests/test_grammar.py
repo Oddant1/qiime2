@@ -10,8 +10,8 @@ import pickle
 import unittest
 import collections.abc
 
-import qiime2.core.type.grammar as grammar
-import qiime2.core.type.template as template
+import rachis.core.type.grammar as grammar
+import rachis.core.type.template as template
 
 
 class _MockBase:

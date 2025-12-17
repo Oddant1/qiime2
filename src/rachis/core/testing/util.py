@@ -6,16 +6,16 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2
+import rachis
 import os
 import os.path
 import zipfile
 
-import qiime2.sdk
+import rachis.sdk
 
 
 def get_dummy_plugin():
-    plugin_manager = qiime2.sdk.PluginManager()
+    plugin_manager = rachis.sdk.PluginManager()
     if 'dummy-plugin' not in plugin_manager.plugins:
         raise RuntimeError(
             "When running QIIME 2 unit tests, the QIIMETEST environment "

@@ -10,17 +10,17 @@ import re
 from importlib.metadata import entry_points
 from typing import Dict, TYPE_CHECKING
 
-from qiime2.core.format import report
-import qiime2.sdk
-import qiime2.core.type as qtype
-import qiime2.core.type.parse as _parse
-from qiime2.core.type import (
+from rachis.core.format import report
+import rachis.sdk
+import rachis.core.type as qtype
+import rachis.core.type.parse as _parse
+from rachis.core.type import (
     is_semantic_type, is_primitive_type, is_collection_type, is_metadata_type,
     is_visualization_type, interrogate_collection_type, parse_primitive,
     is_union, is_metadata_column_type, is_parallel_type)
 
 if TYPE_CHECKING:
-    from qiime2.sdk.usage import UsageDriver
+    from rachis.sdk.usage import UsageDriver
 
 __all__ = [
     'is_semantic_type', 'is_primitive_type', 'is_collection_type',
@@ -109,7 +109,7 @@ def parse_format(format_str):
     if format_str == 'report':
         return report
 
-    pm = qiime2.sdk.PluginManager()
+    pm = rachis.sdk.PluginManager()
     try:
         format_record = pm.formats[format_str]
     except KeyError:
@@ -123,17 +123,17 @@ def actions_by_input_type(string):
     Parameters
     ----------
     string : str
-        QIIME2 artifact type
+        Rachis artifact type
 
     Returns
     -------
-    list of tuples: [(q2.plugin, [q2.actions, ...]), ...]
+    list of tuples: [(plugin, [actions, ...]), ...]
     """
     commands = []
     if string is not None:
-        query_type = qiime2.sdk.util.parse_type(string)
+        query_type = rachis.sdk.util.parse_type(string)
 
-        pm = qiime2.sdk.PluginManager()
+        pm = rachis.sdk.PluginManager()
         for pgn, pg in pm.plugins.items():
             actions = list({a for an, a in pg.actions.items()
                             for iname, i in a.signature.inputs.items()
@@ -148,11 +148,11 @@ def validate_result_collection_keys(*args):
     """Validate one or more strings intended for use as ResultCollection keys.
 
     This can be called on one or more keys provided as arguments:
-    qiime2.sdk.util.validate_result_collection_keys('@', 'a1@')
+    rachis.sdk.util.validate_result_collection_keys('@', 'a1@')
 
     Or on a list, by unpacking it in the call:
     l = ['@', 'a1@']
-    qiime2.sdk.util.validate_result_collection_keys(*l)
+    rachis.sdk.util.validate_result_collection_keys(*l)
     """
     invalid_keys = []
     for key in args:
@@ -174,7 +174,7 @@ def view_collection(collection, view_type):
 def get_available_usage_drivers() -> Dict[str, 'UsageDriver']:
     '''
     Discovers all usage drivers registered under the entry point group
-    'qiime2.usage_drivers'.
+    'rachis.usage_drivers and rachis.usage_drivers'.
 
     Returns
     -------
@@ -184,6 +184,12 @@ def get_available_usage_drivers() -> Dict[str, 'UsageDriver']:
         themselves).
     '''
     return {
-        entry_point.name: entry_point.load() for entry_point in
-        entry_points(group='qiime2.usage_drivers')
+        **{
+            entry_point.name: entry_point.load() for entry_point in
+            entry_points(group='qiime2.usage_drivers')
+        },
+        **{
+            entry_point.name: entry_point.load() for entry_point in
+            entry_points(group='rachis.usage_drivers')
+        },
     }

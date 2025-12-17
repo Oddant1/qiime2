@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------------
 from typing import Union
 
-import qiime2
+import rachis
 
 
 # Artifacts and parameters.
@@ -117,42 +117,42 @@ def docstring_order_method(req_input: dict, req_param: str,
     return {req_param: opt_param}
 
 
-def identity_with_metadata(ints: list, metadata: qiime2.Metadata) -> list:
-    assert isinstance(metadata, qiime2.Metadata)
+def identity_with_metadata(ints: list, metadata: rachis.Metadata) -> list:
+    assert isinstance(metadata, rachis.Metadata)
     return ints
 
 
 # TODO unit tests (test_method.py) for 3 variations of MetadataColumn methods
 # below
 def identity_with_metadata_column(ints: list,
-                                  metadata: qiime2.MetadataColumn) -> list:
-    assert isinstance(metadata, (qiime2.CategoricalMetadataColumn,
-                                 qiime2.NumericMetadataColumn))
+                                  metadata: rachis.MetadataColumn) -> list:
+    assert isinstance(metadata, (rachis.CategoricalMetadataColumn,
+                                 rachis.NumericMetadataColumn))
     return ints
 
 
 def identity_with_categorical_metadata_column(
-        ints: list, metadata: qiime2.CategoricalMetadataColumn) -> list:
-    assert isinstance(metadata, qiime2.CategoricalMetadataColumn)
+        ints: list, metadata: rachis.CategoricalMetadataColumn) -> list:
+    assert isinstance(metadata, rachis.CategoricalMetadataColumn)
     return ints
 
 
 def identity_with_numeric_metadata_column(
-        ints: list, metadata: qiime2.NumericMetadataColumn) -> list:
-    assert isinstance(metadata, qiime2.NumericMetadataColumn)
+        ints: list, metadata: rachis.NumericMetadataColumn) -> list:
+    assert isinstance(metadata, rachis.NumericMetadataColumn)
     return ints
 
 
 def identity_with_optional_metadata(ints: list,
-                                    metadata: qiime2.Metadata = None) -> list:
-    assert isinstance(metadata, (qiime2.Metadata, type(None)))
+                                    metadata: rachis.Metadata = None) -> list:
+    assert isinstance(metadata, (rachis.Metadata, type(None)))
     return ints
 
 
 def identity_with_optional_metadata_column(
-        ints: list, metadata: qiime2.MetadataColumn = None) -> list:
-    assert isinstance(metadata, (qiime2.CategoricalMetadataColumn,
-                                 qiime2.NumericMetadataColumn,
+        ints: list, metadata: rachis.MetadataColumn = None) -> list:
+    assert isinstance(metadata, (rachis.CategoricalMetadataColumn,
+                                 rachis.NumericMetadataColumn,
                                  type(None)))
     return ints
 
@@ -198,7 +198,7 @@ def list_of_ints(ints: int) -> int:
 
 
 def dict_of_ints(ints: int) -> int:
-    assert isinstance(ints, qiime2.sdk.result.ResultCollection)
+    assert isinstance(ints, rachis.sdk.result.ResultCollection)
     return ints
 
 
@@ -229,7 +229,7 @@ def varied_method(ints1: int, ints2: list, int1: int = None,
     if int1 is None:
         int1 = 1
     assert isinstance(ints1, list)
-    assert isinstance(ints2, qiime2.sdk.result.ResultCollection)
+    assert isinstance(ints2, rachis.sdk.result.ResultCollection)
     assert isinstance(int1, int)
     assert isinstance(string, str)
     return ints1, ints2, int1

@@ -9,9 +9,9 @@
 import numbers
 import itertools
 
-from qiime2.core.type.template import TypeTemplate, PredicateTemplate
-import qiime2.metadata as metadata
-import qiime2.core.util as util
+from rachis.core.type.template import TypeTemplate, PredicateTemplate
+import rachis.metadata as metadata
+import rachis.core.util as util
 
 
 _RANGE_DEFAULT_START = float('-inf')
@@ -48,7 +48,7 @@ class Range(_PrimitivePredicateBase):
 
     Examples
     --------
-    >>> from qiime2.plugin import Float, Range
+    >>> from rachis.plugin import Float, Range
 
     A simple proportion without 100%:
 
@@ -271,7 +271,7 @@ def Start(start, inclusive=_RANGE_DEFAULT_INCLUSIVE_START):
 
     Examples
     --------
-    >>> from qiime2.plugin import Start
+    >>> from rachis.plugin import Start
     >>> Start(0)
     Range(0, None)
 
@@ -296,7 +296,7 @@ def End(end, inclusive=_RANGE_DEFAULT_INCLUSIVE_END):
 
     Examples
     --------
-    >>> from qiime2.plugin import End
+    >>> from rachis.plugin import End
     >>> End(100)
     Range(None, 100)
 
@@ -320,7 +320,7 @@ class Choices(_PrimitivePredicateBase):
 
     Examples
     --------
-    >>> from qiime2.plugin import Str, Choices
+    >>> from rachis.plugin import Str, Choices
     >>> "apple" in Str % Choices("apple", "orange", "banana")
     True
     >>> "airplane" in Str % Choices("apple", "orange", "banana")

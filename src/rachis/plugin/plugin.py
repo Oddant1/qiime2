@@ -14,7 +14,7 @@
     >>> plugin = Plugin('my-plugin', builtins.__version__, builtins.website)
     >>> builtins.plugin = plugin
 
-    >>> from qiime2.core.testing.type import (
+    >>> from rachis.core.testing.type import (
     ...     Foo, Bar, C1, IntSequence1, IntSequence2)
     >>> builtins.Foo = Foo
     >>> builtins.Bar = Bar
@@ -30,27 +30,27 @@
     >>> from typing import Literal
     >>> builtins.Literal = Literal
 
-    >>> from qiime2.plugin import TextFileFormat
+    >>> from rachis.plugin import TextFileFormat
     >>> class CSVFormat(TextFileFormat):
     ...     def _validate_(self, level):
     ...         pass
     >>> builtins.CSVFormat = CSVFormat
 
-    >>> from qiime2.plugin import SingleFileDirectoryFormat
+    >>> from rachis.plugin import SingleFileDirectoryFormat
     >>> builtins.CSVDirFormat = SingleFileDirectoryFormat(
     ...     'CSVDirFormat', 'data.csv', builtins.CSVFormat)
 
-    >>> from qiime2.plugin import Citations
+    >>> from rachis.plugin import Citations
     >>> builtins.citations = Citations.load('citations.bib',
-    ...                                     package='qiime2.core.testing')
+    ...                                     package='rachis.core.testing')
 
-    >>> from qiime2.core.testing.method import optional_artifacts_method
+    >>> from rachis.core.testing.method import optional_artifacts_method
     >>> builtins.my_method = optional_artifacts_method
 
-    >>> from qiime2.core.testing.visualizer import most_common_viz
+    >>> from rachis.core.testing.visualizer import most_common_viz
     >>> builtins.my_visualizer = most_common_viz
 
-    >>> from qiime2.core.testing.pipeline import collection_pipeline
+    >>> from rachis.core.testing.pipeline import collection_pipeline
     >>> builtins.my_pipeline = collection_pipeline
 
     >>> builtins.example_function_variant1 = lambda x: None
@@ -62,15 +62,15 @@ import inspect
 import types
 from typing import Any, Optional, Union
 
-from qiime2.core.cite import Citations, CitationRecord
-import qiime2.sdk
-import qiime2.core.type.grammar as grammar
-from qiime2.core.validate import ValidationObject
-from qiime2.plugin.model import DirectoryFormat
-from qiime2.plugin.model.base import FormatBase
-from qiime2.core.type import is_semantic_type
-from qiime2.core.util import get_view_name
-from qiime2.core.cite import _make_citations_tuple
+from rachis.core.cite import Citations, CitationRecord
+import rachis.sdk
+import rachis.core.type.grammar as grammar
+from rachis.core.validate import ValidationObject
+from rachis.plugin.model import DirectoryFormat
+from rachis.plugin.model.base import FormatBase
+from rachis.core.type import is_semantic_type
+from rachis.core.util import get_view_name
+from rachis.core.cite import _make_citations_tuple
 
 
 TransformerRecord = collections.namedtuple(
@@ -94,7 +94,7 @@ ValidatorRecord = collections.namedtuple(
 
 class Plugin:
     """
-    A QIIME 2 Plugin.
+    A Rachis Plugin.
 
     An instance of this class defines all features of a given plugin
     and is instantiated as a module global (i.e. a singleton).
@@ -196,7 +196,7 @@ class Plugin:
     @property
     def actions(self):
         # TODO this doesn't handle method/visualizer name collisions. The
-        # auto-generated `qiime2.plugins.<plugin-name>.actions` API has the
+        # auto-generated `rachis.plugins.<plugin-name>.actions` API has the
         # same problem. This should be solved at method/visualizer registration
         # time, which will solve the problem for both APIs.
         actions = {}
@@ -664,7 +664,7 @@ class PluginMethods(PluginActions):
 
         Examples
         --------
-        >>> from qiime2.plugin import Int
+        >>> from rachis.plugin import Int
         >>> plugin.methods.register_function(
         ...     function=my_method,
         ...     inputs={
@@ -688,7 +688,7 @@ class PluginMethods(PluginActions):
         if examples is None:
             examples = {}
 
-        method = qiime2.sdk.Method._init(function, inputs, parameters, outputs,
+        method = rachis.sdk.Method._init(function, inputs, parameters, outputs,
                                          self._plugin_id, name, description,
                                          input_descriptions,
                                          parameter_descriptions,
@@ -763,7 +763,7 @@ class PluginVisualizers(PluginActions):
         if examples is None:
             examples = {}
 
-        visualizer = qiime2.sdk.Visualizer._init(function, inputs, parameters,
+        visualizer = rachis.sdk.Visualizer._init(function, inputs, parameters,
                                                  self._plugin_id, name,
                                                  description,
                                                  input_descriptions,
@@ -830,7 +830,7 @@ class PluginPipelines(PluginActions):
 
         Examples
         --------
-        >>> from qiime2.plugin import Collection
+        >>> from rachis.plugin import Collection
         >>> plugin.pipelines.register_function(
         ...     function=my_pipeline,
         ...     inputs={'ints': Collection[IntSequence1]},
@@ -845,7 +845,7 @@ class PluginPipelines(PluginActions):
         if examples is None:
             examples = {}
 
-        pipeline = qiime2.sdk.Pipeline._init(function, inputs, parameters,
+        pipeline = rachis.sdk.Pipeline._init(function, inputs, parameters,
                                              outputs, self._plugin_id, name,
                                              description, input_descriptions,
                                              parameter_descriptions,

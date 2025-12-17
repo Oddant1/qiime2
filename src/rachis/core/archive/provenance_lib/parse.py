@@ -23,7 +23,7 @@ from .archive_parser import (
 class ProvDAG:
     '''
     A directed acyclic graph (DAG) representing the provenance of one or more
-    QIIME 2 Archives (.qza or .qzv files).
+    Rachis Archives (.qza or .qzv files).
 
     Parameters
     ----------

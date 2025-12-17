@@ -9,7 +9,7 @@
 import abc
 import shutil
 
-from qiime2.core import transform
+from rachis.core import transform
 from .base import FormatBase, ValidationError, _check_validation_level
 
 

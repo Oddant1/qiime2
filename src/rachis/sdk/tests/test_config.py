@@ -13,13 +13,13 @@ import unittest
 import parsl
 from parsl.executors.threads import ThreadPoolExecutor
 
-from qiime2 import Artifact, Cache
+from rachis import Artifact, Cache
 
-import qiime2.util
-from qiime2.core.util import load_action_yaml
-from qiime2.core.testing.type import SingleInt
-from qiime2.core.testing.util import get_dummy_plugin
-from qiime2.sdk.parallel_config import (PARALLEL_CONFIG, _TEST_EXECUTOR_,
+import rachis.util
+from rachis.core.util import load_action_yaml
+from rachis.core.testing.type import SingleInt
+from rachis.core.testing.util import get_dummy_plugin
+from rachis.sdk.parallel_config import (PARALLEL_CONFIG, _TEST_EXECUTOR_,
                                         _MASK_CONDA_ENV_, ParallelConfig,
                                         load_config_from_file)
 
@@ -66,7 +66,7 @@ class TestConfig(unittest.TestCase):
         )
 
         # Create temp test dir and cache in dir
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.cache = Cache(os.path.join(self.test_dir.name, 'new_cache'))
 
         # Create artifacts here so we have unique inputs in each test
@@ -91,8 +91,8 @@ class TestConfig(unittest.TestCase):
         PARALLEL_CONFIG.action_executor_mapping = {}
 
     def get_data_path(self, filename):
-        fp = qiime2.util.get_filepath_from_package(
-            'qiime2.sdk.tests', 'data/%s' % filename)
+        fp = rachis.util.get_filepath_from_package(
+            'rachis.sdk.tests', 'data/%s' % filename)
         return str(fp)
 
     def test_default_config(self):
@@ -241,7 +241,7 @@ class TestConfig(unittest.TestCase):
             self.pipeline.parallel(self.art, self.art)
 
     def test_concatenate_ints_mapping(self):
-        pm = qiime2.sdk.PluginManager()
+        pm = rachis.sdk.PluginManager()
         other_plugin = pm.plugins['other-plugin']
 
         parameter_only_dummy = self.plugin.pipelines['parameter_only_pipeline']

@@ -6,8 +6,8 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from qiime2 import Metadata
-from qiime2.plugin import ValidationError
+from rachis import Metadata
+from rachis.plugin import ValidationError
 from .type import (Kennel, Dog, Cat, AscIntSequence, Squid, Octopus,
                    Cuttlefish)
 from .format import Cephalapod

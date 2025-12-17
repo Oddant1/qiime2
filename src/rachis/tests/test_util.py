@@ -12,7 +12,7 @@ import tempfile
 import unittest
 import unittest.mock as mock
 
-import qiime2.util as util
+import rachis.util as util
 
 EXDEV = OSError(errno.EXDEV, "Invalid cross-device link")
 ENOTSUP = OSError(errno.ENOTSUP, "Operation not supported")
@@ -23,7 +23,7 @@ SECRET = "this is a secret for testing, don't tell anyone!"
 
 class TestDuplicate(unittest.TestCase):
     def setUp(self):
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.dst1 = os.path.join(self.test_dir.name, 'dst1')
         self.dst2 = os.path.join(self.test_dir.name, 'dst2')
         self.dir = os.path.join(self.test_dir.name, 'dir')
@@ -62,7 +62,7 @@ class TestDuplicate(unittest.TestCase):
         with self.assertRaisesRegex(IsADirectoryError, self.dir):
             util.duplicate(self.src, self.dir)
 
-    @mock.patch('qiime2.util.os.link', side_effect=EACCES)
+    @mock.patch('rachis.util.os.link', side_effect=EACCES)
     def test_perm_error_EACCES(self, mocked_link):
         with self.assertRaisesRegex(
                 PermissionError, "insufficient r/w permissions"):
@@ -70,7 +70,7 @@ class TestDuplicate(unittest.TestCase):
 
         assert mocked_link.called
 
-    @mock.patch('qiime2.util.os.link', side_effect=EPERM)
+    @mock.patch('rachis.util.os.link', side_effect=EPERM)
     def test_perm_error_EPERM(self, mocked_link):
         util.duplicate(self.src, self.dst1)
 
@@ -79,7 +79,7 @@ class TestDuplicate(unittest.TestCase):
         with open(self.dst1) as fh:
             self.assertEqual(fh.read(), SECRET)
 
-    @mock.patch('qiime2.util.os.link', side_effect=ENOTSUP)
+    @mock.patch('rachis.util.os.link', side_effect=ENOTSUP)
     def test_operation_not_supported(self, mocked_link):
         util.duplicate(self.src, self.dst1)
 
@@ -88,17 +88,17 @@ class TestDuplicate(unittest.TestCase):
         with open(self.dst1) as fh:
             self.assertEqual(fh.read(), SECRET)
 
-    @mock.patch('qiime2.util.os.link', side_effect=EXDEV)
+    @mock.patch('rachis.util.os.link', side_effect=EXDEV)
     def test_cross_device_src_not_exists(self, mocked_link):
         with self.assertRaisesRegex(FileNotFoundError, self.missing):
             util.duplicate(self.missing, self.dst1)
 
-    @mock.patch('qiime2.util.os.link', side_effect=EXDEV)
+    @mock.patch('rachis.util.os.link', side_effect=EXDEV)
     def test_cross_device_src_dir(self, mocked_link):
         with self.assertRaisesRegex(IsADirectoryError, self.dir):
             util.duplicate(self.dir, self.dst1)
 
-    @mock.patch('qiime2.util.os.link', side_effect=EXDEV)
+    @mock.patch('rachis.util.os.link', side_effect=EXDEV)
     def test_cross_device_dst_not_exists(self, mocked_link):
         util.duplicate(self.src, self.dst1)
 
@@ -107,18 +107,18 @@ class TestDuplicate(unittest.TestCase):
         with open(self.dst1) as fh:
             self.assertEqual(fh.read(), SECRET)
 
-    @mock.patch('qiime2.util.os.link', side_effect=EXDEV)
+    @mock.patch('rachis.util.os.link', side_effect=EXDEV)
     def test_cross_device_dst_exists(self, mocked_link):
         with self.assertRaisesRegex(FileExistsError, self.dst2):
             util.duplicate(self.src, self.dst2)
 
-    @mock.patch('qiime2.util.os.link', side_effect=EXDEV)
+    @mock.patch('rachis.util.os.link', side_effect=EXDEV)
     def test_cross_device_dst_dir(self, mocked_link):
         with self.assertRaisesRegex(IsADirectoryError, self.dir):
             util.duplicate(self.src, self.dir)
 
-    @mock.patch('qiime2.util.os.link', side_effect=EXDEV)
-    @mock.patch('qiime2.util.shutil.copyfile', side_effect=EACCES)
+    @mock.patch('rachis.util.os.link', side_effect=EXDEV)
+    @mock.patch('rachis.util.shutil.copyfile', side_effect=EACCES)
     def test_cross_device_perm_error(self, mocked_link, mocked_copyfile):
         with self.assertRaisesRegex(
                 PermissionError, "insufficient r/w permissions"):
@@ -139,13 +139,13 @@ class GetFilepathFromPackageTests(unittest.TestCase):
         # the package, or have moved, we can just update this test to point to
         # other non-empty data resources in the package.
 
-        fp = util.get_filepath_from_package('qiime2', 'citations.bib')
+        fp = util.get_filepath_from_package('rachis', 'citations.bib')
         self.assertTrue(fp.exists(), f"Observed path does not exist: {fp}.")
         self.assertTrue(len(fp.open('r').read()) > 0,
                         f"No contents found in {fp}.")
 
         fp = util.get_filepath_from_package(
-            'qiime2.core.archive.provenance_lib', 'assets/python_howto.txt')
+            'rachis.core.archive.provenance_lib', 'assets/python_howto.txt')
         self.assertTrue(fp.exists(), f"Observed path does not exist: {fp}.")
         self.assertTrue(len(fp.open('r').read()) > 0,
                         f"No contents found in {fp}.")
@@ -153,7 +153,7 @@ class GetFilepathFromPackageTests(unittest.TestCase):
     def test_failure(self):
         with self.assertRaisesRegex(FileNotFoundError, "-exists.txt does not"):
             util.get_filepath_from_package(
-                'qiime2', 'i-hope-this-filename-never-exists.txt')
+                'rachis', 'i-hope-this-filename-never-exists.txt')
 
 
 if __name__ == '__main__':

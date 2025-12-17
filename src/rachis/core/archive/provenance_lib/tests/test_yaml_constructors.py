@@ -13,7 +13,7 @@ import yaml
 
 from ...provenance import MetadataInfo
 
-from qiime2.core.util import checksum
+from rachis.core.util import checksum
 
 
 class YamlConstructorTests(unittest.TestCase):

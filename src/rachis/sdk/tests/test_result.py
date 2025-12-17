@@ -13,19 +13,19 @@ import pathlib
 import pytest
 import subprocess
 
-import qiime2.core.type
-from qiime2.sdk import Result, Artifact, Visualization, ResultCollection
-from qiime2.sdk.result import ResultMetadata
-from qiime2.core.annotate import Signature
-import qiime2.core.archive as archive
-import qiime2.core.exceptions as exceptions
+import rachis.core.type
+from rachis.sdk import Result, Artifact, Visualization, ResultCollection
+from rachis.sdk.result import ResultMetadata
+from rachis.core.annotate import Signature
+import rachis.core.archive as archive
+import rachis.core.exceptions as exceptions
 
-from qiime2.core.testing.format import IntSequenceDirectoryFormat
-from qiime2.core.testing.type import (FourInts, SingleInt, IntSequence1,
+from rachis.core.testing.format import IntSequenceDirectoryFormat
+from rachis.core.testing.type import (FourInts, SingleInt, IntSequence1,
                                       IntSequence2)
-from qiime2.core.testing.util import get_dummy_plugin, ArchiveTestingMixin
-from qiime2.core.testing.visualizer import mapping_viz
-from qiime2.core.util import set_permissions, OTHER_NO_WRITE
+from rachis.core.testing.util import get_dummy_plugin, ArchiveTestingMixin
+from rachis.core.testing.visualizer import mapping_viz
+from rachis.core.util import set_permissions, OTHER_NO_WRITE
 
 
 class TestResult(unittest.TestCase, ArchiveTestingMixin):
@@ -40,7 +40,7 @@ class TestResult(unittest.TestCase, ArchiveTestingMixin):
         get_dummy_plugin()
 
         # TODO standardize temporary directories created by QIIME 2
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
 
         self.data_dir = os.path.join(self.test_dir.name, 'viz-output')
         os.mkdir(self.data_dir)
@@ -79,7 +79,7 @@ class TestResult(unittest.TestCase, ArchiveTestingMixin):
         visualization = Result.load(fp)
 
         self.assertIsInstance(visualization, Visualization)
-        self.assertEqual(visualization.type, qiime2.core.type.Visualization)
+        self.assertEqual(visualization.type, rachis.core.type.Visualization)
         self.assertEqual(visualization.uuid, saved_visualization.uuid)
 
     def test_extract_artifact(self):
@@ -446,7 +446,7 @@ class TestResult(unittest.TestCase, ArchiveTestingMixin):
         with open(os.path.join(temp_data_dir, 'ints.txt'), 'w') as fh:
             fh.write("1\n2\n3\n")
 
-        qiime2.Artifact.import_data('IntSequence2', temp_data_dir,
+        rachis.Artifact.import_data('IntSequence2', temp_data_dir,
                                     view_type="IntSequenceDirectoryFormat")
 
     def test_artifact_has_metadata_true(self):
@@ -547,7 +547,7 @@ class TestResultCollection(unittest.TestCase):
         # plugin exists as the tests rely on it being loaded.
         get_dummy_plugin()
 
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.output_fp = os.path.join(self.test_dir.name, 'output')
 
         self.collection = ResultCollection(
@@ -592,7 +592,7 @@ class TestResultCollection(unittest.TestCase):
 
     def test_type_normal_collection(self):
         self.assertEqual(
-            self.collection.type, qiime2.core.type.Collection[SingleInt])
+            self.collection.type, rachis.core.type.Collection[SingleInt])
 
     def test_type_weird_collection(self):
         weird_collection = ResultCollection({
@@ -603,7 +603,7 @@ class TestResultCollection(unittest.TestCase):
 
         self.assertEqual(
             weird_collection.type,
-            qiime2.core.type.Collection[SingleInt | FourInts | IntSequence1 |
+            rachis.core.type.Collection[SingleInt | FourInts | IntSequence1 |
                                         IntSequence2])
 
     def test_collection_order_file_contains_nonexistent_key(self):
@@ -702,9 +702,9 @@ def signature_test_env(monkeypatch):
             return real_run(cmd, *args, **kwargs)
 
     # patch calls to gpg_find_key with fake dict & subprocess.run w/fake_run
-    monkeypatch.setattr(qiime2.core.annotate,
+    monkeypatch.setattr(rachis.core.annotate,
                         'gpg_find_key', fake_gpg_find_key)
-    monkeypatch.setattr(qiime2.sdk.result, 'gpg_find_key', fake_gpg_find_key)
+    monkeypatch.setattr(rachis.sdk.result, 'gpg_find_key', fake_gpg_find_key)
     monkeypatch.setattr(subprocess, 'run', fake_run)
 
     def set_key_lookup(mode):

@@ -12,22 +12,22 @@ import tempfile
 import unittest
 import warnings
 
-import qiime2.core.archive as archive
+import rachis.core.archive as archive
 
-from qiime2.core.testing.util import get_dummy_plugin
-from qiime2.plugin.testing import TestPluginBase
+from rachis.core.testing.util import get_dummy_plugin
+from rachis.plugin.testing import TestPluginBase
 
-from qiime2.sdk import Artifact, Visualization
-from qiime2.core.testing.type import (IntSequence1, IntSequence2, SingleInt,
+from rachis.sdk import Artifact, Visualization
+from rachis.core.testing.type import (IntSequence1, IntSequence2, SingleInt,
                                       Mapping)
-from qiime2.core.testing.method import (migrated_method_true_no_dict,
+from rachis.core.testing.method import (migrated_method_true_no_dict,
                                         migrated_method_missing_required_key,
                                         migrated_method_invalid_key,
                                         migrated_method_empty_key_value,
                                         migrated_method_not_a_dict)
-from qiime2.core.testing.visualizer import most_common_viz
-from qiime2 import Metadata
-from qiime2.metadata.tests.test_io import get_data_path
+from rachis.core.testing.visualizer import most_common_viz
+from rachis import Metadata
+from rachis.metadata.tests.test_io import get_data_path
 
 
 # NOTE: This test suite exists for tests not easily split into
@@ -46,7 +46,7 @@ class TestBadInputs(TestPluginBase):
 
         # TODO standardize temporary directories created by QIIME 2
         # create a temporary data_dir for sample Visualizations
-        self.test_dir = tempfile.TemporaryDirectory(prefix='qiime2-test-temp-')
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
         self.data_dir = os.path.join(self.test_dir.name, 'viz-output')
         os.mkdir(self.data_dir)
         most_common_viz(self.data_dir, collections.Counter(range(42)))

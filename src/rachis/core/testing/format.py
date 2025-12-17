@@ -6,8 +6,8 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from qiime2.plugin import TextFileFormat, ValidationError
-import qiime2.plugin.model as model
+from rachis.plugin import TextFileFormat, ValidationError
+import rachis.plugin.model as model
 
 
 class IntSequenceFormat(TextFileFormat):

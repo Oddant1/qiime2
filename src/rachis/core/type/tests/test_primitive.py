@@ -10,9 +10,9 @@ import unittest
 
 import pandas as pd
 
-import qiime2.metadata as metadata
-import qiime2.core.type.primitive as primitive
-import qiime2.core.type.grammar as grammar
+import rachis.metadata as metadata
+import rachis.core.type.primitive as primitive
+import rachis.core.type.grammar as grammar
 
 
 class TestIntersectTwoRanges(unittest.TestCase):

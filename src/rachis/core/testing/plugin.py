@@ -8,7 +8,7 @@
 
 from importlib import import_module
 
-from qiime2.plugin import (Plugin, Bool, Int, Str, Choices, Range, List, Set,
+from rachis.plugin import (Plugin, Bool, Int, Str, Choices, Range, List, Set,
                            Collection, Visualization, Metadata, MetadataColumn,
                            Categorical, Numeric, TypeMatch)
 
@@ -84,20 +84,20 @@ from .examples import (concatenate_ints_simple, concatenate_ints_complex,
                        )
 
 
-citations = Citations.load('citations.bib', package='qiime2.core.testing')
+citations = Citations.load('citations.bib', package='rachis.core.testing')
 dummy_plugin = Plugin(
     name='dummy-plugin',
     description='Description of dummy plugin.',
     short_description='Dummy plugin for testing.',
     version='0.0.0-dev',
     website='https://github.com/qiime2/qiime2',
-    package='qiime2.core.testing',
+    package='rachis.core.testing',
     user_support_text='For help, see https://qiime2.org',
     citations=[citations['unger1998does'], citations['berry1997flying']]
 )
 
-import_module('qiime2.core.testing.transformer')
-import_module('qiime2.core.testing.validator')
+import_module('rachis.core.testing.transformer')
+import_module('rachis.core.testing.validator')
 
 
 # Register semantic types
@@ -127,8 +127,8 @@ dummy_plugin.register_views(
 # Create IntSequence1 import example usage example
 def is1_use(use):
     def factory():
-        from qiime2.core.testing.format import IntSequenceFormat
-        from qiime2.plugin.util import transform
+        from rachis.core.testing.format import IntSequenceFormat
+        from rachis.plugin.util import transform
         ff = transform([1, 2, 3], to_type=IntSequenceFormat)
 
         ff.validate()
@@ -153,8 +153,8 @@ dummy_plugin.register_artifact_class(
 # Create IntSequence2 import example usage example
 def is2_use(use):
     def factory():
-        from qiime2.core.testing.format import IntSequenceFormatV2
-        from qiime2.plugin.util import transform
+        from rachis.core.testing.format import IntSequenceFormatV2
+        from rachis.plugin.util import transform
         ff = transform([1, 2, 3], to_type=IntSequenceFormatV2)
 
         ff.validate()
@@ -1247,7 +1247,7 @@ dummy_plugin.methods.register_function(
                 ' start with an underscore by default'
 )
 
-import_module('qiime2.core.testing.mapped')
+import_module('rachis.core.testing.mapped')
 
 
 other_plugin = Plugin(
@@ -1256,7 +1256,7 @@ other_plugin = Plugin(
     short_description='',
     version='0.0.0-dev',
     website='',
-    package='qiime2.core.archive.provenance_lib.tests',
+    package='rachis.core.archive.provenance_lib.tests',
     user_support_text='',
     citations=[]
 )

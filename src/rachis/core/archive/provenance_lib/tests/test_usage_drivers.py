@@ -10,8 +10,8 @@ import shutil
 import tempfile
 import unittest
 
-from qiime2.sdk.plugin_manager import PluginManager
-from qiime2.core.testing.type import IntSequence1
+from rachis.sdk.plugin_manager import PluginManager
+from rachis.core.testing.type import IntSequence1
 
 from ..usage_drivers import ReplayPythonUsage
 from ..replay import replay_provenance
@@ -22,7 +22,7 @@ class ReplayPythonUsageTests(unittest.TestCase):
         self.pm = PluginManager()
         self.dp = self.pm.plugins['dummy-plugin']
         self.tempdir = tempfile.mkdtemp(
-            prefix='qiime2-test-usage-drivers-temp-'
+            prefix='rachis-test-usage-drivers-temp-'
         )
 
         def return_many_ints() -> (list, list, list, list, list, list):

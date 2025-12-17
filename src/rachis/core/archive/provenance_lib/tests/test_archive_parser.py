@@ -28,7 +28,7 @@ from ..archive_parser import (
 )
 from ...provenance import MetadataInfo
 
-from qiime2.core.testing.util import ReallyEqualMixin
+from rachis.core.testing.util import ReallyEqualMixin
 
 
 class ParserVxTests(unittest.TestCase):
