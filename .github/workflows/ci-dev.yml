@@ -16,8 +16,9 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - id: set-matrix
         shell: bash
-        run: echo tests=$(uv run --only-dev nox -t pr-matrix --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
-        run: echo misc=$(uv run --only-dev nox -t pr --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
+        run: |
+          echo tests=$(uv run --only-dev nox -t pr-matrix --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
+          echo misc=$(uv run --only-dev nox -t pr --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
 
   misc:
     name: "${{ matrix.session }}"
