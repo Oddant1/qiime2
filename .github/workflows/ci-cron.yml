@@ -1,3 +1,5 @@
+name: "ci-cron"
+
 on:
   schedule:
     # At 01:15 AM UTC, every 3 days, starting on day of the month
@@ -10,7 +12,8 @@ jobs:
     outputs:
       session: ${{ steps.set-matrix.outputs.session }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
       - id: set-test-matrix
         shell: bash
         run: echo session=$(uv run nox -k 'test' --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
@@ -25,5 +28,6 @@ jobs:
         os: ['macos-latest', 'macos-15-intel', 'ubuntu-latest']
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
       - run: uv run nox -s "${{ matrix.session }}"
