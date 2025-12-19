@@ -1,0 +1,29 @@
+on:
+  schedule:
+    # At 01:15 AM UTC, every 3 days, starting on day of the month
+    - cron: '0 15 01 /3 * *'
+  workflow_dispatch: {}
+
+jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      session: ${{ steps.set-matrix.outputs.session }}
+      os: ['macos-latest', 'macos-15-intel', 'ubuntu-latest']
+    steps:
+      - uses: actions/checkout@v3
+      - id: set-test-matrix
+        shell: bash
+        run: echo session=$(uv run nox -k 'test' --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
+
+  tests:
+    name: "${{ matrix.os }} - ${{ matrix.session }}"
+    needs: [setup-matrix]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        session: ${{ fromJson(needs.generate-jobs.outputs.session) }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: uv run nox -s "${{ matrix.session }}"

@@ -7,7 +7,7 @@ description = "None"
 readme = {file = "README.md", content-type = "text/markdown"}
 license-files = ["LICENSE"]
 dynamic = ["version"]
-requires-python="==3.10.*"
+requires-python=">=3.10"
 dependencies = [
     "appdirs>=1.4.4,<2.0.0",
     "bibtexparser>=1.4.3,<2.0.0",
@@ -24,6 +24,7 @@ dependencies = [
     "setuptools>=80.9.0,<81.0.0",
     "tomlkit>=0.13.3,<0.14.0",
     "tzlocal>=5.3.1,<6.0.0",
+    "lxml>=6.0.2,<7.0.0",
 ]
 
 [project.urls]
@@ -39,15 +40,13 @@ Repository = "https://github.com/qiime2/qiime2"
 
 [project.optional-dependencies]
 jupyter = [
-    "notebook>=6.0,<7.0",
+    "notebook>=6.5.7,<7.0",
 ]
 
 [dependency-groups]
 dev = [
-    "lxml>=6.0.2,<7.0.0",
-    "notebook>=6.5.7,<7.0.0",
+    "nox>=2025.11.12",
     "pytest>=9.0.2,<10.0.0",
-    "tornado>=6.5.4,<7.0.0",
 ]
 
 [build-system]
