@@ -16,7 +16,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - id: set-matrix
         shell: bash
-        run: echo session=$(uv run nox -k 'test' --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
+        run: echo session=$(uv run --only-dev nox -k 'test' --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
 
   tests:
     name: "${{ matrix.os }} - ${{ matrix.session }}"
@@ -29,5 +29,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-tags: true
       - uses: astral-sh/setup-uv@v7
       - run: uv run nox -s "${{ matrix.session }}"
