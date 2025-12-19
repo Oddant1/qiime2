@@ -1,7 +1,7 @@
 on:
   schedule:
     # At 01:15 AM UTC, every 3 days, starting on day of the month
-    - cron: '0 15 01 /3 * *'
+    - cron: '0 15 01 0/3 * *'
   workflow_dispatch: {}
 
 jobs:
