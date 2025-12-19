@@ -783,6 +783,15 @@ class TestMethod(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Value already set'):
             random_seed_method()
 
+    def test_set_random_seed_method_never_set(self):
+        random_seed_method = \
+            self.plugin.methods['random_seed_method_never_set']
+        with self.assertRaisesRegex(
+                ValueError,
+                "The capture parameter 'random_seed' never had a value set "
+                "for it"):
+            random_seed_method()
+
 
 exp_merge_calldoc = """\
 Merge mappings

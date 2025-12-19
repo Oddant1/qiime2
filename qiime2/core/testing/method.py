@@ -258,5 +258,11 @@ def random_seed_method_set_twice(
     return random_seed.value
 
 
+def random_seed_method_never_set(
+        random_seed: qtype.CaptureHolder = None) -> int:
+    random_int = random.randrange(sys.maxsize)
+    return random_int
+
+
 def _underscore_method() -> int:
     return 42

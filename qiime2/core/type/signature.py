@@ -393,6 +393,10 @@ class PipelineSignature:
             records to provenance and because we want transformers to run
             outside the DFK in parsl
         """
+        # Keep track of all CaptureHolders so we can error if they do not have
+        # a value set
+        capture_names = []
+
         for name, spec in self.signature_order.items():
             arg = callable_args[name]
 
@@ -406,9 +410,10 @@ class PipelineSignature:
                         name, arg, spec.qiime_type, provenance)
                     callable_args[name] = capture
 
+                capture_names.append(name)
                 provenance.add_parameter(name, spec.qiime_type, arg)
 
-        return callable_args
+        return callable_args, capture_names
 
     def _transform_and_add_input_to_prov(self, provenance, name, spec, _input):
         """ Transform the input and add both the input and the transformation

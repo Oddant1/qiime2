@@ -48,6 +48,7 @@ from .method import (concatenate_ints, split_ints, merge_mappings,
                      unioned_primitives, type_match_list_and_set, union_inputs,
                      list_of_ints, dict_of_ints, returns_int, varied_method,
                      random_seed_method, random_seed_method_set_twice,
+                     random_seed_method_never_set,
                      collection_inner_union, collection_outer_union,
                      dict_params, list_params, _underscore_method,
                      migrated_method_all_optional_keys,
@@ -1261,6 +1262,18 @@ dummy_plugin.methods.register_function(
     description='Sets the value on the Capture object twice. This will always'
                 ' raise an error.'
 )
+
+dummy_plugin.methods.register_function(
+    function=random_seed_method_never_set,
+    inputs={},
+    parameters={
+       'random_seed': Int
+    },
+    outputs=[('seed', SingleInt)],
+    name='Never sets the Capture value.',
+    description='Never sets the Capture value. This will always raise an error'
+)
+
 
 dummy_plugin.methods.register_function(
     function=_underscore_method,

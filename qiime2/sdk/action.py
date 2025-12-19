@@ -258,12 +258,14 @@ class Action(metaclass=abc.ABCMeta):
             callable_args = self.signature.coerce_user_input(
                 **collated_inputs)
 
-            callable_args = \
+            callable_args, capture_names = \
                 self.signature.transform_and_add_callable_args_to_prov(
                     provenance, **callable_args)
 
             outputs = self._callable_executor_(
                 ctx, callable_args, output_types, provenance)
+
+            self._ensure_captures_set(capture_names, callable_args)
 
             if len(outputs) != len(self.signature.outputs):
                 raise ValueError(
@@ -282,6 +284,28 @@ class Action(metaclass=abc.ABCMeta):
         self._set_wrapper_properties(bound_callable)
         self._set_wrapper_name(bound_callable, self.id)
         return bound_callable
+
+    def _ensure_captures_set(self, capture_names, callable_args):
+        '''
+        Ensure all capture parameters have a value set. Either passed in by the
+        caller or captured in the Action.
+
+        capture_names : List[Str]
+            List of names of all params that are CaptureHolders
+        callable_args : Dict[Str : Any]
+            All args passed into our callable
+        '''
+        for capture_name in capture_names:
+            capture = callable_args[capture_name]
+            # If the value on the capture was never set and the value of the
+            # arg is still the default, we raise an error because no value was
+            # ever set for this arg.
+            if not capture._set and capture._value == \
+                    self.signature.parameters[capture_name].default:
+                raise ValueError(
+                    f"The capture parameter '{capture_name}' never had a value "
+                    "set for it"
+                )
 
     def _callable_action_wrapper(self):
         # This is a "root" level invocation (not a nested call within a
