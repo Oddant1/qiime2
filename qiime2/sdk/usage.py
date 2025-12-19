@@ -1714,7 +1714,8 @@ class Usage:
 
             with open(alias_path) as fh:
                 alias_yaml = yaml.safe_load(fh)
-                var_type = self._find_var_type_from_prov(node, alias_yaml)
+
+            var_type = self._find_var_type_from_prov(node, alias_yaml)
 
         return var_type
 
