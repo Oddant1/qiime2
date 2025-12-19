@@ -192,8 +192,7 @@ class ProvNode:
         uuid: str | None = None
     ):
         '''
-        Constructs a ProvNode from an Archiver and the uuid of a Result within
-        its provenance if relevant
+        Constructs a ProvNode from an Archiver.
 
         Parameters
         ----------
