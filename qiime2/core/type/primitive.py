@@ -622,8 +622,8 @@ class _Threads(_PrimitiveTemplateBase):
 
 
 class CaptureHolder:
-    def __init__(self, name, value, type, provenance):
-        self._set = False
+    def __init__(self, name, value, type, provenance, _set):
+        self._set = _set
         self._name = name
         self._value = value
         self._type = type
