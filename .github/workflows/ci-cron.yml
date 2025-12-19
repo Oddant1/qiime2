@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        session: ${{ fromJson(needs.generate-jobs.outputs.session) }}
+        session: ${{ fromJson(needs.setup-matrix.outputs.session) }}
         os: ['macos-latest', 'macos-15-intel', 'ubuntu-latest']
     runs-on: ${{ matrix.os }}
     steps:
