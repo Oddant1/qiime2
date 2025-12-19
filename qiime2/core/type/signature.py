@@ -410,8 +410,8 @@ class PipelineSignature:
                     capture = qtype.CaptureHolder(
                         name, arg, spec.qiime_type, provenance, _set)
                     callable_args[name] = capture
+                    capture_names.append(name)
 
-                capture_names.append(name)
                 provenance.add_parameter(name, spec.qiime_type, arg)
 
         return callable_args, capture_names
