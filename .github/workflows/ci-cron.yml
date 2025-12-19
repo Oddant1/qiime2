@@ -19,7 +19,7 @@ jobs:
         run: echo session=$(uv run --only-dev nox -k 'test' --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
 
   tests:
-    name: "${{ matrix.os }} - ${{ matrix.session }}"
+    name: "${{ matrix.session }}"
     needs: [setup-matrix]
     strategy:
       fail-fast: false

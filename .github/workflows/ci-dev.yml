@@ -34,7 +34,7 @@ jobs:
       - run: uv run nox -s "${{ matrix.session }}"
 
   tests:
-    name: "${{ matrix.os }} - ${{ matrix.session }}"
+    name: "${{ matrix.session }}"
     needs: [setup-matrix]
     strategy:
       fail-fast: false
