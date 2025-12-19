@@ -206,7 +206,7 @@ class ProvNode:
         archive_version : str | None
             The archive version of Archiver we are parsing.
         framework_version : str | None
-            The frameowrk version used to create the Archiver we are parsing.
+            The framework version used to create the Archiver we are parsing.
         uuid : str | None
             None if we are parsing the root Archiver. The uuid of the Artifact
             we are parsing within provenance if set
