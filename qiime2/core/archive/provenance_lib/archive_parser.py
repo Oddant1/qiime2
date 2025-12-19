@@ -258,7 +258,7 @@ class ProvNode:
                 self._metadata = self._parse_metadata(all_metadata_fps)
 
     @property
-    def action_present(self):
+    def _action_present_(self):
         '''
         This property can only be accessed after a PluginManager has been
         instantiated which is why it isn't initialized with the object

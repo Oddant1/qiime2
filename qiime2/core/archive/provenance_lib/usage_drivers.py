@@ -116,7 +116,7 @@ def build_footer(dag: ProvDAG, boundary: str) -> List[str]:
 class ReplayUsageAction(UsageAction):
     def __init__(self, plugin_id: str, action_id: str, node: ProvNode):
         self.node = node
-        if node.action_present:
+        if node._action_present_:
             super().__init__(plugin_id, action_id)
         else:
             if plugin_id == '':
@@ -129,7 +129,7 @@ class ReplayUsageAction(UsageAction):
             self.action_id: str = action_id
 
     def get_action(self) -> Action | None:
-        if self.node.action_present:
+        if self.node._action_present_:
             return super().get_action()
 
         return None
@@ -352,7 +352,7 @@ class ReplayPythonUsage(ArtifactAPIUsage):
         return ', '.join(output_vars).strip()
 
     def action(self, action, inputs, outputs):
-        if action.node.action_present:
+        if action.node._action_present_:
             variables = super().action(action, inputs, outputs)
         else:
             variables = self.action_not_found(action, inputs, outputs)

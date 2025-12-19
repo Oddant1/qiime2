@@ -1048,7 +1048,7 @@ def init_md_from_recorded_md(
     plugin = node.action.plugin
     action = node.action.action_name
 
-    if node.action_present and \
+    if node._action_present_ and \
             param_is_metadata_column(cfg, param_name, plugin, action):
         mdc_id = node._uuid + '_mdc'
         mdc_name = ns.get_usg_var_record(md_id).name + '_mdc'
@@ -1091,7 +1091,7 @@ def init_md_from_md_file(
     action = node.action.action_name
     md = cfg.use.init_metadata(ns.get_usg_var_record(md_id).name, lambda: None)
 
-    if node.action_present and \
+    if node._action_present_ and \
             param_is_metadata_column(cfg, param_name, plugin, action):
         mdc_id = node._uuid + '_mdc'
         mdc_name = ns.get_usg_var_record(md_id).name + '_mdc'
