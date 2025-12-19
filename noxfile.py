@@ -48,6 +48,7 @@ def lint(session: nox.Session) -> None:
 @nox.parametrize(
     "python,resolution",
     [x[0] for x in MATRIX],
+    ids=['py' + ':'.join(x[0]) for x in MATRIX],
     tags=[x[1] for x in MATRIX],
 )
 def test(session: nox.Session, resolution) -> None:
