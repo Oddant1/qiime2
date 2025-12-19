@@ -376,9 +376,9 @@ class PipelineSignature:
         view_type = spec.view_type
         qiime_type = spec.qiime_type
 
-        if view_type == dict and isinstance(param, list):
+        if view_type is dict and isinstance(param, list):
             param = self._list_to_dict(param)
-        elif view_type == list and isinstance(param, dict):
+        elif view_type is list and isinstance(param, dict):
             param = self._dict_to_list(param)
 
         if qiime_type is qtype.Threads and param == 'auto':

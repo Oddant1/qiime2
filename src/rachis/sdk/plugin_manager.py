@@ -51,7 +51,8 @@ class PluginManager:
                 if entry_point.name not in ('dummy-plugin', 'other-plugin'):
                     yield entry_point
         # backwards compatibility
-        for entry_point in importlib.metadata.entry_points(group='qiime2.plugins'):
+        for entry_point in importlib.metadata.entry_points(
+                group='qiime2.plugins'):
             yield entry_point
 
     @classmethod

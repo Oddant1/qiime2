@@ -142,7 +142,8 @@ class TestArtifactVersion(unittest.TestCase, ArchiveTestingMixin):
         self.assertRegex(str(root_metadata), '^.*data-size: .*B.*$')
         self.assertEqual(str(root_metadata), str(prov_metadata))
         # check that conda env exists & isn't empty
-        self.assertRegex(str(conda_env), '^(?:.*error:.*)|(?:.*dependencies:.*- .*)$')
+        self.assertRegex(str(conda_env),
+                         '^(?:.*error:.*)|(?:.*dependencies:.*- .*)$')
         # check that annotation md contains what we expect
         self.assertRegex(str(annotation_metadata),
                          rf'id: {note.id}\nname: mynote\ntype: Note')

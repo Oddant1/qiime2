@@ -140,7 +140,7 @@ def build_graph(action_list=[], opt=False):
 
     Parameters
     ----------
-    action_list : list of Rachis Actions 
+    action_list : list of Rachis Actions
         If list is empty, will pull from all methods in the Rachis plugin
     opt : {True, False}
         Delineates if optional types should be included in the graph

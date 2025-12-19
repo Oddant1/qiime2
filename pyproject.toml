@@ -47,6 +47,7 @@ jupyter = [
 dev = [
     "nox>=2025.11.12",
     "pytest>=9.0.2,<10.0.0",
+    "ruff>=0.14.10",
 ]
 
 [build-system]
@@ -85,3 +86,10 @@ rachis = ["**/*"]
 
 [tool.pytest]
 addopts = ["--doctest-modules"]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+# equivalent for flake8
+extend-select = ["E", "F", "W"]

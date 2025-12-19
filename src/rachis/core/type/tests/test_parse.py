@@ -100,7 +100,7 @@ class TestParsing(unittest.TestCase):
         self.assertIs(W1.mapping, X1.mapping)
 
     def test_TypeMap_with_properties(self):
-        I, OU = TypeMap({
+        T_i, OU = TypeMap({
             C1[Foo % Properties(['A', 'B', 'C'])]: Str,
             C1[Foo % Properties(['A', 'B'])]: Str,
             C1[Foo % Properties(['A', 'C'])]: Str,
@@ -111,14 +111,14 @@ class TestParsing(unittest.TestCase):
         })
 
         scope = {}
-        i = ast_to_type(I.to_ast(), scope=scope)
+        i = ast_to_type(T_i.to_ast(), scope=scope)
         o = ast_to_type(OU.to_ast(), scope=scope)
 
-        self.assertEqual(scope[id(I.mapping)], [i, o])
+        self.assertEqual(scope[id(T_i.mapping)], [i, o])
         self.assertEqual(len(scope), 1)
 
         # Assert mapping is the same after ast_to_type call
-        self.assertEqual(I.mapping.lifted, i.mapping.lifted)
+        self.assertEqual(T_i.mapping.lifted, i.mapping.lifted)
 
         # Assert that the mapping object is the same in both i and o
         self.assertIs(i.mapping, o.mapping)

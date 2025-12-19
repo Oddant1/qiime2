@@ -450,7 +450,8 @@ class RachisArtifactAPIImporter:
 
     def find_spec(self, name, path=None, target=None):
         # Don't waste time doing anything if it's not a qiime2/rachis plugin
-        if not name.startswith('qiime2.plugins.') and not name.startswith('rachis.plugins.'):
+        if (not name.startswith('qiime2.plugins.')
+                and not name.startswith('rachis.plugins.')):
             return None
 
         if target is not None:

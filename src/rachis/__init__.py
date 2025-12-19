@@ -28,7 +28,8 @@ __website__ = 'https://qiime2.org'
 
 __all__ = ['Artifact', 'Visualization', 'ResultCollection', 'Metadata',
            'MetadataColumn', 'CategoricalMetadataColumn',
-           'NumericMetadataColumn', 'Cache', 'Pool', 'get_cache', 'Note', 'util']
+           'NumericMetadataColumn', 'Cache', 'Pool', 'get_cache', 'Note',
+           'util']
 
 
 # Used by `jupyter serverextension enable`
