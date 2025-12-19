@@ -257,28 +257,20 @@ class ProvNode:
             if cfg.parse_study_metadata:
                 self._metadata = self._parse_metadata(all_metadata_fps)
 
-    def set_action_present(self, action_present):
-        '''
-        This is set later when we build our UsageAction and actually have a
-        PluginManager so we can determine whether this action is present in our
-        environment or not
-        '''
-        if hasattr(self, '_action_present'):
-            raise ValueError('Action present already set, cannot set twice')
-
-        self._action_present = action_present
-
     @property
     def action_present(self):
+        '''
+        This property can only be accessed after a PluginManager has been
+        instantiated which is why it isn't initialized with the object
+        '''
         if not hasattr(self, '_action_present'):
             pm = PluginManager.reuse_existing()
 
             plugin_obj = pm._plugin_by_id.get(self.action.plugin)
             if plugin_obj:
-                self.set_action_present(
-                    self.action.action_name in plugin_obj.actions)
+                self._action_present = True
             else:
-                self.set_action_present(False)
+                self._action_present = False
 
         return self._action_present
 
