@@ -192,7 +192,7 @@ class ProvNode:
         uuid: str | None = None
     ):
         '''
-        Constructs a ProvNode from a Result and the uuid of a Result within
+        Constructs a ProvNode from an Archiver and the uuid of a Result within
         its provenance if relevant
         '''
         self.cfg = cfg
