@@ -265,7 +265,7 @@ class Action(metaclass=abc.ABCMeta):
             outputs = self._callable_executor_(
                 ctx, callable_args, output_types, provenance)
 
-            self._ensure_captures_set(capture_names, callable_args)
+            self._ensure_captures_set(callable_args, capture_names)
 
             if len(outputs) != len(self.signature.outputs):
                 raise ValueError(
@@ -285,15 +285,15 @@ class Action(metaclass=abc.ABCMeta):
         self._set_wrapper_name(bound_callable, self.id)
         return bound_callable
 
-    def _ensure_captures_set(self, capture_names, callable_args):
+    def _ensure_captures_set(self, callable_args, capture_names):
         '''
         Ensure all capture parameters have a value set. Either passed in by the
         caller or captured in the Action.
 
-        capture_names : List[Str]
-            List of names of all params that are CaptureHolders
         callable_args : Dict[Str : Any]
             All args passed into our callable
+        capture_names : List[Str]
+            List of names of all params that are CaptureHolders
         '''
         for capture_name in capture_names:
             capture = callable_args[capture_name]
