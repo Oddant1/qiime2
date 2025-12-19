@@ -40,7 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         session: ${{ fromJson(needs.setup-matrix.outputs.tests) }}
-        os: ['macos-latest', 'macos-15-intel', 'ubuntu-latest']
+        os: ['macos-latest', 'ubuntu-latest']
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
