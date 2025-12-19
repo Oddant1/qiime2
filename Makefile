@@ -6,11 +6,10 @@ PREFIX ?= $(CONDA_PREFIX)
 all: ;
 
 lint:
-	q2lint
-	flake8
+	uv run nox -s lint
 
 test: all
-	QIIMETEST= pytest --doctest-modules
+	uv run nox -t test-max
 
 # for parallel, pip install pytest-xdist
 mystery-stew: all

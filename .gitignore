@@ -78,3 +78,6 @@ _version.py
 
 # We are a library not an application
 uv.lock
+
+.venv/
+.nox/

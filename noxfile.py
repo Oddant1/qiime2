@@ -7,6 +7,14 @@
 import nox
 
 
+# [*((python-version, uv-resolution), [*tags])]
+MATRIX = [
+    (('3.10', 'lowest-direct'), ['test-min']),
+    (('3.10', 'highest'), []),
+    (('3.11', 'highest'), ['test-max']),
+]
+
+
 
 def setup_uv(session: nox.Session, resolution='highest') -> None:
     """
@@ -28,16 +36,16 @@ def lint(session: nox.Session) -> None:
     Run the linters
     """
     setup_uv(session)
-    session.install("flake8")
-    session.run("flake8", *session.posargs)
+    session.install("ruff")
+    session.run("ruff", "check", *session.posargs)
 
 
 
-@nox.session(venv_backend="uv", python=['3.10', '3.11'])
-@nox.parametrize('resolution', ['lowest-direct', 'highest'], ids=['min', 'max'])
+@nox.session(venv_backend="uv")
+@nox.parametrize('python,resolution', [x[0] for x in MATRIX], tags=[x[1] for x in MATRIX])
 def test(session: nox.Session, resolution) -> None:
     """
-    Run the tests with (min|max) of the listed dependencies in the pyproject.toml
+    Run the tests (can use `-t test-min` or `-t test-max` to filter)
     """
     setup_uv(session, resolution)
     session.run("pytest", *session.posargs, env={'QIIMETEST':"1"})
