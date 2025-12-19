@@ -187,18 +187,35 @@ class ProvNode:
         cfg: Config,
         archiver: Archiver,
         *args,
-        archive_version: str = None,
-        framework_version: str = None,
+        archive_version: str | None = None,
+        framework_version: str | None = None,
         uuid: str | None = None
     ):
         '''
-        Constructs a ProvNode from a Result and the uuid of a Result within
+        Constructs a ProvNode from an Archiver and the uuid of a Result within
         its provenance if relevant
+
+        Parameters
+        ----------
+        cfg : Config
+            A dataclass that stores four boolean flags: whether to perform
+            checksum validation, whether to parse study metadata, whether to
+            recursively parse nested directories, and whether to enable verbose
+            mode.
+        archiver : Archiver
+            The Archiver representing the Result we are parsing or its parent.
+        archive_version : str | None
+            The archive version of Archiver we are parsing.
+        framework_version : str | None
+            The frameowrk version used to create the Archiver we are parsing.
+        uuid : str | None
+            None if we are parsing the root Archiver. The uuid of the Artifact
+            we are parsing within provenance if set
         '''
         self.cfg = cfg
         self._archiver = archiver
 
-        # TODO: Maybe make sure both are set or both are None
+        # TODO: Maybe make sure both are set or both are None?
         if archive_version is None or framework_version is None:
             archive_version, framework_version = parse_version(archiver, uuid)
 
