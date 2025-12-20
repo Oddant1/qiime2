@@ -300,7 +300,8 @@ class Action(metaclass=abc.ABCMeta):
             # If the value on the capture was never set and the value of the
             # arg is still the default, we raise an error because no value was
             # ever set for this arg.
-            if not capture._set and capture._value:
+            if not capture._set and capture._value == \
+                    self.signature.parameters[capture_name].default:
                 raise ValueError(
                     f"The capture parameter '{capture_name}' never had a "
                     "value set for it"

@@ -406,9 +406,9 @@ class PipelineSignature:
                         provenance, name, spec, arg)
             else:
                 if spec.view_type == qtype.CaptureHolder:
-                    _set = arg == spec.default
                     capture = qtype.CaptureHolder(
-                        name, arg, spec.qiime_type, provenance, _set)
+                        name, arg, spec.qiime_type, provenance
+                    )
                     callable_args[name] = capture
                     capture_names.append(name)
 
