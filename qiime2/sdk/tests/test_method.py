@@ -743,7 +743,7 @@ class TestMethod(unittest.TestCase):
         self.assertEqual(view_ints2_ret, ints2_expected)
         self.assertEqual(view_int1_ret, int1_expected)
 
-    def test_unset_random_seed_method(self):
+    def test_random_seed_method_unset(self):
         random_seed_method = self.plugin.methods['random_seed_method']
         int1, = random_seed_method()
 
@@ -756,7 +756,7 @@ class TestMethod(unittest.TestCase):
 
         self.assertEqual(returned_seed, prov_seed)
 
-    def test_set_random_seed_method_good_value(self):
+    def test_random_seed_method_good_value(self):
         random_seed_method = self.plugin.methods['random_seed_method']
         int1, = random_seed_method(0)
 
@@ -770,20 +770,20 @@ class TestMethod(unittest.TestCase):
 
         self.assertEqual(returned_seed, prov_seed)
 
-    def test_set_random_seed_method_bad_value(self):
+    def test_random_seed_method_bad_value(self):
         random_seed_method = self.plugin.methods['random_seed_method']
         with self.assertRaisesRegex(
                 TypeError,
                 "\'random_seed\'.*1\.0.*Int"):  # noqa: W605
             int1, = random_seed_method(1.0)
 
-    def test_set_random_seed_twice(self):
+    def test_random_seed_method_set_twice(self):
         random_seed_method = \
             self.plugin.methods['random_seed_method_set_twice']
         with self.assertRaisesRegex(ValueError, 'Value already set'):
             random_seed_method()
 
-    def test_set_random_seed_method_never_set(self):
+    def test_random_seed_method_never_set(self):
         random_seed_method = \
             self.plugin.methods['random_seed_method_never_set']
         with self.assertRaisesRegex(
