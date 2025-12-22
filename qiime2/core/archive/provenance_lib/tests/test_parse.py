@@ -28,9 +28,7 @@ from ..archive_parser import (
     Config, ProvNode, ParserResults, ArchiveParser,
 )
 
-from .testing_utilities import (
-     generate_archive_with_file_removed, DummyArtifacts
-)
+from .testing_utilities import DummyArtifacts
 
 from qiime2 import Artifact, Cache
 from qiime2.core.archive.archiver import ChecksumDiff, Archiver
@@ -784,18 +782,22 @@ class ProvDAGTests(unittest.TestCase):
         self.assertEqual(no_validation_dag.checksum_diff, None)
 
     def test_no_checksum_validation_missing_checksums_sha512(self):
-        with generate_archive_with_file_removed(
-            self.das.concated_ints.filepath,
-            self.das.concated_ints.uuid,
-            'checksums.sha512'
-        ) as altered_archive:
-            dag = ProvDAG(altered_archive, validate_checksums=False)
+        concat_ints = self.dp.methods['concatenate_ints']
 
-            self.assertEqual(
-                dag.provenance_is_valid, ValidationCode.VALIDATION_OPTOUT
-            )
+        concated_ints, = concat_ints(
+            self.das.int_seq1.artifact, self.das.int_seq1.artifact,
+            self.das.int_seq2.artifact, 7, 13
+        )
 
-            self.assertEqual(dag.checksum_diff, None)
+        removed_path = concated_ints._archiver.path / 'checksums.sha512'
+        os.remove(removed_path)
+
+        dag = ProvDAG(concated_ints, validate_checksums=False)
+
+        self.assertEqual(
+            dag.provenance_is_valid, ValidationCode.VALIDATION_OPTOUT
+        )
+        self.assertEqual(dag.checksum_diff, None)
 
     def test_no_checksum_validation_missing_node_files(self):
         concat_ints = self.dp.methods['concatenate_ints']
