@@ -258,14 +258,14 @@ class Action(metaclass=abc.ABCMeta):
             callable_args = self.signature.coerce_user_input(
                 **collated_inputs)
 
-            callable_args, capture_names = \
+            callable_args, captures = \
                 self.signature.transform_and_add_callable_args_to_prov(
                     provenance, **callable_args)
 
             outputs = self._callable_executor_(
                 ctx, callable_args, output_types, provenance)
 
-            self._ensure_captures_set(callable_args, capture_names)
+            self._ensure_captures_set(captures)
 
             if len(outputs) != len(self.signature.outputs):
                 raise ValueError(
@@ -285,25 +285,21 @@ class Action(metaclass=abc.ABCMeta):
         self._set_wrapper_name(bound_callable, self.id)
         return bound_callable
 
-    def _ensure_captures_set(self, callable_args, capture_names):
+    def _ensure_captures_set(self, captures):
         '''
         Ensure all capture parameters have a value set. Either passed in by the
         caller or captured in the Action.
 
-        callable_args : Dict[Str : Any]
-            All args passed into our callable
         capture_names : List[Str]
             List of names of all params that are CaptureHolders
         '''
-        for capture_name in capture_names:
-            capture = callable_args[capture_name]
+        for capture in captures:
             # If the value on the capture was never set and the value of the
             # arg is still the default, we raise an error because no value was
             # ever set for this arg.
-            if not capture._set and capture._value == \
-                    self.signature.parameters[capture_name].default:
+            if not capture.is_set:
                 raise ValueError(
-                    f"The capture parameter '{capture_name}' never had a "
+                    f"The capture parameter '{capture._name}' never had a "
                     "value set for it"
                 )
 

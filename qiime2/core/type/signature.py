@@ -394,8 +394,8 @@ class PipelineSignature:
             outside the DFK in parsl
         """
         # Keep track of all CaptureHolders so we can error if they do not have
-        # a value set
-        capture_names = []
+        # a value set after execution
+        captures = []
 
         for name, spec in self.signature_order.items():
             arg = callable_args[name]
@@ -410,11 +410,11 @@ class PipelineSignature:
                         name, arg, spec.qiime_type, provenance
                     )
                     callable_args[name] = capture
-                    capture_names.append(name)
+                    captures.append(capture)
 
                 provenance.add_parameter(name, spec.qiime_type, arg)
 
-        return callable_args, capture_names
+        return callable_args, captures
 
     def _transform_and_add_input_to_prov(self, provenance, name, spec, _input):
         """ Transform the input and add both the input and the transformation
@@ -814,3 +814,7 @@ class CaptureHolder:
         else:
             raise TypeError(
                 f'Value {value} not compatible with type {self._type}')
+
+    @property
+    def is_set(self):
+        return self._set or self._value is not None
