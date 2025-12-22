@@ -817,4 +817,5 @@ class CaptureHolder:
 
     @property
     def is_set(self):
+        # Default value of CaptureHolder param must be None
         return self._set or self._value is not None

@@ -290,13 +290,10 @@ class Action(metaclass=abc.ABCMeta):
         Ensure all capture parameters have a value set. Either passed in by the
         caller or captured in the Action.
 
-        capture_names : List[Str]
-            List of names of all params that are CaptureHolders
+        captures : List[Str]
+            List of all params that are CaptureHolders
         '''
         for capture in captures:
-            # If the value on the capture was never set and the value of the
-            # arg is still the default, we raise an error because no value was
-            # ever set for this arg.
             if not capture.is_set:
                 raise ValueError(
                     f"The capture parameter '{capture._name}' never had a "
