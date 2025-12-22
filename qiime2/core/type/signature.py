@@ -802,7 +802,12 @@ class CaptureHolder:
         self._type = type
         self._provenance = provenance
 
-    def get_value(self):
+    @property
+    def is_set(self):
+        return self._set or self._value != CaptureHolder.CAPTURE_HOLDER_DEFAULT
+
+    @property
+    def value(self):
         return self._value
 
     def set_value(self, value):
@@ -816,7 +821,3 @@ class CaptureHolder:
         else:
             raise TypeError(
                 f'Value {value} not compatible with type {self._type}')
-
-    @property
-    def is_set(self):
-        return self._set or self._value != CaptureHolder.CAPTURE_HOLDER_DEFAULT

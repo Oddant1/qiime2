@@ -172,7 +172,7 @@ class Action(metaclass=abc.ABCMeta):
             the required default
         """
         for name, spec in signature.parameters.items():
-            if spec.view_type is qtype.CaptureHolder and spec.default != \
+            if spec.view_type == qtype.CaptureHolder and spec.default != \
                     qtype.CaptureHolder.CAPTURE_HOLDER_DEFAULT:
                 raise ValueError(
                         f"Default value of CaptureHolder parameter '{name}' "
@@ -315,6 +315,9 @@ class Action(metaclass=abc.ABCMeta):
 
         captures : List[Str]
             List of all params that are CaptureHolders
+
+        Raises : ValueError
+            If the CaptureHolder never had a value set
         '''
         for capture in captures:
             if not capture.is_set:
