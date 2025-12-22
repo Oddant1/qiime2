@@ -621,30 +621,6 @@ class _Threads(_PrimitiveTemplateBase):
         return str(value)
 
 
-class CaptureHolder:
-    def __init__(self, name, value, type, provenance):
-        self._set = False
-        self._name = name
-        self._value = value
-        self._type = type
-        self._provenance = provenance
-
-    def get_value(self):
-        return self._value
-
-    def set_value(self, value):
-        if self._set:
-            raise ValueError(f'Value already set to {self._value}')
-
-        if value in self._type:
-            self._provenance.parameters[self._name] = value
-            self._value = value
-            self._set = True
-        else:
-            raise TypeError(
-                f'Value {value} not compatible with type {self._type}')
-
-
 Int = _Int()
 Float = _Float()
 Bool = _Bool()
