@@ -792,6 +792,33 @@ class TestMethod(unittest.TestCase):
                 "for it"):
             random_seed_method()
 
+    def test_random_seed_method_wrong_default(self):
+        import qiime2.core.type as qtype
+
+        default = \
+            1 if qtype.CaptureHolder.CAPTURE_HOLDER_DEFAULT is None else None
+
+        def random_seed_method_bad_default(
+                random_seed: qtype.CaptureHolder = default) -> int:
+            raise ValueError(
+                "I should never run. I should never even pass registration"
+            )
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "Default value of CaptureHolder.*random_seed.*1.*None"):
+            self.plugin.methods.register_function(
+                function=random_seed_method_bad_default,
+                inputs={},
+                parameters={
+                    'random_seed': Int
+                },
+                outputs=[('seed', SingleInt)],
+                name='Sets a ',
+                description='Sets a bad value for the default. '
+                            'This will always raise an error on registration'
+            )
+
 
 exp_merge_calldoc = """\
 Merge mappings

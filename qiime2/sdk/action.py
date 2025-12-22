@@ -141,6 +141,8 @@ class Action(metaclass=abc.ABCMeta):
     # existing instance (see `_init` and `__setstate__`, respectively).
     def __init(self, callable, signature, plugin_id, name, description,
                citations, deprecated, migrated, examples):
+        self._validate_capture_holders(signature)
+
         self._callable = callable
         self.signature = signature
         self.plugin_id = plugin_id
@@ -156,6 +158,27 @@ class Action(metaclass=abc.ABCMeta):
         self._dynamic_async = self._get_async_wrapper()
         # This a temp thing to play with parsl before integrating more deeply
         self._dynamic_parsl = self._get_parsl_wrapper()
+
+    def _validate_capture_holders(self, signature):
+        """
+        Validates that any CaptureHolder params have their default set
+        correctly and errors if not.
+
+        signature : Dict[string: ParamSpec]
+            The signature of this action
+
+        Raises : ValueError
+            If the default value of a CaptureHolder param is found to not be
+            the required default
+        """
+        for name, spec in signature.parameters.items():
+            if spec.view_type is qtype.CaptureHolder and spec.default != \
+                    qtype.CaptureHolder.CAPTURE_HOLDER_DEFAULT:
+                raise ValueError(
+                        f"Default value of CaptureHolder parameter '{name}' "
+                        f"is '{spec.default}' should be "
+                        f"'{qtype.CaptureHolder.CAPTURE_HOLDER_DEFAULT}'."
+                    )
 
     def __init__(self):
         raise NotImplementedError(

@@ -793,6 +793,8 @@ class HashableInvocation():
 
 
 class CaptureHolder:
+    CAPTURE_HOLDER_DEFAULT = None
+
     def __init__(self, name, value, type, provenance):
         self._set = False
         self._name = name
@@ -817,5 +819,4 @@ class CaptureHolder:
 
     @property
     def is_set(self):
-        # Default value of CaptureHolder param must be None
-        return self._set or self._value is not None
+        return self._set or self._value != CaptureHolder.CAPTURE_HOLDER_DEFAULT

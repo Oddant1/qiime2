@@ -1274,7 +1274,6 @@ dummy_plugin.methods.register_function(
     description='Never sets the Capture value. This will always raise an error'
 )
 
-
 dummy_plugin.methods.register_function(
     function=_underscore_method,
     inputs={},
