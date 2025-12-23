@@ -814,7 +814,7 @@ class CaptureHolder:
         if self._set:
             raise ValueError(f'Value already set to {self._value}')
 
-        if value in self._type:
+        if value is None or value in self._type:
             self._provenance.parameters[self._name] = value
             self._value = value
             self._set = True
