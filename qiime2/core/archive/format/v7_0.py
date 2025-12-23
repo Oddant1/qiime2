@@ -175,8 +175,8 @@ class ArchiveFormat(v6.ArchiveFormat):
             checksum_type=cls.CHECKSUM_TYPE
         )
 
-    def __init__(self, archive_record):
-        super().__init__(archive_record)
+    def __init__(self, archive_record, *args, replay=False):
+        super().__init__(archive_record, *args, replay=replay)
 
         self.annotations_dir = \
             archive_record.root / self.ANNOTATIONS_DIR
