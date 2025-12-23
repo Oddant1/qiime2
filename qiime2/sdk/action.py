@@ -172,7 +172,7 @@ class Action(metaclass=abc.ABCMeta):
             the required default
         """
         for name, spec in signature.parameters.items():
-            if spec.view_type == qtype.CaptureHolder and spec.default != \
+            if spec.view_type is qtype.CaptureHolder and spec.default != \
                     qtype.CaptureHolder.CAPTURE_HOLDER_DEFAULT:
                 raise ValueError(
                         f"Default value of CaptureHolder parameter '{name}' "
