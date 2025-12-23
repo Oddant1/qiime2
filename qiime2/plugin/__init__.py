@@ -15,7 +15,7 @@ from qiime2.core.type import (SemanticType, Int, Str, Float, Metadata,
                               MetadataColumn, Categorical, Numeric, Properties,
                               Range, Start, End, Choices, Bool, Set, List,
                               Collection, Visualization, TypeMap, TypeMatch,
-                              Jobs, Threads)
+                              Jobs, Threads, CaptureHolder)
 
 
 __all__ = ['TextFileFormat', 'BinaryFileFormat', 'DirectoryFormat', 'Plugin',
@@ -24,7 +24,7 @@ __all__ = ['TextFileFormat', 'BinaryFileFormat', 'DirectoryFormat', 'Plugin',
            'Properties', 'Range', 'Start', 'End', 'Choices', 'Visualization',
            'Jobs', 'Threads', 'TypeMap', 'TypeMatch', 'ValidationError',
            'Citations', 'CitationRecord', 'get_available_cores',
-           'SingleFileDirectoryFormat']
+           'SingleFileDirectoryFormat', 'CaptureHolder']
 
 # IMPORTANT:
 # Autodoc cannot find a docstring unless it is defined in the same module that

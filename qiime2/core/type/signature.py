@@ -393,6 +393,10 @@ class PipelineSignature:
             records to provenance and because we want transformers to run
             outside the DFK in parsl
         """
+        # Keep track of all CaptureHolders so we can error if they do not have
+        # a value set after execution
+        captures = []
+
         for name, spec in self.signature_order.items():
             arg = callable_args[name]
 
@@ -401,9 +405,16 @@ class PipelineSignature:
                     self._transform_and_add_input_to_prov(
                         provenance, name, spec, arg)
             else:
+                if spec.view_type == qtype.CaptureHolder:
+                    capture = qtype.CaptureHolder(
+                        name, arg, spec.qiime_type, provenance
+                    )
+                    callable_args[name] = capture
+                    captures.append(capture)
+
                 provenance.add_parameter(name, spec.qiime_type, arg)
 
-        return callable_args
+        return callable_args, captures
 
     def _transform_and_add_input_to_prov(self, provenance, name, spec, _input):
         """ Transform the input and add both the input and the transformation
@@ -779,3 +790,34 @@ class HashableInvocation():
             return collection
 
         return tuple(new_collection)
+
+
+class CaptureHolder:
+    CAPTURE_HOLDER_DEFAULT = None
+
+    def __init__(self, name, value, type, provenance):
+        self._set = False
+        self._name = name
+        self._value = value
+        self._type = type
+        self._provenance = provenance
+
+    @property
+    def is_set(self):
+        return self._set or self._value != CaptureHolder.CAPTURE_HOLDER_DEFAULT
+
+    @property
+    def value(self):
+        return self._value
+
+    def set_value(self, value):
+        if self._set:
+            raise ValueError(f'Value already set to {self._value}')
+
+        if value is None or value in self._type:
+            self._provenance.parameters[self._name] = value
+            self._value = value
+            self._set = True
+        else:
+            raise TypeError(
+                f'Value {value} not compatible with type {self._type}')

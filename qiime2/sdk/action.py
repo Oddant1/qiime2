@@ -141,6 +141,8 @@ class Action(metaclass=abc.ABCMeta):
     # existing instance (see `_init` and `__setstate__`, respectively).
     def __init(self, callable, signature, plugin_id, name, description,
                citations, deprecated, migrated, examples):
+        self._validate_capture_holders(signature)
+
         self._callable = callable
         self.signature = signature
         self.plugin_id = plugin_id
@@ -156,6 +158,27 @@ class Action(metaclass=abc.ABCMeta):
         self._dynamic_async = self._get_async_wrapper()
         # This a temp thing to play with parsl before integrating more deeply
         self._dynamic_parsl = self._get_parsl_wrapper()
+
+    def _validate_capture_holders(self, signature):
+        """
+        Validates that any CaptureHolder params have their default set
+        correctly and errors if not.
+
+        signature : Dict[string: ParamSpec]
+            The signature of this action
+
+        Raises : ValueError
+            If the default value of a CaptureHolder param is found to not be
+            the required default
+        """
+        for name, spec in signature.parameters.items():
+            if spec.view_type is qtype.CaptureHolder and spec.default != \
+                    qtype.CaptureHolder.CAPTURE_HOLDER_DEFAULT:
+                raise ValueError(
+                        f"Default value of CaptureHolder parameter '{name}' "
+                        f"is '{spec.default}' should be "
+                        f"'{qtype.CaptureHolder.CAPTURE_HOLDER_DEFAULT}'."
+                    )
 
     def __init__(self):
         raise NotImplementedError(
@@ -258,12 +281,14 @@ class Action(metaclass=abc.ABCMeta):
             callable_args = self.signature.coerce_user_input(
                 **collated_inputs)
 
-            callable_args = \
+            callable_args, captures = \
                 self.signature.transform_and_add_callable_args_to_prov(
                     provenance, **callable_args)
 
             outputs = self._callable_executor_(
                 ctx, callable_args, output_types, provenance)
+
+            self._ensure_captures_set(captures)
 
             if len(outputs) != len(self.signature.outputs):
                 raise ValueError(
@@ -282,6 +307,24 @@ class Action(metaclass=abc.ABCMeta):
         self._set_wrapper_properties(bound_callable)
         self._set_wrapper_name(bound_callable, self.id)
         return bound_callable
+
+    def _ensure_captures_set(self, captures):
+        '''
+        Ensure all capture parameters have a value set. Either passed in by the
+        caller or captured in the Action.
+
+        captures : List[Str]
+            List of all params that are CaptureHolders
+
+        Raises : ValueError
+            If the CaptureHolder never had a value set
+        '''
+        for capture in captures:
+            if not capture.is_set:
+                raise ValueError(
+                    f"The capture parameter '{capture._name}' never had a "
+                    "value set for it"
+                )
 
     def _callable_action_wrapper(self):
         # This is a "root" level invocation (not a nested call within a
