@@ -741,9 +741,9 @@ class Cache:
         >>> cache_path = os.path.join(test_dir.name, 'cache')
         >>> cache = Cache(cache_path)
         >>> pool = cache.create_pool(key='key')
-        >>> cache.get_keys() == set(['key'])
+        >>> cache.get_keys() == ['key']
         True
-        >>> cache.get_pools() == set(['key'])
+        >>> cache.get_pools() == ['key']
         True
         >>> test_dir.cleanup()
         """
@@ -948,7 +948,7 @@ class Cache:
         >>> str(saved_artifact._archiver.path) == \
                 str(cache.data / str(artifact.uuid))
         True
-        >>> cache.get_keys() == set(['key'])
+        >>> cache.get_keys() == ['key']
         True
         >>> test_dir.cleanup()
         """
@@ -1158,10 +1158,10 @@ class Cache:
         >>> cache = Cache(cache_path)
         >>> artifact = Artifact.import_data(IntSequence1, [0, 1, 2])
         >>> saved_artifact = cache.save(artifact, 'key')
-        >>> cache.get_keys() == set(['key'])
+        >>> cache.get_keys() == ['key']
         True
         >>> cache.remove('key')
-        >>> cache.get_keys() == set()
+        >>> cache.get_keys() == []
         True
         >>> # Note that the data is still in the cache due to our
         >>> # saved_artifact causing the process pool to keep a reference to it
@@ -1360,16 +1360,18 @@ class Cache:
         return self.path / 'keys'
 
     def get_keys(self):
-        """Returns a set of all keys in the cache.
+        """Returns an alphabetically sorted list of all keys in the cache.
 
         Returns
         -------
-        set[str]
-            All of the keys in the cache. Just the names now what they refer
+        list[str]
+            All of the keys in the cache. Just the names not what they refer
             to.
         """
         with self.lock:
-            return set(os.listdir(self.keys))
+            keys = os.listdir(self.keys)
+            keys.sort()
+            return keys
 
     @property
     def lockfile(self):
@@ -1384,15 +1386,17 @@ class Cache:
         return self.path / 'pools'
 
     def get_pools(self):
-        """Returns a set of all pools in the cache.
+        """Returns an alphabetically sorted list of all pools in the cache.
 
         Returns
         -------
-        set[str]
+        list[str]
             The names of all of the named pools in the cache.
         """
         with self.lock:
-            return set(os.listdir(self.pools))
+            pools = os.listdir(self.pools)
+            pools.sort()
+            return pools
 
     @property
     def processes(self):
