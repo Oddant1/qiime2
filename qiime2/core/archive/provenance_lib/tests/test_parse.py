@@ -126,6 +126,7 @@ class ProvDAGTests(unittest.TestCase):
         with self.assertRaisesRegex(UnparseableDataError, 'does not exist'):
             ProvDAG(fp)
 
+    @pytest.mark.skipif(os.geteuid() == 0, reason="super user always wins")
     def test_insufficient_permissions(self):
         fp = os.path.join(self.tempdir, 'int-seq-1-permissions-copy.qza')
         self.das.int_seq1.artifact.save(fp)
