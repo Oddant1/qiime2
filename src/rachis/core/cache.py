@@ -497,7 +497,7 @@ class Cache:
             created_path = True
 
         self.lock = \
-            MEGALock(str(self.lockfile), lifetime=timedelta(minutes=10))
+            MEGALock(str(self.lockfile), lifetime=timedelta(minutes=3))
 
         # We need to lock here to ensure that if we have multiple processes
         # trying to create the same cache one of them can actually succeed at

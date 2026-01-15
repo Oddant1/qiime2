@@ -14,7 +14,8 @@ from .base import Context
 def _subprocess_apply(ctx, args, kwargs):
     exe = ctx.action_obj._bind(
         lambda: Context(ctx), {'type': 'asynchronous'})
-    results = exe(*args, **kwargs)
+    with ctx.cache:
+        results = exe(*args, **kwargs)
 
     return results
 

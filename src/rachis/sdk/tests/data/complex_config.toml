@@ -11,9 +11,6 @@ class = "SlurmProvider"
 [parsl.executors.provider.launcher]
 class = "SrunLauncher"
 
-[parsl.executors.provider.channel]
-class = "LocalChannel"
-
 [[parsl.executors]]
 class = "HighThroughputExecutor"
 label = "other"
