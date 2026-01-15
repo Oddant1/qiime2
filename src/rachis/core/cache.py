@@ -259,7 +259,9 @@ def monitor_thread(cache_dir, is_done):
     """
     while not is_done.is_set():
         touch_under_path(cache_dir)
-        time.sleep(60 * 60 * 6)
+        # Use wait() instead of sleep() so the thread wakes up immediately
+        # when is_done is set, allowing it to exit cleanly
+        is_done.wait(timeout=60 * 60 * 6)
 
 
 def lock_thread(flufl_lock, lifetime, is_done):
@@ -286,7 +288,9 @@ def lock_thread(flufl_lock, lifetime, is_done):
             flufl_lock.refresh()
         except flufl.lock._lockfile.NotLockedError:
             break
-        time.sleep(lifetime.seconds * .9)
+        # Use wait() instead of sleep() so the thread wakes up immediately
+        # when is_done is set, allowing it to exit cleanly
+        is_done.wait(timeout=lifetime.seconds * .9)
 
 
 # This is very important to our trademark
