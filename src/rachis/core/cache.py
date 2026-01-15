@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2025, QIIME 2 development team.
+# Copyright (c) 2016-2026, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -262,6 +262,33 @@ def monitor_thread(cache_dir, is_done):
         time.sleep(60 * 60 * 6)
 
 
+def lock_thread(flufl_lock, lifetime, is_done):
+    """It is conceivable that something could need to hold the lock for longer
+    than the lifetime, so this thread will periodically refresh the duration
+    of the lock provided we are still holding it. We still want to set a
+    limited lifetime on the lock so that if whatever is holding the lock
+    terminates abnormally the next process that comes along and wants the lock
+    will break the expired lock
+
+    Parameters
+    ----------
+    flufl_lock: flufl.lock.Lock
+        The lock we are refreshing the duration on.
+    lifetime: datetime.timedelta
+        Represents how long the lifetime of the lock should be. We use this to
+        determine how long to wait before refreshing the lock.
+    is_done : threading.Event
+        The process that invoked this daemon sets this flag when releasing the
+        lock to notify this daemon to terminate.
+    """
+    while not is_done.is_set():
+        try:
+            flufl_lock.refresh()
+        except flufl.lock._lockfile.NotLockedError:
+            break
+        time.sleep(lifetime.seconds * .9)
+
+
 # This is very important to our trademark
 tm = object
 
@@ -281,7 +308,7 @@ class MEGALock(tm):
         self.flufl_lock = flufl.lock.Lock(flufl_fp, lifetime=lifetime)
 
     def __enter__(self):
-        """ We acquire the thread lock first because the flufl lock isn't
+        """We acquire the thread lock first because the flufl lock isn't
         thread-safe which is why we need both locks in the first place
         """
         if self.re_entries == 0:
@@ -292,6 +319,14 @@ class MEGALock(tm):
             except Exception:
                 self.thread_lock.release()
                 raise
+            else:
+                self._thread_is_done = threading.Event()
+                self._thread = threading.Thread(
+                    target=lock_thread,
+                    args=(self.flufl_lock, self.lifetime,
+                          self._thread_is_done),
+                    daemon=True)
+                self._thread.start()
 
         self.re_entries += 1
 
@@ -300,6 +335,7 @@ class MEGALock(tm):
             self.re_entries -= 1
 
         if self.re_entries == 0:
+            self._thread_is_done.set()
             self.flufl_lock.unlock()
             self.thread_lock.release()
 
@@ -308,6 +344,8 @@ class MEGALock(tm):
 
         del lockless_dict['thread_lock']
         del lockless_dict['flufl_lock']
+        del lockless_dict['_thread']
+        del lockless_dict['_thread_is_done']
 
         return lockless_dict
 
@@ -703,9 +741,9 @@ class Cache:
         >>> cache_path = os.path.join(test_dir.name, 'cache')
         >>> cache = Cache(cache_path)
         >>> pool = cache.create_pool(key='key')
-        >>> cache.get_keys() == set(['key'])
+        >>> cache.get_keys() == ['key']
         True
-        >>> cache.get_pools() == set(['key'])
+        >>> cache.get_pools() == ['key']
         True
         >>> test_dir.cleanup()
         """
@@ -806,7 +844,7 @@ class Cache:
             # while tracking all data within those that were referenced
             for pool in self.get_pools():
                 if pool not in referenced_pools:
-                    shutil.rmtree(self.pools / pool)
+                    self._try_to_remove_target_dir(self.pools / pool)
                 else:
                     for data in os.listdir(self.pools / pool):
                         if not self._check_dangling_reference(
@@ -820,7 +858,9 @@ class Cache:
                 create_time = float(process_pool.split('-')[1].split('@')[0])
 
                 if time.time() - create_time >= self.process_pool_lifespan:
-                    shutil.rmtree(self.processes / process_pool)
+                    self._try_to_remove_target_dir(
+                        self.processes / process_pool
+                    )
                 else:
                     for data in os.listdir(self.processes / process_pool):
                         referenced_data.add(data.split('.')[0])
@@ -831,24 +871,27 @@ class Cache:
                 assert is_uuid4(data)
 
                 if data not in referenced_data:
-                    target = self.data / data
-                    try:
-                        shutil.rmtree(target)
-                    # We may not have permissions because old versions of
-                    # QIIME 2 set entries in data to read-only. If we encounter
-                    # that then set write permissions here and try again.
-                    #
-                    # This try-except will induce a slight performance overhead
-                    # in Python versions pre 3.11, but much less than running
-                    # set_permissions every time. In Python 3.11 and on,
-                    # try-except introduces no performance penalty if an
-                    # exception is not raised.
-                    except PermissionError as e:
-                        if e.errno == 13:
-                            set_permissions(target, None, USER_GROUP_RWX)
-                            shutil.rmtree(target)
-                        else:
-                            raise e
+                    self._try_to_remove_target_dir(self.data / data)
+
+    def _try_to_remove_target_dir(self, target):
+        try:
+            shutil.rmtree(target)
+        # We may not have permissions because old versions of
+        # QIIME 2 set entries in data to read-only. If we encounter
+        # that then set write permissions here and try again.
+        #
+        # This try-except will induce a slight performance overhead
+        # in Python versions pre 3.11, but much less than running
+        # set_permissions every time. In Python 3.11 and on,
+        # try-except introduces no performance penalty if an
+        # exception is not raised.
+        except PermissionError:
+            try:
+                set_permissions(target, None, USER_GROUP_RWX)
+                shutil.rmtree(target)
+            except PermissionError:
+                # Give up, we tried
+                pass
 
     def _check_dangling_reference(self, data_path, key_path):
         """ If the data specified does not exist then we have a dangling
@@ -905,7 +948,7 @@ class Cache:
         >>> str(saved_artifact._archiver.path) == \
                 str(cache.data / str(artifact.uuid))
         True
-        >>> cache.get_keys() == set(['key'])
+        >>> cache.get_keys() == ['key']
         True
         >>> test_dir.cleanup()
         """
@@ -1115,10 +1158,10 @@ class Cache:
         >>> cache = Cache(cache_path)
         >>> artifact = Artifact.import_data(IntSequence1, [0, 1, 2])
         >>> saved_artifact = cache.save(artifact, 'key')
-        >>> cache.get_keys() == set(['key'])
+        >>> cache.get_keys() == ['key']
         True
         >>> cache.remove('key')
-        >>> cache.get_keys() == set()
+        >>> cache.get_keys() == []
         True
         >>> # Note that the data is still in the cache due to our
         >>> # saved_artifact causing the process pool to keep a reference to it
@@ -1193,7 +1236,7 @@ class Cache:
                     Result._from_archiver(Archiver.load_raw(destination, self))
                 existing.merge_annotations(ref)
 
-    def _rename_to_data(self, uuid, src):
+    def _rename_to_data(self, uuid, src, *args, replay=False):
         """Takes some data in src and renames it into the cache's data dir. It
         then ensures there are symlinks for this data in the process pool and
         the named pool if one exists. This is generally used to move data from
@@ -1223,8 +1266,10 @@ class Cache:
             if not os.path.exists(dest):
                 os.rename(src, dest)
             else:
-                existing = Result._from_archiver(Archiver.load_raw(dest, self))
-                new = Result._from_archiver(Archiver.load_raw(src, self))
+                existing = Result._from_archiver(
+                    Archiver.load_raw(dest, self, replay=replay))
+                new = Result._from_archiver(
+                    Archiver.load_raw(src, self, replay=replay))
                 existing.merge_annotations(new)
 
             # Create a new alias whether we renamed or not because this is
@@ -1315,16 +1360,18 @@ class Cache:
         return self.path / 'keys'
 
     def get_keys(self):
-        """Returns a set of all keys in the cache.
+        """Returns an alphabetically sorted list of all keys in the cache.
 
         Returns
         -------
-        set[str]
-            All of the keys in the cache. Just the names now what they refer
+        list[str]
+            All of the keys in the cache. Just the names not what they refer
             to.
         """
         with self.lock:
-            return set(os.listdir(self.keys))
+            keys = os.listdir(self.keys)
+            keys.sort()
+            return keys
 
     @property
     def lockfile(self):
@@ -1339,15 +1386,17 @@ class Cache:
         return self.path / 'pools'
 
     def get_pools(self):
-        """Returns a set of all pools in the cache.
+        """Returns an alphabetically sorted list of all pools in the cache.
 
         Returns
         -------
-        set[str]
+        list[str]
             The names of all of the named pools in the cache.
         """
         with self.lock:
-            return set(os.listdir(self.pools))
+            pools = os.listdir(self.pools)
+            pools.sort()
+            return pools
 
     @property
     def processes(self):

@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2025, QIIME 2 development team.
+# Copyright (c) 2016-2026, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -150,6 +150,10 @@ class Result(IResult):
     @property
     def format(self):
         return self._archiver.format
+
+    @property
+    def archive_version(self):
+        return self._archiver.archive_version
 
     @property
     def citations(self):
@@ -778,6 +782,12 @@ class Artifact(Result):
 
         self.format.validate(self.view(self.format), level)
 
+    def get_checksums(self) -> dict[str, str]:
+        return self._archiver.get_checksums()
+
+    def validate_checksums(self):
+        super().validate()
+
 
 class Visualization(Result):
     extension = '.qzv'
@@ -1097,11 +1107,133 @@ class ResultCollection:
     def items(self):
         return self.collection.items()
 
-    def validate(self, view, level=None):
+    def validate(self, level=None):
         for result in self.values():
-            result.validate(view, level)
+            result.validate(level)
+
+    def validate_checksums(self):
+        for result in self.values():
+            if isinstance(result, Artifact):
+                result.validate_checksums()
+            elif isinstance(result, Result):
+                result.validate()
 
     def result(self):
         """ Noop to provide standardized interface with ProxyResultCollection.
         """
         return self
+
+
+class ChecksumCache:
+    _instance = None
+
+    def __new__(cls):
+        '''
+        Implements a cache of artifact file checksums. Maps artifact filepaths
+        beginning with their uuids to checksums.
+
+        The cache is populated at the beginning of an action using all input
+        artifacts and is queried at the end of an action to prevent redundant
+        checksumming of the provenance files in the new output artifacts.
+        '''
+        if cls._instance is None:
+            instance = super().__new__(cls)
+            instance.cache: dict[pathlib.Path, str] = {}
+            cls._instance = instance
+
+        return cls._instance
+
+    def get(self, filepath: pathlib.Path) -> str | None:
+        '''
+        Gets the checksum of the artifact file at `filepath`.
+
+        Parameters
+        ----------
+        filepath : pathlib.Path
+            The filepath including the artifact and file of interest.
+
+        Returns
+        -------
+        str | None
+            The checksum if found, None otherwise.
+        '''
+        if filepath not in self.cache:
+            return None
+
+        return self.cache[filepath]
+
+    def has_matching_checksum_type(self, artifact: Artifact) -> bool:
+        '''
+        Determines whether an artifact uses the same checksumming algorithm
+        as the current one.
+
+        Parameters
+        ----------
+        artifact : Artifact
+            The artifact for which to determine the checksum algorithm type.
+
+        Returns
+        -------
+        bool
+            True if the artifact uses the same checksum type as the current
+            one, False otherwise.
+        '''
+        if not artifact._archiver.has_checksums():
+            return False
+
+        artifact_checksum_type = artifact._archiver._fmt.CHECKSUM_TYPE
+        current_checksum_type = archive.Archiver.get_format_class(
+            archive.Archiver.CURRENT_FORMAT_VERSION
+        ).CHECKSUM_TYPE
+
+        return artifact_checksum_type == current_checksum_type
+
+    def cache_artifact(self, artifact: Artifact) -> None:
+        '''
+        Adds a single artifact's checksum file's contents to the checksum
+        cache.
+
+        If the checksum type associated with `artifact` is different than the
+        checksum type associated with the current archive version, then the
+        artifact is not cached. This allows the filepaths associated with
+        `artifact` to be re-checksummed with the new algorithm at output write
+        time, as will be needed for future validation.
+
+        Parameters
+        ----------
+        artifact : Artifact
+            The artifact to cache.
+        '''
+        if not self.has_matching_checksum_type(artifact):
+            return
+
+        for fp, checksum in artifact.get_checksums().items():
+            path = pathlib.Path(fp)
+
+            if path.is_relative_to(pathlib.Path("provenance/artifacts")):
+                key = path.relative_to(pathlib.Path("provenance/artifacts"))
+            elif path.is_relative_to(pathlib.Path("provenance")):
+                key = (
+                    pathlib.Path(str(artifact.uuid)) /
+                    path.relative_to(pathlib.Path("provenance"))
+                )
+            else:
+                # all other files are not included in the provenance of any
+                # artifact generated using this artifact as input
+                continue
+
+            self.cache[key] = checksum
+
+    def cache_result_collection(
+        self, result_collection: ResultCollection
+    ) -> None:
+        '''
+        Adds all artifacts in a result collection to the checksum cache.
+
+        Parameters
+        ----------
+        result_collection : ResultCollection
+            The result collection containing the artifacts to cache.
+        '''
+        for artifact in result_collection.values():
+            self.cache_artifact(artifact)

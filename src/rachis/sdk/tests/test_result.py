@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2025, QIIME 2 development team.
+# Copyright (c) 2016-2026, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -540,6 +540,38 @@ class TestResult(unittest.TestCase, ArchiveTestingMixin):
                     'IntSequence1', [1, 'a', 3, 4], validate_level='min'
                 )
 
+    def test_validate_checksums(self):
+        '''
+        Tests that Artifact.validate_checksums passes when artifact contents
+        are not changed and fails when a checksum in the checksum file is
+        altered.
+        '''
+        artifact = Artifact.import_data('IntSequence1', [1, 2, 3, 5])
+        artifact.validate_checksums()
+
+        if not hasattr(artifact._archiver._fmt, 'CHECKSUM_FILE'):
+            return
+
+        checksum_fp = (
+            pathlib.Path(artifact._archiver.root_dir) /
+            artifact._archiver._fmt.CHECKSUM_FILE
+        )
+        with open(checksum_fp, 'r+') as fh:
+            content = fh.read()
+
+            # change the first character in the first checksum
+            if content[0] != 'a':
+                content = 'a' + content[1:]
+            else:
+                content = 'b' + content[1:]
+
+            fh.write(content)
+
+        with self.assertRaisesRegex(
+            exceptions.ValidationError, 'Changed files'
+        ):
+            artifact.validate_checksums()
+
 
 class TestResultCollection(unittest.TestCase):
     def setUp(self):
@@ -647,6 +679,80 @@ class TestResultCollection(unittest.TestCase):
                 'ResultCollection keys must be strings and may only contain '
                 'the following characters:.*valid key'):
             collection['not a valid key'] = 0
+
+    def test_validate(self):
+        '''
+        Validates two result collections, one with all valid members which is
+        expected to pass, and one with an invalid member which is expected to
+        fail.
+        '''
+        int_seq_1 = Artifact.import_data(
+            'IntSequence1', [1, 3, 5, 7], validate_level='min'
+        )
+        int_seq_2 = Artifact.import_data(
+            'IntSequence1', [6, 7], validate_level='min'
+        )
+        int_seq_3 = Artifact.import_data(
+            'IntSequence1', [2, 4, 6, 8], validate_level='min'
+        )
+
+        collection = ResultCollection({
+            'is1': int_seq_1, 'is2': int_seq_2, 'is3': int_seq_3
+        })
+        collection.validate(level='max')
+
+        # we want to test ResultCollection.validate's logic, not
+        # IntSequenceFormat._validate_ directly
+        with unittest.mock.patch(
+            'rachis.core.testing.format.IntSequenceFormat._validate_',
+            side_effect=lambda level: None
+        ):
+            int_seq_invalid = Artifact.import_data(
+                'IntSequence1', [2, 4, 6, 'suh'], validate_level='min'
+            )
+
+        collection = ResultCollection({
+            'is1': int_seq_1, 'is2': int_seq_2, 'is3': int_seq_invalid
+        })
+
+        with self.assertRaisesRegex(
+            exceptions.ValidationError, 'not an integer'
+        ):
+            collection.validate(level='max')
+
+    def test_validate_checksums(self):
+        '''
+        Tests that ResultCollection.validate_checksums passes when its artifact
+        contents' are not changed and fails when a checksum in the checksum
+        file of a member artifact is altered.
+        '''
+        artifact1 = Artifact.import_data('IntSequence1', [1, 2, 3, 4])
+        artifact2 = Artifact.import_data('IntSequence1', [6, 7])
+        collection = ResultCollection({'a1': artifact1, 'a2': artifact2})
+        collection.validate_checksums()
+
+        if not hasattr(artifact1._archiver._fmt, 'CHECKSUM_FILE'):
+            return
+
+        checksum_fp = (
+            pathlib.Path(artifact1._archiver.root_dir) /
+            artifact1._archiver._fmt.CHECKSUM_FILE
+        )
+        with open(checksum_fp, 'r+') as fh:
+            content = fh.read()
+
+            # change the first character in the first checksum
+            if content[0] != 'a':
+                content = 'a' + content[1:]
+            else:
+                content = 'b' + content[1:]
+
+            fh.write(content)
+
+        with self.assertRaisesRegex(
+            exceptions.ValidationError, 'Changed files'
+        ):
+            collection.validate_checksums()
 
 
 @pytest.fixture

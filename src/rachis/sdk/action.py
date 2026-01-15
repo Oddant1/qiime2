@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2025, QIIME 2 development team.
+# Copyright (c) 2016-2026, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -10,6 +10,7 @@ import abc
 import inspect
 import tempfile
 import textwrap
+from types import FunctionType
 
 import decorator
 import dill
@@ -18,10 +19,12 @@ from typing import Mapping, TypedDict, Union
 from types import MappingProxyType
 
 import rachis.sdk
+from rachis.sdk.result import Artifact, ResultCollection, ChecksumCache
 import rachis.core.type as qtype
 import rachis.core.archive as archive
 from rachis.core.util import (LateBindingAttribute, DropFirstParameter,
                               tuplize, create_collection_name)
+from rachis.core.cite import CitationRecord
 
 
 def _coerce_pipeline_outputs(ctx, outputs):
@@ -116,8 +119,18 @@ class Action(metaclass=abc.ABCMeta):
 
     # Private constructor
     @classmethod
-    def _init(cls, callable, signature, plugin_id, name, description,
-              citations, deprecated, migrated, examples):
+    def _init(
+        cls,
+        callable: FunctionType,
+        signature: qtype.MethodSignature,
+        plugin_id: str,
+        name: str,
+        description: str,
+        citations: CitationRecord | list[CitationRecord],
+        deprecated: bool,
+        migrated: bool | dict[str, str],
+        examples: dict[str, FunctionType]
+    ):
         """
 
         Parameters
@@ -141,6 +154,8 @@ class Action(metaclass=abc.ABCMeta):
     # existing instance (see `_init` and `__setstate__`, respectively).
     def __init(self, callable, signature, plugin_id, name, description,
                citations, deprecated, migrated, examples):
+        self._validate_capture_holders(signature)
+
         self._callable = callable
         self.signature = signature
         self.plugin_id = plugin_id
@@ -156,6 +171,27 @@ class Action(metaclass=abc.ABCMeta):
         self._dynamic_async = self._get_async_wrapper()
         # This a temp thing to play with parsl before integrating more deeply
         self._dynamic_parsl = self._get_parsl_wrapper()
+
+    def _validate_capture_holders(self, signature):
+        """
+        Validates that any CaptureHolder params have their default set
+        correctly and errors if not.
+
+        signature : Dict[string: ParamSpec]
+            The signature of this action
+
+        Raises : ValueError
+            If the default value of a CaptureHolder param is found to not be
+            the required default
+        """
+        for name, spec in signature.parameters.items():
+            if spec.view_type is qtype.CaptureHolder and spec.default != \
+                    qtype.CaptureHolder.CAPTURE_HOLDER_DEFAULT:
+                raise ValueError(
+                        f"Default value of CaptureHolder parameter '{name}' "
+                        f"is '{spec.default}' should be "
+                        f"'{qtype.CaptureHolder.CAPTURE_HOLDER_DEFAULT}'."
+                    )
 
     def __init__(self):
         raise NotImplementedError(
@@ -251,19 +287,29 @@ class Action(metaclass=abc.ABCMeta):
                     warn(self._build_migration_message(), FutureWarning)
 
             # Type management
-            collated_inputs = self.signature.collate_inputs(
-                *args, **kwargs)
+            collated_inputs = self.signature.collate_inputs(*args, **kwargs)
             self.signature.check_types(**collated_inputs)
             output_types = self.signature.solve_output(**collated_inputs)
-            callable_args = self.signature.coerce_user_input(
-                **collated_inputs)
+            callable_args = self.signature.coerce_user_input(**collated_inputs)
 
-            callable_args = \
+            # validate and cache checksums
+            checksum_cache = ChecksumCache()
+            for input in collated_inputs.values():
+                if isinstance(input, Artifact):
+                    input.validate_checksums()
+                    checksum_cache.cache_artifact(input)
+                elif isinstance(input, ResultCollection):
+                    input.validate_checksums()
+                    checksum_cache.cache_result_collection(input)
+
+            callable_args, captures = \
                 self.signature.transform_and_add_callable_args_to_prov(
                     provenance, **callable_args)
 
             outputs = self._callable_executor_(
                 ctx, callable_args, output_types, provenance)
+
+            self._ensure_captures_set(captures)
 
             if len(outputs) != len(self.signature.outputs):
                 raise ValueError(
@@ -282,6 +328,24 @@ class Action(metaclass=abc.ABCMeta):
         self._set_wrapper_properties(bound_callable)
         self._set_wrapper_name(bound_callable, self.id)
         return bound_callable
+
+    def _ensure_captures_set(self, captures):
+        '''
+        Ensure all capture parameters have a value set. Either passed in by the
+        caller or captured in the Action.
+
+        captures : List[Str]
+            List of all params that are CaptureHolders
+
+        Raises : ValueError
+            If the CaptureHolder never had a value set
+        '''
+        for capture in captures:
+            if not capture.is_set:
+                raise ValueError(
+                    f"The capture parameter '{capture._name}' never had a "
+                    "value set for it"
+                )
 
     def _callable_action_wrapper(self):
         # This is a "root" level invocation (not a nested call within a
@@ -454,9 +518,23 @@ class Method(Action):
         return tuple(output_artifacts)
 
     @classmethod
-    def _init(cls, callable, inputs, parameters, outputs, plugin_id, name,
-              description, input_descriptions, parameter_descriptions,
-              output_descriptions, citations, deprecated, migrated, examples):
+    def _init(
+        cls,
+        callable: FunctionType,
+        inputs: dict,
+        parameters: dict,
+        outputs: dict,
+        plugin_id: str,
+        name: str,
+        description: str,
+        input_descriptions: dict[str, str],
+        parameter_descriptions: dict[str, str],
+        output_descriptions: dict[str, str],
+        citations: CitationRecord | list[CitationRecord],
+        deprecated: bool,
+        migrated: bool | dict[str, str],
+        examples: dict[str, FunctionType]
+    ):
         signature = qtype.MethodSignature(callable, inputs, parameters,
                                           outputs, input_descriptions,
                                           parameter_descriptions,

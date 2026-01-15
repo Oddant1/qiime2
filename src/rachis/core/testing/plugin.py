@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2025, QIIME 2 development team.
+# Copyright (c) 2016-2026, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -47,6 +47,8 @@ from .method import (concatenate_ints, split_ints, merge_mappings,
                      docstring_order_method, variadic_input_method,
                      unioned_primitives, type_match_list_and_set, union_inputs,
                      list_of_ints, dict_of_ints, returns_int, varied_method,
+                     random_seed_method, random_seed_method_set_twice,
+                     random_seed_method_never_set,
                      collection_inner_union, collection_outer_union,
                      dict_params, list_params, _underscore_method,
                      migrated_method_all_optional_keys,
@@ -1233,6 +1235,43 @@ dummy_plugin.methods.register_function(
     name='Takes and returns a combination of colletions and non collections',
     description='Takes and returns a combination of colletions and non'
                 ' collections'
+)
+
+dummy_plugin.methods.register_function(
+    function=random_seed_method,
+    inputs={},
+    parameters={
+       'random_seed': Int
+    },
+    outputs=[('seed', SingleInt)],
+    name='Takes a random seed',
+    description='Takes an integer as a random seed and returns that same'
+                ' integer. If no integer is provided, it generates one at'
+                ' random and captures that randomly generated integer in'
+                ' provenance.'
+)
+
+dummy_plugin.methods.register_function(
+    function=random_seed_method_set_twice,
+    inputs={},
+    parameters={
+       'random_seed': Int
+    },
+    outputs=[('seed', SingleInt)],
+    name='Sets the value on the Capture twice.',
+    description='Sets the value on the Capture object twice. This will always'
+                ' raise an error.'
+)
+
+dummy_plugin.methods.register_function(
+    function=random_seed_method_never_set,
+    inputs={},
+    parameters={
+       'random_seed': Int
+    },
+    outputs=[('seed', SingleInt)],
+    name='Never sets the Capture value.',
+    description='Never sets the Capture value. This will always raise an error'
 )
 
 dummy_plugin.methods.register_function(

@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2024, QIIME 2 development team.
+# Copyright (c) 2016-2026, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -11,8 +11,6 @@ import pathlib
 
 import rachis.core.archive.format.v1 as v1
 import rachis.core.archive.format.v6 as v6
-from rachis.core.archive.format.util import write_checksums
-
 
 class ArchiveFormat(v6.ArchiveFormat):
     """QIIME 2 Archive Format Version 7.0
@@ -167,16 +165,8 @@ class ArchiveFormat(v6.ArchiveFormat):
         # Write checksums last
         cls.write_checksums(archive_record)
 
-    @classmethod
-    def write_checksums(cls, archive_record):
-        write_checksums(
-            directory=str(archive_record.root),
-            checksum_file=cls.CHECKSUM_FILE,
-            checksum_type=cls.CHECKSUM_TYPE
-        )
-
-    def __init__(self, archive_record):
-        super().__init__(archive_record)
+    def __init__(self, archive_record, *args, replay=False):
+        super().__init__(archive_record, *args, replay=replay)
 
         self.annotations_dir = \
             archive_record.root / self.ANNOTATIONS_DIR

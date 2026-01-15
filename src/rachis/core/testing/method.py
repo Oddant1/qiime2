@@ -1,13 +1,17 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2025, QIIME 2 development team.
+# Copyright (c) 2016-2026, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
+
+import sys
+import random
 from typing import Union
 
 import rachis
+import rachis.core.type as qtype
 
 
 # Artifacts and parameters.
@@ -233,6 +237,31 @@ def varied_method(ints1: int, ints2: list, int1: int = None,
     assert isinstance(int1, int)
     assert isinstance(string, str)
     return ints1, ints2, int1
+
+
+def random_seed_method(random_seed: qtype.CaptureHolder = None) -> int:
+    if random_seed.value is None:
+        random_int = random.randrange(sys.maxsize)
+        random_seed.set_value(random_int)
+
+    return random_seed.value
+
+
+def random_seed_method_set_twice(
+        random_seed: qtype.CaptureHolder = None) -> int:
+    random_int = random.randrange(sys.maxsize)
+    random_seed.set_value(random_int)
+
+    random_int = random.randrange(sys.maxsize)
+    random_seed.set_value(random_int)
+
+    return random_seed.value
+
+
+def random_seed_method_never_set(
+        random_seed: qtype.CaptureHolder = None) -> int:
+    random_int = random.randrange(sys.maxsize)
+    return random_int
 
 
 def _underscore_method() -> int:

@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2025, QIIME 2 development team.
+# Copyright (c) 2016-2026, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -28,7 +28,7 @@ class ArchiveFormat(v0.ArchiveFormat):
         provenance_capture.finalize(
             prov_dir, [root / cls.METADATA_FILE, archive_record.version_fp])
 
-    def __init__(self, archive_record):
-        super().__init__(archive_record)
+    def __init__(self, archive_record, *args, replay=False):
+        super().__init__(archive_record, *args, replay=replay)
 
         self.provenance_dir = archive_record.root / self.PROVENANCE_DIR

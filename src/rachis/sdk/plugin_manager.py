@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2025, QIIME 2 development team.
+# Copyright (c) 2016-2026, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -134,7 +134,7 @@ class PluginManager:
                 '`package` or set `plugin.package`.')
         if plugin.project_name is None:
             raise ValueError(
-                'No value specified for project_name - must proved a value '
+                'No value specified for project_name - must provide a value '
                 'for `project_name` or set `plugin.project_name`.')
 
         self._integrate_plugin(plugin)

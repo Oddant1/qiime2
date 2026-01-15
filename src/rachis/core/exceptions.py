@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016-2025, QIIME 2 development team.
+# Copyright (c) 2016-2026, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -12,4 +12,12 @@ class ValidationError(Exception):
 
 
 class ImplementationError(Exception):
+    pass
+
+
+class RachisWarning(UserWarning):
+    """
+    A custom warning that will always be displayed in the CLI, whether or not
+    the --verbose flag is set.
+    """
     pass
