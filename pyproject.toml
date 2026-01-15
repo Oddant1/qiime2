@@ -78,8 +78,7 @@ file = "src/rachis/_version.py"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["src/*"]
+where = ["src"]
 
 [tool.setuptools.package-data]
 rachis = ["**/*"]
