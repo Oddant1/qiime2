@@ -48,4 +48,4 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       - uses: astral-sh/setup-uv@v7
-      - run: uv run nox -s "${{ matrix.session }}"
+      - run: TMPDIR=$RUNNER_TEMP uv run nox -s "${{ matrix.session }}"
