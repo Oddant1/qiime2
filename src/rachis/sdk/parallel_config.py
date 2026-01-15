@@ -40,7 +40,7 @@ VENDORED_CONFIG = {
             {'class': 'ThreadPoolExecutor', 'label': 'tpool',
                 'max_threads': max(psutil.cpu_count() - 1, 1)},
             {'class': 'HighThroughputExecutor', 'label': 'default',
-                'max_workers': max(psutil.cpu_count() - 1, 1),
+                'max_workers_per_node': max(psutil.cpu_count() - 1, 1),
                 'provider': {'class': 'LocalProvider'}}
             ]
         }

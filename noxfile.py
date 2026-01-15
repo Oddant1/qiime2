@@ -56,4 +56,4 @@ def test(session: nox.Session, resolution) -> None:
     Run the tests (can use `-t test-min` or `-t test-max` to filter)
     """
     setup_uv(session, resolution)
-    session.run("pytest", *session.posargs, env={"QIIMETEST": "1"})
+    session.run("pytest", *session.posargs, '-v', '--durations=0', env={"QIIMETEST": "1"})
