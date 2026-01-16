@@ -1,0 +1,32 @@
+name: "manual-profile"
+
+on:
+  workflow_dispatch:
+    inputs:
+      pytest-args:
+        description: "The pytest args"
+        required: true
+      runner:
+        description: 'The runner to use'
+        required: true
+      python:
+        description: 'The python version'
+        required: true
+
+jobs:
+  profile:
+    name: "Run Profiler"
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --extra=jupyter --resolution=highest --python=${{ inputs.python }}
+      - run: QIIMETEST= uv run --with pyinstrument pyinstrument -o session.json -r pyisession -m pytest -- ${{ inputs.pytest-args }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: session
+          path: session.json
+  
