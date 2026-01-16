@@ -28,6 +28,7 @@ create a cache structure on disk at that location. Any existing directory you
 attempt to use as a cache should have been created as a cache by QIIME 2.
 
 """
+import contextlib
 import re
 import os
 import stat
@@ -297,6 +298,42 @@ def lock_thread(flufl_lock, lifetime, is_done):
 tm = object
 
 
+@contextlib.contextmanager
+def _EVIL_FQDN():
+    """
+    This exists because on macOS 15+ LAN requests require permission to run.
+    `socket.getfqdn()` will find the fully-qualified domain name, but because
+    of .local tlds, a multicast dns request happens over LAN, which triggers
+    the permission request.
+
+    On Github runners, these requests go unanswered and timeout, resulting in
+    an answer equivalent to `platform.node`.
+
+    So. we can just disable this in the flufl.lock and instead presume that a
+    macOS user has a sufficiently unique name in the off-chance they are
+    interacting with an NFS/SMB share directly, which is not so common in the
+    first place.
+
+    Technically, Terminal applications are immune to this, but let's keep the
+    behavior the same.
+    """
+    import socket
+    import platform
+    backup = socket.getfqdn
+    if platform.system() == 'Darwin':
+        socket.getfqdn = platform.node
+    try:
+        yield
+    finally:
+        socket.getfqdn = backup
+
+
+class _FluflLock(flufl.lock.Lock):
+    def __init__(self, *args, **kwargs):
+        with _EVIL_FQDN():
+            super().__init__(*args, **kwargs)
+
+
 class MEGALock(tm):
     """We need to lock out other processes with flufl, but we also need to
     lock out other threads with a Python thread lock (because parsl
@@ -309,7 +346,7 @@ class MEGALock(tm):
         self.re_entries = 0
 
         self.thread_lock = threading.Lock()
-        self.flufl_lock = flufl.lock.Lock(flufl_fp, lifetime=lifetime)
+        self.flufl_lock = _FluflLock(flufl_fp, lifetime=lifetime)
 
     def __enter__(self):
         """We acquire the thread lock first because the flufl lock isn't
@@ -357,8 +394,7 @@ class MEGALock(tm):
         self.__dict__.update(state)
 
         self.thread_lock = threading.Lock()
-        self.flufl_lock = \
-            flufl.lock.Lock(self.flufl_fp, lifetime=self.lifetime)
+        self.flufl_lock = _FluflLock(self.flufl_fp, lifetime=self.lifetime)
 
 
 class Cache:
