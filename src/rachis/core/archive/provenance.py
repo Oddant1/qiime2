@@ -31,6 +31,9 @@ import rachis.core.util as util
 from rachis.core.cite import Citations
 
 
+IMPORTLIB_DISTRIBUTIONS_CACHE = None
+
+
 def _ts_to_date(ts):
     time_zone = timezone.utc
     try:
@@ -386,10 +389,13 @@ class ProvenanceCapture:
         return ForwardRef('environment:plugins:' + plugin.name)
 
     def capture_env(self):
-        return collections.OrderedDict(
-            (d.metadata["Name"], d.metadata["Version"]) for d in
-            importlib.metadata.distributions()
-        )
+        global IMPORTLIB_DISTRIBUTIONS_CACHE
+        if IMPORTLIB_DISTRIBUTIONS_CACHE is None:
+            IMPORTLIB_DISTRIBUTIONS_CACHE = collections.OrderedDict(
+                (d.metadata["Name"], d.metadata["Version"]) for d in
+                importlib.metadata.distributions()
+            )
+        return IMPORTLIB_DISTRIBUTIONS_CACHE
 
     def transformation_recorder(self, name):
         section = self.transformers[name] = []
