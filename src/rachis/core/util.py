@@ -142,7 +142,8 @@ def has_checksum_native(checksum_type):
 
 
 def checksum(filepath, checksum_type):
-    if os.environ.get('QIIMETEST') is None and has_checksum_native(checksum_type):
+    if os.environ.get('QIIMETEST') is None \
+            and has_checksum_native(checksum_type):
         return checksum_native(filepath, checksum_type)
     else:
         return checksum_python(filepath, checksum_type)
@@ -198,7 +199,8 @@ def checksum_zip(zf: zipfile.ZipFile, filepath: str,
 
 
 def checksum_directory(directory, checksum_type):
-    if os.environ.get('QIIMETEST') is None and has_checksum_native(checksum_type):
+    if os.environ.get('QIIMETEST') is None \
+            and has_checksum_native(checksum_type):
         checksum = checksum_native
     else:
         checksum = checksum_python
