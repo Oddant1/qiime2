@@ -6,12 +6,14 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import sys
 import random
+import sys
 from typing import Union
+import warnings
 
 import rachis
 import rachis.core.type as qtype
+from rachis.core.exceptions import RachisWarning
 
 
 # Artifacts and parameters.
@@ -265,4 +267,9 @@ def random_seed_method_never_set(
 
 
 def _underscore_method() -> int:
+    return 42
+
+
+def raises_rachis_warning() -> int:
+    warnings.warn('This is an important warning.', RachisWarning)
     return 42
