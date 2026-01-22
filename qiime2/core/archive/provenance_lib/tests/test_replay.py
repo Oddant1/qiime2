@@ -15,7 +15,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from qiime2 import Artifact
+from qiime2 import Artifact, Metadata
 from qiime2.sdk import PluginManager
 from qiime2.sdk.usage import Usage, UsageVariable
 from qiime2.plugins import ArtifactAPIUsageVariable
@@ -986,6 +986,10 @@ class ReplayResultCollectionTests(CustomAssertions):
     @classmethod
     def setUpClass(cls):
         cls.dp = PluginManager().plugins['dummy-plugin']
+        cls.de_facto_collection_pipeline = \
+            cls.dp.pipelines['de_facto_collection_pipeline']
+        cls.parameter_only_pipeline = \
+            cls.dp.pipelines['parameter_only_pipeline']
 
         cls.single_int = Artifact.import_data('SingleInt', 0)
         cls.dict_of_ints = cls.dp.methods['dict_of_ints']
@@ -1155,6 +1159,38 @@ output_1_artifact_collection, = dummy_plugin_actions.dict_of_ints(
 '''
         self.assertIn(exp, rendered)
         self.assertREAppearsOnlyOnce(rendered, r'ResultCollection\(')
+
+    def test_using_rc_member_as_metadata(self):
+        rc, = self.de_facto_collection_pipeline()
+        ints1, _ = self.parameter_only_pipeline(
+            42, metadata=rc['0'].view(Metadata)
+        )
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            in_fp = pathlib.Path(tempdir) / 'int1s.qza'
+            ints1.save(in_fp)
+            dag = ProvDAG(in_fp)
+
+            out_fp = pathlib.Path(tempdir) / 'rendered.txt'
+            out_fn = str(out_fp)
+            replay_provenance(
+                ReplayPythonUsage, dag, out_fn, dump_recorded_metadata=False
+            )
+
+            with open(out_fp) as fh:
+                rendered = fh.read()
+
+        exp = '''
+metadata_1 = output_0_artifact_collection['0']
+metadata_1_a_0_md = metadata_1.view(Metadata)
+foo_0, _ = dummy_plugin_actions.parameter_only_pipeline(
+    int1=42,
+    int2=2,
+    metadata=metadata_1_a_0_md,
+    other=False,
+)
+'''
+        self.assertIn(exp, rendered)
 
 
 class BuildActionUsageTests(CustomAssertions):
