@@ -642,7 +642,7 @@ class InitializerTests(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, "not.*used.*input_artifact_uuids.*empty"
         ):
-            init_md_from_artifacts(md_info, ns, cfg)
+            init_md_from_artifacts('param', md_info, ns, cfg)
 
     def test_init_md_from_artifacts_one_art(self):
         # This helper doesn't capture real data, so we're only smoke testing,
@@ -658,7 +658,7 @@ class InitializerTests(unittest.TestCase):
 
         # create dummy hash '0', not relevant here
         md_info = MetadataInfo(['uuid1'], 'hmm.tsv', '0')
-        var = init_md_from_artifacts(md_info, ns, cfg)
+        var = init_md_from_artifacts('param', md_info, ns, cfg)
         self.assertIsInstance(var, UsageVariable)
         self.assertEqual(var.var_type, 'metadata')
         rendered = var.use.render()
@@ -687,7 +687,7 @@ class InitializerTests(unittest.TestCase):
 
         # create dummy hash '0', not relevant here
         md_info = MetadataInfo(['uuid1', 'uuid2', 'uuid3'], 'hmm.tsv', '0')
-        var = init_md_from_artifacts(md_info, ns, cfg)
+        var = init_md_from_artifacts('param', md_info, ns, cfg)
         self.assertIsInstance(var, UsageVariable)
         self.assertEqual(var.var_type, 'metadata')
         rendered = var.use.render()
