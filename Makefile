@@ -11,12 +11,11 @@ lint:
 test: all
 	uv run nox -t test-max
 
-# for parallel, pip install pytest-xdist
 mystery-stew: all
-	MYSTERY_STEW= pytest rachis/tests/mystery_stew.py -n auto
+	uv run nox -s test_mystery_stew
 
 install: all
-	$(PYTHON) -m pip install -v .
+	$(PYTHON) -m pip install --no-deps -v .
 
 dev: all
 	pip install -e .

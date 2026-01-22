@@ -57,3 +57,19 @@ def test(session: nox.Session, resolution) -> None:
     """
     setup_uv(session, resolution)
     session.run("pytest", *session.posargs, '-v', env={"QIIMETEST": "1"})
+
+@nox.session(venv_backend="uv", tags=["pr"])
+def test_mystery_stew(session: nox.Session) -> None:
+    """
+    Run mystery-stew tests for the artifact API
+    """
+    setup_uv(session)
+
+    session.run("uv", 'run', '-n',
+                "--with=git+https://github.com/qiime2/q2-mystery-stew",
+                "--with=git+https://github.com/qiime2/q2",
+                "--with=pytest-xdist",
+                "pytest",
+                "-n=auto",
+                "src/rachis/tests/mystery_stew.py",
+                env={"MYSTERY_STEW": "1", "QIIMETEST": "1"})

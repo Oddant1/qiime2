@@ -61,6 +61,9 @@ class ArtifactAPIUsageVariable(usage.UsageVariable):
         name = self.to_interface_name()
         expr = expression
 
+        if key is not None:
+            key = str(key)
+
         if key:
             name = "%r[%r]" % (name, key)
 
@@ -81,6 +84,9 @@ class ArtifactAPIUsageVariable(usage.UsageVariable):
             return
 
         name = self.to_interface_name()
+
+        if key is not None:
+            key = str(key)
 
         if key:
             name = "%r[%r]" % (name, key)
