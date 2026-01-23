@@ -50,10 +50,12 @@ class PluginManager:
             else:
                 if entry_point.name not in ('dummy-plugin', 'other-plugin'):
                     yield entry_point
+
         # backwards compatibility
-        for entry_point in importlib.metadata.entry_points(
-                group='qiime2.plugins'):
-            yield entry_point
+        if 'QIIMETEST' not in os.environ:
+            for entry_point in importlib.metadata.entry_points(
+                    group='qiime2.plugins'):
+                yield entry_point
 
     @classmethod
     def reuse_existing(cls):
