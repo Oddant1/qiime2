@@ -1,0 +1,275 @@
+# ----------------------------------------------------------------------------
+# Copyright (c) 2016-2026, QIIME 2 development team.
+#
+# Distributed under the terms of the Modified BSD License.
+#
+# The full license is in the file LICENSE, distributed with this software.
+# ----------------------------------------------------------------------------
+
+import random
+import sys
+from typing import Union
+import warnings
+
+import rachis
+import rachis.core.type as qtype
+from rachis.core.exceptions import RachisWarning
+
+
+# Artifacts and parameters.
+def concatenate_ints(ints1: list, ints2: list, ints3: list, int1: int,
+                     int2: int) -> list:
+    return ints1 + ints2 + ints3 + [int1] + [int2]
+
+
+# Multiple output artifacts.
+def split_ints(ints: list) -> (list, list):
+    middle = int(len(ints) / 2)
+    left = ints[:middle]
+    right = ints[middle:]
+    return left, right
+
+
+# No parameters, only artifacts.
+def merge_mappings(mapping1: dict, mapping2: dict) -> dict:
+    merged = mapping1.copy()
+    for key, value in mapping2.items():
+        if key in merged and merged[key] != value:
+            raise ValueError(
+                "Key %r exists in `mapping1` and `mapping2` with conflicting "
+                "values: %r != %r" % (key, merged[key], value))
+        merged[key] = value
+    return merged
+
+
+# No input artifacts, only parameters.
+def params_only_method(name: str, age: int) -> dict:
+    return {name: age}
+
+
+# Unioned primitives
+def unioned_primitives(foo: int, bar: str = 'auto_bar') -> dict:
+    return {'foo': foo, 'bar': bar}
+
+
+# No input artifacts or parameters.
+def no_input_method() -> dict:
+    return {'foo': 42}
+
+
+def deprecated_method() -> dict:
+    return {'foo': 43}
+
+
+def migrated_method_all_optional_keys() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_no_optional_keys() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_from_distro() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_to_distro() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_epoch() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_from_distro_to_distro() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_from_distro_epoch() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_to_distro_epoch() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_true_no_dict() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_missing_required_key() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_invalid_key() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_empty_key_value() -> dict:
+    return {'ziggy': 42}
+
+
+def migrated_method_not_a_dict() -> dict:
+    return {'ziggy': 42}
+
+
+def long_description_method(mapping1: dict, name: str, age: int) -> dict:
+    return {name: age}
+
+
+def docstring_order_method(req_input: dict, req_param: str,
+                           opt_input: dict = None,
+                           opt_param: int = None) -> dict:
+    return {req_param: opt_param}
+
+
+def identity_with_metadata(ints: list, metadata: rachis.Metadata) -> list:
+    assert isinstance(metadata, rachis.Metadata)
+    return ints
+
+
+# TODO unit tests (test_method.py) for 3 variations of MetadataColumn methods
+# below
+def identity_with_metadata_column(ints: list,
+                                  metadata: rachis.MetadataColumn) -> list:
+    assert isinstance(metadata, (rachis.CategoricalMetadataColumn,
+                                 rachis.NumericMetadataColumn))
+    return ints
+
+
+def identity_with_categorical_metadata_column(
+        ints: list, metadata: rachis.CategoricalMetadataColumn) -> list:
+    assert isinstance(metadata, rachis.CategoricalMetadataColumn)
+    return ints
+
+
+def identity_with_numeric_metadata_column(
+        ints: list, metadata: rachis.NumericMetadataColumn) -> list:
+    assert isinstance(metadata, rachis.NumericMetadataColumn)
+    return ints
+
+
+def identity_with_optional_metadata(ints: list,
+                                    metadata: rachis.Metadata = None) -> list:
+    assert isinstance(metadata, (rachis.Metadata, type(None)))
+    return ints
+
+
+def identity_with_optional_metadata_column(
+        ints: list, metadata: rachis.MetadataColumn = None) -> list:
+    assert isinstance(metadata, (rachis.CategoricalMetadataColumn,
+                                 rachis.NumericMetadataColumn,
+                                 type(None)))
+    return ints
+
+
+def optional_artifacts_method(ints: list, num1: int, optional1: list = None,
+                              optional2: list = None,
+                              num2: int = None) -> list:
+    result = ints + [num1]
+    if optional1 is not None:
+        result += optional1
+    if optional2 is not None:
+        result += optional2
+    if num2 is not None:
+        result += [num2]
+    return result
+
+
+def variadic_input_method(ints: list, int_set: int, nums: int,
+                          opt_nums: int = None) -> list:
+    results = []
+
+    for int_list in ints:
+        results += int_list
+    results += sorted(int_set)
+    results += nums
+    if opt_nums:
+        results += opt_nums
+
+    return results
+
+
+def type_match_list_and_set(ints: list, strs1: list, strs2: set) -> list:
+    return [0]
+
+
+def union_inputs(ints1: Union[dict, list], ints2: list) -> list:
+    return [0]
+
+
+def list_of_ints(ints: int) -> int:
+    assert isinstance(ints, list)
+    return ints
+
+
+def dict_of_ints(ints: int) -> int:
+    assert isinstance(ints, rachis.sdk.result.ResultCollection)
+    return ints
+
+
+def returns_int(int: int) -> int:
+    return int
+
+
+def collection_inner_union(ints: list) -> list:
+    return [[0]]
+
+
+def collection_outer_union(ints: list) -> list:
+    return [[0]]
+
+
+def dict_params(ints: dict) -> int:
+    assert isinstance(ints, dict)
+    return ints
+
+
+def list_params(ints: list) -> int:
+    assert isinstance(ints, list)
+    return ints
+
+
+def varied_method(ints1: int, ints2: list, int1: int = None,
+                  string: str = "NO") -> (int, list, int):
+    if int1 is None:
+        int1 = 1
+    assert isinstance(ints1, list)
+    assert isinstance(ints2, rachis.sdk.result.ResultCollection)
+    assert isinstance(int1, int)
+    assert isinstance(string, str)
+    return ints1, ints2, int1
+
+
+def random_seed_method(random_seed: qtype.CaptureHolder = None) -> int:
+    if random_seed.value is None:
+        random_int = random.randrange(sys.maxsize)
+        random_seed.set_value(random_int)
+
+    return random_seed.value
+
+
+def random_seed_method_set_twice(
+        random_seed: qtype.CaptureHolder = None) -> int:
+    random_int = random.randrange(sys.maxsize)
+    random_seed.set_value(random_int)
+
+    random_int = random.randrange(sys.maxsize)
+    random_seed.set_value(random_int)
+
+    return random_seed.value
+
+
+def random_seed_method_never_set(
+        random_seed: qtype.CaptureHolder = None) -> int:
+    random_int = random.randrange(sys.maxsize)
+    return random_int
+
+
+def _underscore_method() -> int:
+    return 42
+
+
+def raises_rachis_warning() -> int:
+    warnings.warn('This is an important warning.', RachisWarning)
+    return 42

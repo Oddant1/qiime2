@@ -1,0 +1,541 @@
+# ----------------------------------------------------------------------------
+# Copyright (c) 2016-2026, QIIME 2 development team.
+#
+# Distributed under the terms of the Modified BSD License.
+#
+# The full license is in the file LICENSE, distributed with this software.
+# ----------------------------------------------------------------------------
+
+import hashlib
+import shutil
+import unittest
+import tempfile
+import pathlib
+import collections
+import datetime
+import os
+import dateutil.relativedelta as relativedelta
+
+import rachis.core.util as util
+from rachis.core.testing.type import Foo, Bar, Baz
+
+
+class TestFindDuplicates(unittest.TestCase):
+    # NOTE: wrapping each input in `iter()` because that is the interface
+    # expected by `find_duplicates`, and avoids the need to test other iterable
+    # types, e.g. list, tuples, generators, etc.
+
+    def test_empty_iterable(self):
+        obs = util.find_duplicates(iter([]))
+
+        self.assertEqual(obs, set())
+
+    def test_single_value(self):
+        obs = util.find_duplicates(iter(['foo']))
+
+        self.assertEqual(obs, set())
+
+    def test_multiple_values_no_duplicates(self):
+        obs = util.find_duplicates(iter(['foo', 'bar']))
+
+        self.assertEqual(obs, set())
+
+    def test_one_duplicate(self):
+        obs = util.find_duplicates(iter(['foo', 'bar', 'foo']))
+
+        self.assertEqual(obs, {'foo'})
+
+    def test_multiple_duplicates(self):
+        obs = util.find_duplicates(
+                iter(['foo', 'bar', 'foo', 'baz', 'foo', 'bar']))
+
+        self.assertEqual(obs, {'foo', 'bar'})
+
+    def test_all_duplicates(self):
+        obs = util.find_duplicates(
+                iter(['foo', 'bar', 'baz', 'baz', 'bar', 'foo']))
+
+        self.assertEqual(obs, {'foo', 'bar', 'baz'})
+
+    def test_different_hashables(self):
+        iterable = iter(['foo', 42, -9.999, 'baz', ('a', 'b'), 42, 'foo',
+                         ('a', 'b', 'c'), ('a', 'b')])
+        obs = util.find_duplicates(iterable)
+
+        self.assertEqual(obs, {'foo', 42, ('a', 'b')})
+
+
+class TestDurationTime(unittest.TestCase):
+
+    def test_time_travel(self):
+        start = datetime.datetime(1987, 10, 27, 1, 21, 2, 50)
+        end = datetime.datetime(1985, 10, 26, 1, 21, 0, 0)
+        reldelta = relativedelta.relativedelta(end, start)
+
+        self.assertEqual(
+            util.duration_time(reldelta),
+            '-2 years, -1 days, -3 seconds, and 999950 microseconds')
+
+    def test_no_duration(self):
+        time = datetime.datetime(1985, 10, 26, 1, 21, 0)
+        reldelta = relativedelta.relativedelta(time, time)
+
+        self.assertEqual(util.duration_time(reldelta),
+                         '0 microseconds')
+
+    def test_singular(self):
+        start = datetime.datetime(1985, 10, 26, 1, 21, 0, 0)
+        end = datetime.datetime(1986, 11, 27, 2, 22, 1, 1)
+        reldelta = relativedelta.relativedelta(end, start)
+
+        self.assertEqual(
+            util.duration_time(reldelta),
+            '1 year, 1 month, 1 day, 1 hour, 1 minute, 1 second,'
+            ' and 1 microsecond')
+
+    def test_plural(self):
+        start = datetime.datetime(1985, 10, 26, 1, 21, 0, 0)
+        end = datetime.datetime(1987, 12, 28, 3, 23, 2, 2)
+        reldelta = relativedelta.relativedelta(end, start)
+
+        self.assertEqual(
+            util.duration_time(reldelta),
+            '2 years, 2 months, 2 days, 2 hours, 2 minutes, 2 seconds,'
+            ' and 2 microseconds')
+
+    def test_missing(self):
+        start = datetime.datetime(1985, 10, 26, 1, 21, 0, 0)
+        end = datetime.datetime(1987, 10, 27, 1, 21, 2, 50)
+        reldelta = relativedelta.relativedelta(end, start)
+
+        self.assertEqual(
+            util.duration_time(reldelta),
+            '2 years, 1 day, 2 seconds, and 50 microseconds')
+
+    def test_unusually_round_number(self):
+        start = datetime.datetime(1985, 10, 26, 1, 21, 0, 0)
+        end = datetime.datetime(1985, 10, 27, 1, 21, 0, 0)
+        reldelta = relativedelta.relativedelta(end, start)
+
+        self.assertEqual(
+            util.duration_time(reldelta), '1 day')
+
+    def test_microseconds(self):
+        start = datetime.datetime(1985, 10, 26, 1, 21, 0, 0)
+        end = datetime.datetime(1985, 10, 26, 1, 21, 0, 1955)
+        reldelta = relativedelta.relativedelta(end, start)
+
+        self.assertEqual(
+            util.duration_time(reldelta), '1955 microseconds')
+
+
+class ChecksumTestMixin:
+    """Mixin for checksum testing to handle any hash algorithm"""
+    checksum_type = None
+    hashfunc = None
+
+    def setUp(self):
+        self.test_dir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
+        self.test_path = pathlib.Path(self.test_dir.name)
+
+    def tearDown(self):
+        self.test_dir.cleanup()
+
+    def make_file(self, data: bytes, relpath: str = "file"):
+        path = self.test_path / relpath
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        return path
+
+    def test_empty_file(self):
+        data = b''
+        path = self.make_file(data)
+        expected = self.hashfunc(data).hexdigest()
+        self.assertEqual(util.checksum(path, self.checksum_type), expected)
+
+    def test_single_byte_file(self):
+        data = b'a'
+        path = self.make_file(data)
+        expected = self.hashfunc(data).hexdigest()
+        self.assertEqual(util.checksum(path, self.checksum_type), expected)
+
+    def test_large_file(self):
+        data = b'verybigfile' * (1024 * 50)
+        path = self.make_file(data)
+        expected = self.hashfunc(data).hexdigest()
+        self.assertEqual(util.checksum(path, self.checksum_type), expected)
+
+    def test_can_use_string(self):
+        data = b'Normal text\nand things\n'
+        path = self.make_file(data)
+        expected = self.hashfunc(data).hexdigest()
+        self.assertEqual(util.checksum(str(path), self.checksum_type),
+                         expected)
+
+
+class TestMD5Sum(ChecksumTestMixin, unittest.TestCase):
+    checksum_type = 'md5'
+    hashfunc = hashlib.md5
+
+
+class TestSHA512Sum(ChecksumTestMixin, unittest.TestCase):
+    checksum_type = 'sha512'
+    hashfunc = hashlib.sha512
+
+
+class ChecksumDirectoryMixin:
+    """Mixin for testing checksum_directory against any hash algorithm."""
+    checksum_type = None
+    hashfunc = None
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory(prefix='rachis-test-temp-')
+        self.test_path = pathlib.Path(self.tempdir.name)
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def make_file(self, data: bytes, relpath: str):
+        p = self.test_path / relpath
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(data)
+        return p.relative_to(self.test_path)
+
+    def test_empty_directory(self):
+        self.assertEqual(
+            util.checksum_directory(self.test_path, self.checksum_type),
+            collections.OrderedDict()
+        )
+
+    def test_nested_empty_directories(self):
+        (self.test_path / 'foo').mkdir()
+        (self.test_path / 'foo' / 'bar').mkdir()
+        (self.test_path / 'baz').mkdir()
+        self.assertEqual(
+            util.checksum_directory(self.test_path, self.checksum_type),
+            collections.OrderedDict()
+        )
+
+    def test_single_file(self):
+        rel = self.make_file(b'Normal text\nand things\n', 'foobarbaz.txt')
+        full = self.test_path / rel
+        expected = self.hashfunc(full.read_bytes()).hexdigest()
+        self.assertEqual(
+            util.checksum_directory(self.test_path, self.checksum_type),
+            collections.OrderedDict([(str(rel), expected)])
+        )
+
+    def test_single_file_checksum_python(self):
+        with tempfile.TemporaryDirectory() as td:
+            fp = pathlib.Path(td) / 'test.txt'
+            fp.write_text('contents\n')
+            expected = self.hashfunc(fp.read_bytes()).hexdigest()
+            obs = util.checksum_python(fp, self.checksum_type)
+            self.assertEqual(expected, obs)
+
+    def test_single_file_checksum_native(self):
+        tool = f'{self.checksum_type}sum'
+        if shutil.which(tool) is None:
+            self.skipTest(f"'{tool}' executable is required")
+        with tempfile.TemporaryDirectory() as td:
+            fp = pathlib.Path(td) / 'test.txt'
+            fp.write_text('contents\n')
+            expected = self.hashfunc(fp.read_bytes()).hexdigest()
+            obs = util.checksum_native(fp, self.checksum_type)
+            self.assertEqual(expected, obs)
+
+    def test_single_file_nested(self):
+        (self.test_path / 'bar').mkdir()
+        rel = (self.test_path / 'bar' / 'foo.baz').relative_to(self.test_path)
+        self.make_file(b'anything at all', rel)
+        expected = \
+            self.hashfunc((self.test_path / rel).read_bytes()).hexdigest()
+        self.assertEqual(
+            util.checksum_directory(self.test_path, self.checksum_type),
+            collections.OrderedDict([(str(rel), expected)])
+        )
+
+    def test_sorted_decent(self):
+        # beta files
+        beta = self.test_path / 'beta'
+        beta.mkdir()
+        for name in ['10', '1', '2']:
+            self.make_file(name.encode(), f'beta/{name}')
+        # alpha files
+        alpha = self.test_path / 'alpha'
+        alpha.mkdir()
+        for name in ['foo', 'bar']:
+            self.make_file(name.encode(), f'alpha/{name}')
+        # top‑level
+        self.make_file(b'z', 'z')
+
+        exp = [
+            ('z', self.hashfunc(b'z').hexdigest()),
+            ('alpha/bar', self.hashfunc(b'bar').hexdigest()),
+            ('alpha/foo', self.hashfunc(b'foo').hexdigest()),
+            ('beta/1', self.hashfunc(b'1').hexdigest()),
+            ('beta/10', self.hashfunc(b'10').hexdigest()),
+            ('beta/2',  self.hashfunc(b'2').hexdigest()),
+        ]
+        self.assertEqual(
+            list(util.checksum_directory(self.test_path,
+                                         self.checksum_type).items()),
+            exp
+        )
+
+    def test_can_use_string(self):
+        (self.test_path / 'bar').mkdir()
+        rel = (self.test_path / 'bar' / 'foo.baz').relative_to(self.test_path)
+        self.make_file(b'anything at all', rel)
+        expected = \
+            self.hashfunc((self.test_path / rel).read_bytes()).hexdigest()
+        self.assertEqual(
+            util.checksum_directory(str(self.test_path), self.checksum_type),
+            collections.OrderedDict([(str(rel), expected)])
+        )
+
+
+class TestMD5SumDirectory(ChecksumDirectoryMixin, unittest.TestCase):
+    checksum_type = 'md5'
+    hashfunc = hashlib.md5
+
+
+class TestSHA512SumDirectory(ChecksumDirectoryMixin, unittest.TestCase):
+    checksum_type = 'sha512'
+    hashfunc = hashlib.sha512
+
+
+class TestChecksumFormat(unittest.TestCase):
+    def test_to_simple(self):
+        line = util.to_checksum_format('this/is/a/filepath',
+                                       'd9724aeba59d8cea5265f698b2c19684')
+        self.assertEqual(
+            line, 'd9724aeba59d8cea5265f698b2c19684  this/is/a/filepath')
+
+    def test_from_simple(self):
+        fp, chks = util.from_checksum_format(
+            'd9724aeba59d8cea5265f698b2c19684  this/is/a/filepath')
+
+        self.assertEqual(fp, 'this/is/a/filepath')
+        self.assertEqual(chks, 'd9724aeba59d8cea5265f698b2c19684')
+
+    def test_to_hard(self):
+        # two kinds of backslash n to trip up the escaping:
+        line = util.to_checksum_format('filepath/\n/with/\\newline',
+                                       '939aaaae6098ebdab049b0f3abe7b68c')
+
+        # Note raw string
+        self.assertEqual(
+            line,
+            r'\939aaaae6098ebdab049b0f3abe7b68c  filepath/\n/with/\\newline')
+
+    def test_from_hard(self):
+        fp, chks = util.from_checksum_format(
+            r'\939aaaae6098ebdab049b0f3abe7b68c  filepath/\n/with/\\newline'
+            + '\n')  # newline from a checksum "file"
+
+        self.assertEqual(fp, 'filepath/\n/with/\\newline')
+        self.assertEqual(chks, '939aaaae6098ebdab049b0f3abe7b68c')
+
+    def test_filepath_with_leading_backslash(self):
+        line = r'\d41d8cd98f00b204e9800998ecf8427e  \\.qza'
+        fp, chks = util.from_checksum_format(line)
+
+        self.assertEqual(chks, 'd41d8cd98f00b204e9800998ecf8427e')
+        self.assertEqual(fp, r'\.qza')
+
+    def test_filepath_with_leading_backslashes(self):
+        line = r'\d41d8cd98f00b204e9800998ecf8427e  \\\\\\.qza'
+        fp, chks = util.from_checksum_format(line)
+
+        self.assertEqual(fp, r'\\\.qza')
+        self.assertEqual(chks, 'd41d8cd98f00b204e9800998ecf8427e')
+
+    def test_impossible_backslash(self):
+        # It may be impossible to generate a single '\' in the md5sum digest,
+        # because each '\' is escaped (as '\\') in the digest. We'll
+        # test for it anyway, for full coverage.
+
+        fp, _ = util.from_checksum_format(
+            r'fake_checksum  \.qza'
+        )
+
+        fp2, _ = util.from_checksum_format(
+            r'\fake_checksum  \.qza'
+        )
+
+        self.assertEqual(fp, r'\.qza')
+        self.assertEqual(fp2, r'\.qza')
+
+    def test_from_legacy_format(self):
+        fp, chks = util.from_checksum_format(
+            r'0ed29022ace300b4d96847882daaf0ef *this/means/binary/mode')
+
+        self.assertEqual(fp, 'this/means/binary/mode')
+        self.assertEqual(chks, '0ed29022ace300b4d96847882daaf0ef')
+
+    def check_roundtrip(self, filepath, checksum):
+        line = util.to_checksum_format(filepath, checksum)
+        new_fp, new_chks = util.from_checksum_format(line)
+
+        self.assertEqual(new_fp, filepath)
+        self.assertEqual(new_chks, checksum)
+
+    def test_nonsense(self):
+        self.check_roundtrip(
+            r'^~gpfh)bU)WvN/;3jR6H-*={iEBM`(flY2>_|5mp8{-h>Ou\{{ImLT>h;XuC,.#',
+            '89241859050e5a43ccb5f7aa0bca7a3a')
+
+        self.check_roundtrip(
+            r"l5AAPGKLP5Mcv0b`@zDR\XTTnF;[2M>O/>,d-^Nti'vpH\{>q)/4&CuU/xQ}z,O",
+            'c47d43cadb60faf30d9405a3e2592b26')
+
+        self.check_roundtrip(
+            r'FZ\rywG:7Q%"J@}Rk>\&zbWdS0nhEl_k1y1cMU#Lk_"*#*/uGi>Evl7M1suNNVE',
+            '9c7753f252116473994e8bffba2c620b')
+
+
+class TestSortedPoset(unittest.TestCase):
+    def test_already_sorted_incomparable(self):
+        a = [Foo, Bar, Baz]
+
+        r = util.sorted_poset(a)
+
+        # Incomparable elements, so as long as they
+        # are present, any order is valid.
+        self.assertEqual(len(r), 3)
+        self.assertIn(Foo, r)
+        self.assertIn(Bar, r)
+        self.assertIn(Baz, r)
+
+    def test_already_sorted_all_comparable(self):
+        a = [Foo, Foo | Bar, Foo | Bar | Baz]
+
+        r = util.sorted_poset(a)
+
+        self.assertEqual(a, r)
+
+    def test_already_sorted_all_comparable_reverse(self):
+        a = [Foo, Foo | Bar, Foo | Bar | Baz]
+
+        r = util.sorted_poset(a, reverse=True)
+
+        self.assertEqual(list(reversed(a)), r)
+
+    def test_mixed_elements(self):
+        a = [Foo | Bar, Foo | Baz, Foo]
+
+        r = util.sorted_poset(a)
+
+        self.assertEqual(r[0], Foo)
+        # Order of others won't matter
+
+    def test_mxed_elements_diamond(self):
+        a = [Foo | Bar, Foo, Bar | Baz | Foo, Baz | Foo]
+
+        r = util.sorted_poset(a)
+
+        self.assertEqual(r[0], Foo)
+        self.assertEqual(r[-1], Bar | Baz | Foo)
+
+    def test_multiple_minimums(self):
+        a = [Foo | Bar, Foo, Bar | Baz | Foo, Bar, Baz]
+
+        r = util.sorted_poset(a)
+
+        idx_foo = r.index(Foo)
+        idx_bar = r.index(Bar)
+        idx_foobar = r.index(Foo | Bar)
+
+        self.assertLess(idx_foo, idx_foobar)
+        self.assertLess(idx_bar, idx_foobar)
+        self.assertEqual(r[-1], Bar | Baz | Foo)
+
+    def test_multiple_equivalents(self):
+        a = [Baz, Foo | Bar, Foo, Bar | Foo, Bar]
+
+        r = util.sorted_poset(a)
+
+        idx_foo = r.index(Foo)
+        idx_bar = r.index(Bar)
+        idx_barfoo = r.index(Bar | Foo)
+        idx_foobar = r.index(Foo | Bar)
+
+        adjacent = -1 <= idx_barfoo - idx_foobar <= 1
+        self.assertTrue(adjacent)
+        self.assertLess(idx_foo, idx_barfoo)
+        self.assertLess(idx_foo, idx_foobar)
+        self.assertLess(idx_bar, idx_barfoo)
+        self.assertLess(idx_bar, idx_foobar)
+
+
+class TestReplaceBytesInFile(unittest.TestCase):
+    def _run_test(self, content, old_bytes, new_bytes, expected,
+                  buffer_size=None):
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(content)
+            temp_file_path = temp_file.name
+
+        try:
+            util.replace_bytes_in_file(temp_file_path, old_bytes, new_bytes,
+                                       buffer_size=buffer_size)
+
+            with open(temp_file_path, 'rb') as f:
+                self.assertEqual(f.read(), expected)
+        finally:
+            os.remove(temp_file_path)
+
+    def test_basic_replacement(self):
+        self._run_test(b"Hello World", b"Hello", b"Hi", b"Hi World")
+
+    def test_simple_overlapping_pattern(self):
+        self._run_test(b"ababab", b"abab", b"ABAB", b"ABABab")
+
+    def test_cross_boundary_replacement(self):
+        content = b"abc" * 1000
+        expected = b"ABCABC" * 500
+        self._run_test(content, b"abcabc", b"ABCABC", expected, buffer_size=16)
+
+    def test_empty_file(self):
+        self._run_test(b"", b"Hello", b"Hi", b"")
+
+    def test_single_char_replacement(self):
+        self._run_test(b"aaaa", b"a", b"b", b"bbbb")
+
+    def test_different_length_replacement(self):
+        self._run_test(
+            b"Hello World", b"Hello", b"Greetings", b"Greetings World")
+
+
+class TestReplaceBytesInDirectory(unittest.TestCase):
+    def test_basic_replacement(self):
+        # Test basic replacement
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create test files
+            test_file1 = os.path.join(temp_dir, "test1.txt")
+            test_file2 = os.path.join(temp_dir, "test2.txt")
+            # Different extension
+            test_file3 = os.path.join(temp_dir, "test3.dat")
+
+            with open(test_file1, 'wb') as f:
+                f.write(b"Hello World")
+            with open(test_file2, 'wb') as f:
+                f.write(b"Hello World Hello")
+            with open(test_file3, 'wb') as f:
+                f.write(b"Hello World")
+
+            # Test basic replacement
+            util.replace_bytes_in_directory(
+                temp_dir,
+                b"Hello",
+                b"Hi",
+                {'.txt'}
+            )
+
+            # Check results
+            with open(test_file1, 'rb') as f:
+                self.assertEqual(f.read(), b"Hi World")
+            with open(test_file2, 'rb') as f:
+                self.assertEqual(f.read(), b"Hi World Hi")
+            with open(test_file3, 'rb') as f:
+                self.assertEqual(f.read(), b"Hello World")  # Shouldn't change

@@ -1,0 +1,73 @@
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# dependencies = ["nox>=2025.11.12"]
+# ///
+
+import nox
+
+# Tags:
+#   test-min  - for local testing of min deps
+#   test-max  - for local testing of max deps
+#   pr        - for pull-requests
+#   pr-matrix - for pull-requests, will us OS matrix
+
+
+# [*((python-version, uv-resolution), [*tags])]
+MATRIX = [
+    (("3.10", "lowest-direct"), ["test-min", "pr-matrix"]),
+    (("3.10", "highest"), []),
+    (("3.11", "highest"), ["test-max", "pr-matrix"]),
+]
+
+
+def setup_uv(session: nox.Session, resolution="highest") -> None:
+    """
+    IMPORTANT: make sure to set `venv_backend="uv"` on @nox.session().
+    """
+    session.run_install(
+        "uv",
+        "sync",
+        "--extra=jupyter",
+        f"--resolution={resolution}",
+        f"--python={session.virtualenv.location}",
+        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
+    )
+
+
+@nox.session(venv_backend="uv", tags=["pr"])
+def lint(session: nox.Session) -> None:
+    """
+    Run the linters
+    """
+    setup_uv(session)
+    session.run("ruff", "check", *session.posargs)
+
+
+@nox.session(venv_backend="uv")
+@nox.parametrize(
+    "python,resolution",
+    [x[0] for x in MATRIX],
+    ids=['py' + ':'.join(x[0]) for x in MATRIX],
+    tags=[x[1] for x in MATRIX],
+)
+def test(session: nox.Session, resolution) -> None:
+    """
+    Run the tests (can use `-t test-min` or `-t test-max` to filter)
+    """
+    setup_uv(session, resolution)
+    session.run("pytest", *session.posargs, '-v', env={"QIIMETEST": "1"})
+
+@nox.session(venv_backend="uv", tags=["pr"])
+def test_mystery_stew(session: nox.Session) -> None:
+    """
+    Run mystery-stew tests for the artifact API
+    """
+    setup_uv(session)
+
+    session.run("uv", 'run', '-n',
+                "--with=git+https://github.com/qiime2/q2-mystery-stew",
+                "--with=git+https://github.com/qiime2/q2",
+                "pytest",
+                "src/rachis/tests/mystery_stew.py",
+                env={"MYSTERY_STEW": "1", "QIIMETEST": "1"})

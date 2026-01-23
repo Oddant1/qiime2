@@ -1,23 +1,54 @@
 [project]
-name = "qiime2"
+name = "rachis"
 authors = [
-    { name = "None", email = "developers@qiime2.org" }
+    { name = "Rachis Developers", email = "developers@qiime2.org" }
 ]
 description = "None"
 readme = {file = "README.md", content-type = "text/markdown"}
-license = {file = "LICENSE"}
+license-files = ["LICENSE"]
 dynamic = ["version"]
+requires-python=">=3.10,<3.12"
+dependencies = [
+    "appdirs>=1.4.4,<2.0.0",
+    "bibtexparser>=1.4.3,<2.0.0",
+    "decorator~=4.4.2",
+    "dill>=0.4.0,<0.5.0",
+    "flufl-lock>=9.0.0,<10.0.0",
+    "networkx>=3.1,<4.0.0",
+    "numpy>=1.26,<3.0.0",
+    "pandas>=2.2,<3.0.0",
+    "parsl>=2026.0",
+    "psutil>=7.1.3,<8.0.0",
+    "python-dateutil>=2.9.0.post0,<3.0.0",
+    "pyyaml>=6.0.3,<7.0.0",
+    "setuptools>=80.9.0,<81.0.0",
+    "tomlkit>=0.13.3,<0.14.0",
+    "tzlocal>=5.3.1,<6.0.0",
+    "lxml>=6.0.2,<7.0.0",
+]
 
 [project.urls]
 Homepage = "https://qiime2.org"
 Repository = "https://github.com/qiime2/qiime2"
 
-[project.entry-points.'qiime2.plugins']
-"dummy-plugin" = "qiime2.core.testing.plugin:dummy_plugin"
-"other-plugin" = "qiime2.core.testing.plugin:other_plugin"
+[project.entry-points.'rachis.plugins']
+"dummy-plugin" = "rachis.core.testing.plugin:dummy_plugin"
+"other-plugin" = "rachis.core.testing.plugin:other_plugin"
 
-[project.entry-points.'qiime2.usage_drivers']
-"python3" = "qiime2.core.archive.provenance_lib:ReplayPythonUsage"
+[project.entry-points.'rachis.usage_drivers']
+"python3" = "rachis.core.archive.provenance_lib:ReplayPythonUsage"
+
+[project.optional-dependencies]
+jupyter = [
+    "notebook>=6.5.7,<7.0",
+]
+
+[dependency-groups]
+dev = [
+    "nox>=2025.11.12",
+    "pytest>=9.0.2,<10.0.0",
+    "ruff>=0.14.10",
+]
 
 [build-system]
 requires = [
@@ -41,14 +72,23 @@ dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
 distance-dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
 
 [tool.versioningit.write]
-file = "qiime2/_version.py"
+file = "src/rachis/_version.py"
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["qiime2*"]
+where = ["src"]
 
 [tool.setuptools.package-data]
-qiime2 = ["**/*"]
+rachis = ["**/*"]
+
+[tool.pytest]
+addopts = ["--doctest-modules"]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+# equivalent for flake8
+extend-select = ["E", "F", "W"]

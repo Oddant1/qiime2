@@ -1,0 +1,51 @@
+name: ci-dev
+on:
+  pull_request:
+    branches: ["dev"]
+  push:
+    branches: ["dev"]
+
+jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      tests: ${{ steps.set-matrix.outputs.tests }}
+      misc: ${{ steps.set-matrix.outputs.misc }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+      - id: set-matrix
+        shell: bash
+        run: |
+          echo tests=$(uv run --only-dev nox -t pr-matrix --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
+          echo misc=$(uv run --only-dev nox -t pr --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
+
+  misc:
+    name: "${{ matrix.session }}"
+    needs: [setup-matrix]
+    strategy:
+      fail-fast: false
+      matrix:
+        session: ${{ fromJson(needs.setup-matrix.outputs.misc) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+      - run: uv run nox -s "${{ matrix.session }}"
+
+  tests:
+    name: "${{ matrix.session }} [${{ matrix.os }}]"
+    needs: [setup-matrix]
+    strategy:
+      fail-fast: false
+      matrix:
+        session: ${{ fromJson(needs.setup-matrix.outputs.tests) }}
+        os: ['macos-latest', 'ubuntu-latest']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: astral-sh/setup-uv@v7
+      - run: TMPDIR=$RUNNER_TEMP uv run nox -s "${{ matrix.session }}"
