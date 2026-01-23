@@ -841,7 +841,7 @@ def build_action_usage(
                         node, param_name, unique_md_id, ns, cfg
                     )
                 else:
-                    md = init_md_from_artifacts(param_val, ns, cfg)
+                    md = init_md_from_artifacts(param_name, param_val, ns, cfg)
 
             param_val = md
 
@@ -1102,7 +1102,8 @@ def init_md_from_md_file(
 
 
 def init_md_from_artifacts(
-        md_inf: MetadataInfo, ns: ReplayNamespaces, cfg: ReplayConfig
+        param_name: str, md_inf: MetadataInfo, ns: ReplayNamespaces,
+        cfg: ReplayConfig
 ) -> UsageVariable:
     '''
     Initializes and returns a Metadata UsageVariable with no real data,
@@ -1113,6 +1114,8 @@ def init_md_from_artifacts(
 
     Parameters
     ----------
+    param_name : str
+        The name of this param in the action signature.
     md_inf : MetadataInfo
         Named tuple with fields `input_artifact_uuids` which is a list of
         uuids and `relative_fp` which is the filename of the metadata file.
@@ -1141,7 +1144,17 @@ def init_md_from_artifacts(
     md_files_in = []
     for artifact_uuid in md_inf.input_artifact_uuids:
         amd_id = artifact_uuid + '_a'
-        var_name = ns.get_usg_var_record(artifact_uuid).variable.name + '_a'
+        var = ns.get_usg_var_record(artifact_uuid)
+
+        if var is None:
+            # Our var was part of a ResultCollection. If a var is part of a
+            # collection and is used as a metadata param like this, it is never
+            # specifically added to the ns, so do it here
+            ns.add_rc_member_to_ns(artifact_uuid, param_name, cfg.use)
+            var = ns.get_usg_var_record(artifact_uuid)
+
+        var_name = var.variable.name + '_a'
+
         if ns.get_usg_var_record(amd_id) is None:
             var_name = ns.add_usg_var_record(amd_id, var_name)
             art_as_md = cfg.use.view_as_metadata(

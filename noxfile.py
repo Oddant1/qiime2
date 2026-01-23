@@ -58,6 +58,7 @@ def test(session: nox.Session, resolution) -> None:
     setup_uv(session, resolution)
     session.run("pytest", *session.posargs, '-v', env={"QIIMETEST": "1"})
 
+
 @nox.session(venv_backend="uv", tags=["pr"])
 def test_mystery_stew(session: nox.Session) -> None:
     """

@@ -12,6 +12,7 @@ import pathlib
 import rachis.core.archive.format.v1 as v1
 import rachis.core.archive.format.v6 as v6
 
+
 class ArchiveFormat(v6.ArchiveFormat):
     """QIIME 2 Archive Format Version 7.0
 

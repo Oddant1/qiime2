@@ -15,7 +15,8 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from rachis import Artifact
+
+from rachis import Artifact, Metadata
 from rachis.sdk import PluginManager
 from rachis.sdk.usage import Usage, UsageVariable
 from rachis.plugins import ArtifactAPIUsageVariable
@@ -642,7 +643,7 @@ class InitializerTests(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, "not.*used.*input_artifact_uuids.*empty"
         ):
-            init_md_from_artifacts(md_info, ns, cfg)
+            init_md_from_artifacts('param', md_info, ns, cfg)
 
     def test_init_md_from_artifacts_one_art(self):
         # This helper doesn't capture real data, so we're only smoke testing,
@@ -658,7 +659,7 @@ class InitializerTests(unittest.TestCase):
 
         # create dummy hash '0', not relevant here
         md_info = MetadataInfo(['uuid1'], 'hmm.tsv', '0')
-        var = init_md_from_artifacts(md_info, ns, cfg)
+        var = init_md_from_artifacts('param', md_info, ns, cfg)
         self.assertIsInstance(var, UsageVariable)
         self.assertEqual(var.var_type, 'metadata')
         rendered = var.use.render()
@@ -687,7 +688,7 @@ class InitializerTests(unittest.TestCase):
 
         # create dummy hash '0', not relevant here
         md_info = MetadataInfo(['uuid1', 'uuid2', 'uuid3'], 'hmm.tsv', '0')
-        var = init_md_from_artifacts(md_info, ns, cfg)
+        var = init_md_from_artifacts('param', md_info, ns, cfg)
         self.assertIsInstance(var, UsageVariable)
         self.assertEqual(var.var_type, 'metadata')
         rendered = var.use.render()
@@ -986,6 +987,10 @@ class ReplayResultCollectionTests(CustomAssertions):
     @classmethod
     def setUpClass(cls):
         cls.dp = PluginManager().plugins['dummy-plugin']
+        cls.de_facto_collection_pipeline = \
+            cls.dp.pipelines['de_facto_collection_pipeline']
+        cls.parameter_only_pipeline = \
+            cls.dp.pipelines['parameter_only_pipeline']
 
         cls.single_int = Artifact.import_data('SingleInt', 0)
         cls.dict_of_ints = cls.dp.methods['dict_of_ints']
@@ -1155,6 +1160,38 @@ output_1_artifact_collection, = dummy_plugin_actions.dict_of_ints(
 '''
         self.assertIn(exp, rendered)
         self.assertREAppearsOnlyOnce(rendered, r'ResultCollection\(')
+
+    def test_using_rc_member_as_metadata(self):
+        rc, = self.de_facto_collection_pipeline()
+        ints1, _ = self.parameter_only_pipeline(
+            42, metadata=rc['0'].view(Metadata)
+        )
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            in_fp = pathlib.Path(tempdir) / 'int1s.qza'
+            ints1.save(in_fp)
+            dag = ProvDAG(in_fp)
+
+            out_fp = pathlib.Path(tempdir) / 'rendered.txt'
+            out_fn = str(out_fp)
+            replay_provenance(
+                ReplayPythonUsage, dag, out_fn, dump_recorded_metadata=False
+            )
+
+            with open(out_fp) as fh:
+                rendered = fh.read()
+
+        exp = '''
+metadata_1 = output_0_artifact_collection['0']
+metadata_1_a_0_md = metadata_1.view(Metadata)
+foo_0, _ = dummy_plugin_actions.parameter_only_pipeline(
+    int1=42,
+    int2=2,
+    metadata=metadata_1_a_0_md,
+    other=False,
+)
+'''
+        self.assertIn(exp, rendered)
 
 
 class BuildActionUsageTests(CustomAssertions):
