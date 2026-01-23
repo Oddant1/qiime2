@@ -1,9 +1,9 @@
 name: ci-dev
 on:
   pull_request:
-    branches: ["dev", "rachis"]
+    branches: ["dev"]
   push:
-    branches: ["dev", "rachis"]
+    branches: ["dev"]
 
 jobs:
   setup-matrix:
