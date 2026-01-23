@@ -254,7 +254,7 @@ class UnknownAnnotation(Annotation):
     def __init__(*args):
         raise NotImplementedError('`UnknownAnnotation` is an abstract class'
                                   ' used for handling Annotations associated'
-                                  ' with future versions of Rachis'
+                                  ' with future versions of Rachis.'
                                   ' It should not be instantiated directly.')
 
     _write_meta_yaml = __init__

@@ -277,7 +277,7 @@ class ReplayPythonUsage(ArtifactAPIUsage):
         Parameters
         ----------
         action : Action
-            The rachis Action object.
+            The Rachis Action object.
         input_opts : UsageInputs
             The UsageInputs mapping for the action.
         variables : UsageOutputs
