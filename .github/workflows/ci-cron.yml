@@ -1,0 +1,36 @@
+name: "ci-cron"
+
+on:
+  schedule:
+    # At 01:15 AM UTC, every 3 days, starting on day of the month
+    - cron: '15 01 1/3 * *'
+  workflow_dispatch: {}
+
+jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      session: ${{ steps.set-matrix.outputs.session }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+      - id: set-matrix
+        shell: bash
+        run: echo session=$(uv run --only-dev nox -k 'test' --json -l | jq -c '[.[].session]') | tee --append $GITHUB_OUTPUT
+
+  tests:
+    name: "${{ matrix.session }} [${{ matrix.os }}]"
+    needs: [setup-matrix]
+    strategy:
+      fail-fast: false
+      matrix:
+        session: ${{ fromJson(needs.setup-matrix.outputs.session) }}
+        os: ['macos-latest', 'macos-15-intel', 'ubuntu-latest']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: astral-sh/setup-uv@v7
+      - run: uv run nox -s "${{ matrix.session }}"

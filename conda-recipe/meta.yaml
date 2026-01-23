@@ -1,5 +1,5 @@
 package:
-  name: qiime2
+  name: rachis
   version: {{ PLUGIN_VERSION }}
 source:
   path: ..
@@ -37,10 +37,10 @@ test:
   - tornado
   - notebook {{ notebook }}
   imports:
-  - qiime2
+  - rachis
   commands:
-  - QIIMETEST= python -c "import qiime2.plugins.dummy_plugin"
-  - QIIMETEST= py.test --pyargs --doctest-modules qiime2
+  - QIIMETEST= python -c "import rachis.plugins.dummy_plugin"
+  - QIIMETEST= py.test --pyargs --doctest-modules rachis
 about:
   home: https://qiime2.org
   license: BSD-3-Clause

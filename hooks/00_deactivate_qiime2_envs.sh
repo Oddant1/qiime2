@@ -1,5 +1,0 @@
-#!/bin/sh
-
-unset MPLBACKEND
-unset R_LIBS_USER
-unset PYTHONNOUSERSITE
