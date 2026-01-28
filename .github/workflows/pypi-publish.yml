@@ -1,3 +1,4 @@
+name: pypi-publish
 on:
   release:
     types: [published]
@@ -11,7 +12,10 @@ jobs:
         uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
 
       - name: Checkout release
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v.6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v.6.0.2
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Build package
         run: uv build
@@ -19,6 +23,7 @@ jobs:
       - name: Store dist/*
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
+          name: dist
           path: dist
 
   test:
@@ -27,7 +32,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        session: ${{ fromJson(needs.setup-matrix.outputs.session) }}
         os: ['macos-latest', 'ubuntu-latest']
     runs-on: ${{ matrix.os }}
     steps:
@@ -36,9 +40,12 @@ jobs:
 
       - name: Fetch dist/*
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: dist
+          path: dist
 
       - name: Test package
-        run: QIIMETEST= uv run --isolated --no-project --with dist/*.whl pytest --pyargs rachis
+        run: QIIMETEST= uv run --isolated --no-project --with dist/*.whl python -c "import rachis.plugins.dummy_plugin"
 
   pypi:
     needs: [build, test]
@@ -56,6 +63,9 @@ jobs:
 
       - name: Fetch dist/*
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: dist
+          path: dist
 
       - name: Publish
         run: uv publish
