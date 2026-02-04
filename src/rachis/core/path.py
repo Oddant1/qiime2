@@ -7,24 +7,67 @@
 # ----------------------------------------------------------------------------
 
 import os
+import sys
 import pathlib
 import shutil
 import distutils
 import tempfile
 import weakref
 
-_ConcretePath = type(pathlib.Path())
+_SHIM_PATHLIB = False
+if sys.version_info.major == 3 and sys.version_info.minor < 12:
+    _SHIM_PATHLIB = True
+
+
+# Works in py3.11 and 3.12, same logic as __new__ in 3.12
+_ConcretePath = pathlib.WindowsPath if os.name == 'nt' else pathlib.PosixPath
 
 
 def _party_parrot(self, *args):
     raise TypeError("Cannot mutate %r." % self)
 
 
+def _init_path(cls, is_dir, prefix=None):
+    from rachis.core.cache import get_cache
+
+    cache = get_cache()
+    tmp_path = cache.get_tmp_path()
+
+    if hasattr(cls, 'DEFAULT_PREFIX'):
+        default_prefix = cls.DEFAULT_PREFIX
+    else:
+        default_prefix = f'rachis-{cls.__name__}-'
+
+    if prefix is None:
+        prefix = default_prefix
+    elif not prefix.startswith(default_prefix):
+        prefix = default_prefix + prefix
+
+    if is_dir:
+        path = tempfile.mkdtemp(prefix=prefix, dir=tmp_path)
+    else:
+        fd, path = tempfile.mkstemp(prefix=prefix, dir=tmp_path)
+        # fd is now assigned to our process table, but we don't need to do
+        # anything with the file. We will call `open` on the `name` later
+        # producing a different file descriptor, so close this one to
+        # prevent a resource leak.
+        os.close(fd)
+
+    return path
+
+
 class OwnedPath(_ConcretePath):
-    def __new__(cls, *args, **kwargs):
-        self = super().__new__(cls, *args, **kwargs)
+
+    if _SHIM_PATHLIB:
+        def __new__(cls, *args, **kwargs):
+            obj = super().__new__(cls, *args, **kwargs)
+            obj.__init__(*args, **kwargs)
+            return obj
+
+    def __init__(self, *args, **kwargs):
+        if not _SHIM_PATHLIB:
+            super().__init__(*args, **kwargs)
         self._user_owned = True
-        return self
 
     def _copy_dir_or_file(self, other):
         if self.is_dir():
@@ -59,14 +102,17 @@ class OwnedPath(_ConcretePath):
                 self._destruct()
                 return copied
 
+    def with_segments(self, *args):
+        path = os.path.join(*args)
+        return self.__class__(path)
+
 
 class InPath(OwnedPath):
-    def __new__(cls, path):
-        self = super().__new__(cls, path)
+    def __init__(self, path):
+        super().__init__(path)
         self.__backing_path = path
         if hasattr(path, '_user_owned'):
             self._user_owned = path._user_owned
-        return self
 
     chmod = lchmod = rename = replace = rmdir = symlink_to = touch = unlink = \
         write_bytes = write_text = _party_parrot
@@ -90,61 +136,55 @@ class OutPath(OwnedPath):
         else:
             os.unlink(path)
 
-    def __new__(cls, dir=False):
-        """
-        Create a tempfile, return pathlib.Path reference to it.
-        """
-        from rachis.core.cache import get_cache
+    if _SHIM_PATHLIB:
+        def __new__(cls, dir=False):
+            path = _init_path(cls, is_dir=dir)
+            obj = super().__new__(cls, path)
+            obj._destructor = weakref.finalize(obj, obj._destruct, str(obj))
+            return obj
+    else:
+        def __init__(self, dir=False):
+            """
+            Create a tempfile, return pathlib.Path reference to it.
+            """
+            path = _init_path(self.__class__, is_dir=dir)
+            super().__init__(path)
+            self._destructor = weakref.finalize(
+                self, self._destruct, str(self))
 
-        cache = get_cache()
-        tmp_path = cache.get_tmp_path()
-        prefix = 'q2-%s-' % cls.__name__
-
-        if dir:
-            name = tempfile.mkdtemp(prefix=prefix, dir=tmp_path)
-        else:
-            fd, name = tempfile.mkstemp(prefix=prefix, dir=tmp_path)
-            # fd is now assigned to our process table, but we don't need to do
-            # anything with the file. We will call `open` on the `name` later
-            # producing a different file descriptor, so close this one to
-            # prevent a resource leak.
-            os.close(fd)
-        obj = super().__new__(cls, name)
-        obj._destructor = weakref.finalize(obj, cls._destruct, str(obj))
-        return obj
+    def __enter__(self):
+        return self
 
     def __exit__(self, t, v, tb):
         self._destructor()
+
+    def with_segments(self, *args):
+        path = os.path.join(*args)
+        return _ConcretePath(path)
 
 
 class InternalDirectory(_ConcretePath):
     DEFAULT_PREFIX = 'rachis-'
 
     @classmethod
-    def __new(cls, *args):
-        self = super().__new__(cls, *args)
-        return self
-
-    def __new__(cls, *args, prefix=None):
+    def _validate_init(cls, *args, prefix=None):
         if args and prefix is not None:
             raise TypeError("Cannot pass a path and a prefix at the same time")
-        elif args:
-            # This happens when the base-class's __reduce__ method is invoked
-            # for pickling.
-            return cls.__new(*args)
-        else:
-            from rachis.core.cache import get_cache
 
-            cache = get_cache()
-            tmp_path = cache.get_tmp_path()
-
-            if prefix is None:
-                prefix = cls.DEFAULT_PREFIX
-            elif not prefix.startswith(cls.DEFAULT_PREFIX):
-                prefix = cls.DEFAULT_PREFIX + prefix
-            # TODO: normalize when temp-directories are configurable
-            path = tempfile.mkdtemp(prefix=prefix, dir=tmp_path)
-            return cls.__new(path)
+    if _SHIM_PATHLIB:
+        def __new__(cls, *args, prefix=None):
+            cls._validate_init(*args, prefix=prefix)
+            if args == ():
+                path = _init_path(cls, is_dir=True, prefix=prefix)
+                return super().__new__(cls, path)
+            else:
+                # pickle's reduce is happening and we are py3.11
+                return super().__new__(cls, *args)
+    else:
+        def __init__(self, *args, prefix=None):
+            self._validate_init(*args, prefix=prefix)
+            path = _init_path(self.__class__, is_dir=True, prefix=prefix)
+            super().__init__(path)
 
     def __truediv__(self, path):
         # We don't want to create self-destructing paths when using the join
@@ -154,6 +194,10 @@ class InternalDirectory(_ConcretePath):
     def __rtruediv__(self, path):
         # Same reasoning as truediv
         return _ConcretePath(path, str(self))
+
+    def with_segments(self, *args):
+        path = os.path.join(*args)
+        return _ConcretePath(path)
 
 
 class ArchivePath(InternalDirectory):

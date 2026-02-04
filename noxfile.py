@@ -17,7 +17,10 @@ import nox
 MATRIX = [
     (("3.10", "lowest-direct"), ["test-min", "pr-matrix"]),
     (("3.10", "highest"), []),
-    (("3.11", "highest"), ["test-max", "pr-matrix"]),
+    (("3.11", "highest"), []),
+    (("3.12", "highest"), ["pr-matrix"]),
+    (("3.13", "highest"), []),
+    (("3.14", "highest"), ["test-max", "pr-matrix"]),
 ]
 
 
@@ -35,7 +38,7 @@ def setup_uv(session: nox.Session, resolution="highest") -> None:
     )
 
 
-@nox.session(venv_backend="uv", tags=["pr"])
+@nox.session(venv_backend="uv", tags=["pr", "lint"])
 def lint(session: nox.Session) -> None:
     """
     Run the linters
