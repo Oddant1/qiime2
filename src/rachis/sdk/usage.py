@@ -381,11 +381,11 @@ class UsageOutputNames:
         Usage.action
         """
         for key, val in kwargs.items():
-            rachis.util.is_valid_python_identifier(val, 'name')
             if not isinstance(val, str):
                 raise TypeError(
                     'Name provided for key %r must be a string, not a %r.' %
                     (key, type(val)))
+            rachis.util.is_valid_python_identifier(val, 'name')
 
         self.values = kwargs
 
