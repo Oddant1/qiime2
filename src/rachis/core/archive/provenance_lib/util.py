@@ -5,7 +5,6 @@
 #
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
-import codecs
 import re
 import warnings
 
@@ -64,9 +63,7 @@ def parse_version(
         warnings.filterwarnings(
             'ignore', 'invalid escape sequence', DeprecationWarning
         )
-        version_match_repr = codecs.decode(
-            _VERSION_MATCHER.encode('utf-8'), 'unicode-escape'
-        )
+        version_match_repr = _VERSION_MATCHER.replace(r'\n', '\n')
         raise ValueError(
             f'Malformed Archive: VERSION file out of spec in '
             f'{archiver.path}.\n'

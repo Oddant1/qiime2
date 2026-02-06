@@ -5,7 +5,6 @@
 #
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
-import codecs
 import os
 import shutil
 import tempfile
@@ -134,8 +133,7 @@ class TestVersionParser(unittest.TestCase):
         )
         self.assertNotRegex(long, _VERSION_MATCHER)
 
-    splitvm = codecs.decode(_VERSION_MATCHER.encode('utf-8'),
-                            'unicode-escape').split(sep='\n')
+    splitvm = _VERSION_MATCHER.split(sep=r'\n')
     re_l1, re_l2, re_l3 = splitvm
 
     def test_line1_good(self):
