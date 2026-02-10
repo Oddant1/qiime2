@@ -147,7 +147,7 @@ def get_filepath_from_package(package, relative_filepath):
 
 
 def is_valid_python_identifier(given_string, var_name):
-    """Validates that the given strng is a valid Python idenitifier with the
+    """Validates that the given string is a valid Python idenitifier with the
     exception that `-` is allowed.
 
     Parameters
