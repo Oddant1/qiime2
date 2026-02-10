@@ -161,7 +161,7 @@ def is_valid_python_identifier(given_string, var_name):
     ------
     ValueError
         If the string passed in is not a valid Python identifier.
-        """
+    """
     replaced_string = given_string.replace('-', '_')
     if not replaced_string.isidentifier():
         raise ValueError(f'{var_name.capitalize()} "{given_string}" is not a'

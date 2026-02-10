@@ -152,7 +152,7 @@ class Annotation():
             If the Annotation base class is instantiated.
 
         """
-        is_valid_python_identifier(name, 'name')
+        self.validate_name(name)
 
         if type(self) is Annotation:
             raise TypeError('Annotation is an abstract class'
@@ -160,6 +160,22 @@ class Annotation():
         self.name = name
         self.id = _uuid.uuid4()
         self.created_at = datetime.now()
+
+    def validate_name(self, name):
+        """Validates that the given name is a valid Python idenitifier with the
+        exception that `-` is allowed.
+
+        Parameters
+        ----------
+        name : str
+            The name to validate.
+
+        Raises
+        ------
+        ValueError
+            If the name passed in is not a valid Python identifier.
+        """
+        is_valid_python_identifier(name, 'name')
 
     def _write_meta_yaml(self, annotations_dir,
                          root_result_uuid, referenced_result_uuid,

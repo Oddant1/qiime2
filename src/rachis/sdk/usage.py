@@ -380,13 +380,7 @@ class UsageOutputNames:
         UsageInputs
         Usage.action
         """
-        for key, val in kwargs.items():
-            if not isinstance(val, str):
-                raise TypeError(
-                    'Name provided for key %r must be a string, not a %r.' %
-                    (key, type(val)))
-            rachis.util.is_valid_python_identifier(val, 'name')
-
+        self.validate_names(kwargs)
         self.values = kwargs
 
     def __repr__(self):
@@ -411,6 +405,29 @@ class UsageOutputNames:
         example.
         """
         return key in self.values
+
+    def validate_names(self, kwargs):
+        """
+        Validates that all names for output vars are strings and follow our
+        usual naming rules of Python identifier + -
+
+        kwargs : str
+            The name of the resulting variables to be returned by
+            :meth:`Usage.action`.
+
+        Raises
+        ------
+        ValueError
+            If the value passed in is not a string or not a valid Python
+            identifier.
+        """
+        for key, val in kwargs.items():
+            if not isinstance(val, str):
+                raise TypeError(
+                    'Name provided for key %r must be a string, not a %r.' %
+                    (key, type(val)))
+            rachis.util.is_valid_python_identifier(val, 'name')
+
 
     def items(self):
         """Same as a dictionary.
