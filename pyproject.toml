@@ -38,11 +38,6 @@ Repository = "https://github.com/qiime2/qiime2"
 [project.entry-points.'rachis.usage_drivers']
 "python3" = "rachis.core.archive.provenance_lib:ReplayPythonUsage"
 
-[project.optional-dependencies]
-jupyter = [
-    "notebook>=6.5.7,<7.0",
-]
-
 [dependency-groups]
 dev = [
     "nox>=2025.11.12",

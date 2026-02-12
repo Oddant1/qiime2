@@ -926,9 +926,15 @@ class Visualization(Result):
                     result[ext] = str(relpath) if relative else str(abspath)
         return result
 
-    def _repr_html_(self):
-        from rachis.jupyter import make_html
-        return make_html(str(self._archiver.path))
+    def _repr_mimebundle_(self, include=None, exclude=None):
+        import base64
+        with tempfile.NamedTemporaryFile() as fh:
+            self._archiver.save(fh.name)
+            b64 = base64.b64encode(fh.read()).decode('ascii')
+            return {
+                "text/plain": repr(self),
+                "application/vnd.rachis.archive+zip": b64,
+            }
 
 
 class ResultCollection:
