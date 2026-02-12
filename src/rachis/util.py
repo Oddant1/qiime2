@@ -144,3 +144,29 @@ def get_filepath_from_package(package, relative_filepath):
             f'The requested data asset {fp} does not exist.')
     else:
         return fp
+
+
+def is_valid_python_identifier(given_string, var_name):
+    """Validates that the given string is a valid Python idenitifier with the
+    exception that `-` is allowed.
+
+    Parameters
+    ----------
+    given_string : str
+        The string to validate.
+    var_name : str
+        The name of the variable. This is templated into the error message
+
+    Raises
+    ------
+    ValueError
+        If the string passed in is not a valid Python identifier.
+    """
+    replaced_string = given_string.replace('-', '_')
+    if not replaced_string.isidentifier():
+        raise ValueError(f'{var_name.capitalize()} "{given_string}" is not a'
+                         f' valid Python identifier. {var_name.capitalize()}s'
+                         ' may contain `-` characters but must otherwise be'
+                         ' valid Python identifiers. Python identifier rules'
+                         ' may be found here https://www.askpython.com/python/'
+                         'python-identifiers-rules-best-practices')
