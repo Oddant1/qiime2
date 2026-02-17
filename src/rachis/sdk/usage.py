@@ -410,6 +410,7 @@ class UsageOutputNames:
         """
         Validates that all names for output vars are strings and follow our
         usual naming rules of Python identifier + -
+
         Warning
         -------
         For use by interface drivers only. Do not use in a written usage
