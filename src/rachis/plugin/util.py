@@ -72,7 +72,7 @@ def run_commands(cmds, verbose=True):
 NP_RNG_MAX_SIZE = 2**128
 
 
-def set_np_random_seed_if_needed(random_seed: CaptureHolder):
+def set_np_random_seed(random_seed: CaptureHolder):
     """
     Sets the value on a CaptureHolder to a random value for numpy seeding if
     there is not value set on the CaptureHolder. Does nothing if a value is
