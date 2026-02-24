@@ -7,8 +7,10 @@
 # ----------------------------------------------------------------------------
 
 import psutil
+import random
 import subprocess
 
+from rachis.core.type import CaptureHolder
 from rachis.core.transform import ModelType
 
 
@@ -63,3 +65,25 @@ def run_commands(cmds, verbose=True):
             print("\nCommand:", end=' ')
             print(" ".join(cmd), end='\n\n')
         subprocess.run(cmd, check=True)
+
+
+# Numpy recommends using at least 128 bits of entropy as a seed, and we are
+# indirectly seeding numpy in this plugin.
+NP_RNG_MAX_SIZE = 2**128
+
+
+def set_np_random_seed_if_needed(random_seed: CaptureHolder):
+    """
+    Sets the value on a CaptureHolder to a random value for numpy seeding if
+    there is not value set on the CaptureHolder. Does nothing if a value is
+    already set
+
+    Parameters
+    ----------
+    random_seed : CaptureHolder<Int>
+        A CaptureHolder object intended to store an integer value for seeing
+        numpy rng
+    """
+    if not random_seed.is_set:
+        random_int = random.randrange(NP_RNG_MAX_SIZE)
+        random_seed.set_value(random_int)
