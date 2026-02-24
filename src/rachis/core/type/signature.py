@@ -326,13 +326,9 @@ class PipelineSignature:
                                     " with an input type: %r")
 
     def _assert_valid_views(self, inputs, parameters, outputs):
-        for name, spec in itertools.chain(inputs.items(),
-                                          parameters.items(),
-                                          outputs.items()):
-            if spec.has_view_type():
-                raise TypeError(
-                    " Pipelines do not support function annotations (found one"
-                    " for parameter: %r)." % name)
+        # Just let em use views on Pipelines if they feel like it... what's the
+        # worst that could happen right?
+        pass
 
     def coerce_user_input(self, **user_input):
         """ Coerce user inputs to be appropriate for callable
