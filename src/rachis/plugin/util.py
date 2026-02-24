@@ -69,7 +69,7 @@ def run_commands(cmds, verbose=True):
 
 # Numpy recommends using at least 128 bits of entropy as a seed, and we are
 # indirectly seeding numpy in this plugin.
-NP_RNG_MAX_SIZE = 2**128
+NP_RNG_SIZE = 2**128
 
 
 def set_np_random_seed(random_seed: CaptureHolder):
@@ -85,5 +85,5 @@ def set_np_random_seed(random_seed: CaptureHolder):
         numpy rng
     """
     if not random_seed.is_set:
-        random_int = random.randrange(NP_RNG_MAX_SIZE)
+        random_int = random.randrange(NP_RNG_SIZE)
         random_seed.set_value(random_int)
