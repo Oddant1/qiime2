@@ -380,12 +380,7 @@ class UsageOutputNames:
         UsageInputs
         Usage.action
         """
-        for key, val in kwargs.items():
-            if not isinstance(val, str):
-                raise TypeError(
-                    'Name provided for key %r must be a string, not a %r.' %
-                    (key, type(val)))
-
+        self.validate_names(kwargs)
         self.values = kwargs
 
     def __repr__(self):
@@ -410,6 +405,29 @@ class UsageOutputNames:
         example.
         """
         return key in self.values
+
+    def validate_names(self, kwargs):
+        """
+        Validates that all names for output vars are strings and follow our
+        usual naming rules of Python identifier + -
+
+        kwargs : str
+            The name of the resulting variables to be returned by
+            :meth:`Usage.action`.
+
+        Raises
+        ------
+        ValueError
+            If the value passed in is not a string or not a valid Python
+            identifier.
+        """
+        for key, val in kwargs.items():
+            if not isinstance(val, str):
+                raise TypeError(
+                    'Name provided for key %r must be a string, not a %r.' %
+                    (key, type(val)))
+            rachis.util.is_valid_python_identifier(val, 'name')
+
 
     def items(self):
         """Same as a dictionary.
@@ -1694,19 +1712,21 @@ class Usage:
     def _find_var_type_from_prov(self,
                                  node,
                                  action_yaml):
-        if action_yaml['action']['type'] == 'visualizer':
+        action_type = action_yaml['action']['type']
+
+        if action_type == 'visualizer':
             # Visualizers can only output visualizations
             if type(action_yaml['action']['output-name']) is List:
                 var_type = 'visualization_collection'
             else:
                 var_type = 'visualization'
-        elif action_yaml['action']['type'] == 'method':
+        elif action_type == 'method':
             # Methods can only output artifacts
             if type(action_yaml['action']['output-name']) is List:
                 var_type = 'artifact_collection'
             else:
                 var_type = 'artifact'
-        else:
+        elif action_type == 'pipeline':
             # If we are a pipeline we need to recurse until we find our root
             alias_uuid = action_yaml['action']['alias-of']
             alias_path = node._archiver.provenance_dir / 'artifacts' \
@@ -1716,6 +1736,15 @@ class Usage:
                 alias_yaml = yaml.safe_load(fh)
 
             var_type = self._find_var_type_from_prov(node, alias_yaml)
+        elif action_type == 'import':
+            # Imports are always an Artifact
+            var_type = 'artifact'
+        elif action_type == 'report':
+            # Reports are always a Visualization
+            var_type = 'visualization'
+        else:
+            # What have you done
+            raise ValueError(f'Unknown action type found: {action_type}')
 
         return var_type
 

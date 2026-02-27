@@ -707,14 +707,7 @@ class Cache:
             this to ensure no one creates keys that cause issues when we try to
             load them.
         """
-        validation_key = key.replace('-', '_')
-        if not validation_key.isidentifier():
-            raise ValueError(f"Key '{key}' is not a valid Python identifier. "
-                             "Keys may contain '-' characters but must "
-                             "otherwise be valid Python identifiers. Python "
-                             "identifier rules may be found here "
-                             "https://www.askpython.com/python/"
-                             "python-identifiers-rules-best-practices")
+        rachis.util.is_valid_python_identifier(key, 'key')
 
     def _create_cache_contents(self):
         """Create the cache directory, all sub directories, and the version

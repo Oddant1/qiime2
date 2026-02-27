@@ -19,6 +19,7 @@ from datetime import datetime
 from rachis.core.util import (find_root_fp, sha512_file_hex,
                               gpg_find_key, format_algorithm,
                               unix_gpg_terminal_helper)
+from rachis.util import is_valid_python_identifier
 
 
 class Annotation():
@@ -174,14 +175,7 @@ class Annotation():
         ValueError
             If the name passed in is not a valid Python identifier.
         """
-        validate_name = name.replace('-', '_')
-        if not validate_name.isidentifier():
-            raise ValueError(f'Name "{name}" is not a valid Python identifier.'
-                             ' Keys may contain `-` characters but must'
-                             ' otherwise be valid Python identifiers. Python'
-                             ' identifier rules may be found here'
-                             ' https://www.askpython.com/python/'
-                             'python-identifiers-rules-best-practices')
+        is_valid_python_identifier(name, 'name')
 
     def _write_meta_yaml(self, annotations_dir,
                          root_result_uuid, referenced_result_uuid,
