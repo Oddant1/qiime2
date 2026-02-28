@@ -484,6 +484,12 @@ class PipelineSignature:
         provenance.add_input(name, _input)
         qiime_type, _ = self._get_qiime_type_and_name(spec)
 
+        if type(self) is PipelineSignature:
+            # We do not transform Artifacts to view type for Pipeline inputs.
+            # view type annotations are purely informational for
+            # whoever/whatever is looking at the pipeline signature
+            return _input
+
         # Transform artifacts to view types as necessary
         if _input is None:
             transformed_input = None
