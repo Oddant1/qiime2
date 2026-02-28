@@ -81,7 +81,7 @@ def set_np_random_seed(random_seed: CaptureHolder):
     Parameters
     ----------
     random_seed : CaptureHolder<Int>
-        A CaptureHolder object intended to store an integer value for seeing
+        A CaptureHolder object intended to store an integer value for seeding
         numpy rng
     """
     if not random_seed.is_set:
