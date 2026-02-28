@@ -328,7 +328,68 @@ class PipelineSignature:
     def _assert_valid_views(self, inputs, parameters, outputs):
         # Just let em use views on Pipelines if they feel like it... what's the
         # worst that could happen right?
-        pass
+        annotated = self._assert_all_annotated_or_unannotated(
+            inputs, parameters, outputs
+        )
+
+        if annotated:
+            print(f"Inputs: {inputs}\nOutputs: {outputs}")
+            for name, spec in inputs.items():
+                if spec.view_type not in [
+                            rachis.sdk.Artifact, list[rachis.sdk.Artifact],
+                            dict[rachis.sdk.Artifact]
+                        ]:
+                    raise ValueError(f'{name} {spec.view_type}')
+
+            for name, spec in outputs.items():
+                if spec.view_type not in [
+                            rachis.sdk.Artifact, list[rachis.sdk.Artifact],
+                            dict[rachis.sdk.Artifact],
+                            rachis.sdk.Visualization,
+                            list[rachis.sdk.Visualization],
+                            dict[rachis.sdk.Visualization]
+                        ]:
+                    raise ValueError(f'{name} {spec.view_type}')
+
+    def _assert_all_annotated_or_unannotated(
+                self, inputs, parameters, outputs
+            ):
+        """
+        Asserts that we don't have a mix of annotated and unannotated inputs,
+        parameters, and outputs. All must be annotated or none.
+
+        Parameters
+        ----------
+        inputs : Dict[string : ParameterSpec]
+            The inputs to the Pipeline
+        parameters : Dict[string : ParameterSpec]
+            The parameters to the Pipeline
+        outputs : Dict[string : ParameterSpec]
+            The outputs of the Pipeline
+
+        Returns
+        -------
+        Boolean
+            True if we have annotations False if we don't
+
+        Raises
+        ------
+        TypeError
+            If there is a mix of annotated and unannotated
+        """
+        annotated = False
+
+        all_specs = itertools.chain(
+            inputs.values(), parameters.values(), outputs.values()
+        )
+        if any(spec.has_view_type() for spec in all_specs) and not \
+                (annotated := all(spec.has_view_type() for spec in all_specs)):
+            raise TypeError(
+                "Pipelines must have annotations for all inputs, parameters,"
+                " and outputs or no annotations."
+            )
+
+        return annotated
 
     def coerce_user_input(self, **user_input):
         """ Coerce user inputs to be appropriate for callable
