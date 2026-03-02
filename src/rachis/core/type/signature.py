@@ -333,7 +333,6 @@ class PipelineSignature:
         )
 
         if annotated:
-            print(f"Inputs: {inputs}\nOutputs: {outputs}")
             for name, spec in inputs.items():
                 if spec.view_type not in [
                             rachis.sdk.Artifact, list[rachis.sdk.Artifact],
