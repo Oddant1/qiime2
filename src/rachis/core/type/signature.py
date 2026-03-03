@@ -326,8 +326,25 @@ class PipelineSignature:
                                     " with an input type: %r")
 
     def _assert_valid_views(self, inputs, parameters, outputs):
-        # Just let em use views on Pipelines if they feel like it... what's the
-        # worst that could happen right?
+        """
+        Assert that the view type annotations on a Pipeline, if they are
+        present, are valid. Inputs and outputs must be some form of Result.
+        Parameters don't follow any special rules.
+
+        Parameters
+        ----------
+        inputs : Dict[string : ParameterSpec]
+            The inputs to the Pipeline
+        parameters : Dict[string : ParameterSpec]
+            The parameters to the Pipeline
+        outputs : Dict[string : ParameterSpec]
+            The outputs of the Pipeline
+
+        Raises
+        ------
+        TypeError
+            If a view type annotation on an input or an output is invalid.
+        """
         annotated = self._assert_all_annotated_or_unannotated(
             inputs, parameters, outputs
         )
