@@ -345,10 +345,7 @@ class PipelineSignature:
         # TODO: Cleanup the formatting of these error messages
         if annotated:
             for name, spec in inputs.items():
-                if spec.view_type not in [
-                            rachis.sdk.Artifact, list[rachis.sdk.Artifact],
-                            dict[rachis.sdk.Artifact]
-                        ]:
+                if spec.view_type not in VALID_INPUTS:
                     raise ValueError(
                         f'The input {name} has the view type {spec.view_type}.'
                         f' Valid view types for Pipeline inputs are'
@@ -356,13 +353,7 @@ class PipelineSignature:
                     )
 
             for name, spec in outputs.items():
-                if spec.view_type not in [
-                            rachis.sdk.Artifact, list[rachis.sdk.Artifact],
-                            dict[rachis.sdk.Artifact],
-                            rachis.sdk.Visualization,
-                            list[rachis.sdk.Visualization],
-                            dict[rachis.sdk.Visualization]
-                        ]:
+                if spec.view_type not in VALID_OUTPUTS:
                     raise ValueError(
                         f'The output {name} has the view type'
                         f' {spec.view_type}. Valid view types for Pipeline'
