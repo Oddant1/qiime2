@@ -355,6 +355,44 @@ class TestPipeline(unittest.TestCase):
 
         self.assertTrue(True)
 
+    def test_annotations_mixed(self):
+        def mixed_annotations(ctx, annotated: int, unannotated) -> tuple[rachis.Artifact]:
+            pass
+
+        # with self.assertRaisesRegex(
+        #         ValueError,
+        #         "Default value of CaptureHolder.*random_seed.*1.*None"):
+        self.plugin.pipelines.register_function(
+            function=mixed_annotations,
+            inputs={},
+            parameters={
+                'annotated': Int,
+                'unannotated': Int
+            },
+            outputs=[('out1', SingleInt)],
+            name='Sets a ',
+            description='Sets a bad value for the default. '
+                        'This will always raise an error on registration'
+        )
+
+    def test_annotations_bad(self):
+        def bad_annotations(ctx, is_artifact: int, is_int: rachis.Artifact) -> tuple[int]:
+            pass
+
+        self.plugin.pipelines.register_function(
+            function=bad_annotations,
+            inputs={
+                'is_artifact': SingleInt,
+            },
+            parameters={
+                'is_int': Int,
+            },
+            outputs=[('out1', SingleInt)],
+            name='Sets a ',
+            description='Sets a bad value for the default. '
+                        'This will always raise an error on registration'
+        )
+
     def test_failing_from_arity(self):
         for call in self.iter_callables('failing_pipeline'):
             with self.assertRaisesRegex(TypeError, 'match number.*3.*1'):
