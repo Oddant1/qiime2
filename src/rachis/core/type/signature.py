@@ -346,7 +346,7 @@ class PipelineSignature:
         if annotated:
             for name, spec in inputs.items():
                 if spec.view_type not in VALID_INPUTS:
-                    raise ValueError(
+                    raise TypeError(
                         f'The input {name} has the view type {spec.view_type}.'
                         f' Valid view types for Pipeline inputs are'
                         f' {VALID_INPUTS}'
@@ -354,7 +354,7 @@ class PipelineSignature:
 
             for name, spec in outputs.items():
                 if spec.view_type not in VALID_OUTPUTS:
-                    raise ValueError(
+                    raise TypeError(
                         f'The output {name} has the view type'
                         f' {spec.view_type}. Valid view types for Pipeline'
                         f' outputs are {VALID_OUTPUTS}'
