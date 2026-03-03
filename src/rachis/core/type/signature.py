@@ -332,13 +332,27 @@ class PipelineSignature:
             inputs, parameters, outputs
         )
 
+        VALID_INPUTS = [
+            rachis.sdk.Artifact, list[rachis.sdk.Artifact],
+            dict[rachis.sdk.Artifact]
+        ]
+        VALID_OUTPUTS = [
+            rachis.sdk.Artifact, list[rachis.sdk.Artifact],
+            dict[rachis.sdk.Artifact], rachis.sdk.Visualization,
+            list[rachis.sdk.Visualization], dict[rachis.sdk.Visualization]
+        ]
+
         if annotated:
             for name, spec in inputs.items():
                 if spec.view_type not in [
                             rachis.sdk.Artifact, list[rachis.sdk.Artifact],
                             dict[rachis.sdk.Artifact]
                         ]:
-                    raise ValueError(f'{name} {spec.view_type}')
+                    raise ValueError(
+                        f'The input {name} has the view type {spec.view_type}.'
+                        f' Valid view types for Pipeline inputs are'
+                        f' {VALID_INPUTS}'
+                    )
 
             for name, spec in outputs.items():
                 if spec.view_type not in [
@@ -348,7 +362,11 @@ class PipelineSignature:
                             list[rachis.sdk.Visualization],
                             dict[rachis.sdk.Visualization]
                         ]:
-                    raise ValueError(f'{name} {spec.view_type}')
+                    raise ValueError(
+                        f'The output {name} has the view type'
+                        f' {spec.view_type}. Valid view types for Pipeline'
+                        f' outputs are {VALID_OUTPUTS}'
+                    )
 
     def _assert_all_annotated_or_unannotated(
                 self, inputs, parameters, outputs
