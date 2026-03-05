@@ -35,7 +35,7 @@ test:
   requires:
   - pytest
   - tornado
-  - notebook {{ notebook }}
+  - notebook
   imports:
   - rachis
   commands:
