@@ -31,7 +31,6 @@ def setup_uv(session: nox.Session, resolution="highest") -> None:
     session.run_install(
         "uv",
         "sync",
-        "--extra=jupyter",
         f"--resolution={resolution}",
         f"--python={session.virtualenv.location}",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
