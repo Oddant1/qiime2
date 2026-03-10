@@ -14,7 +14,6 @@ requirements:
   run:
   - python {{ python }}
   - pyyaml
-  - decorator {{ decorator }}
   - pandas {{ pandas }}
   - tzlocal {{ tzlocal }}
   - python-dateutil

@@ -83,9 +83,6 @@ class Context:
         return callable_action
 
     def _callable_action_(self, *args, **kwargs):
-        # The function is the first arg, we ditch that
-        args = args[1:]
-
         # If we have a named_pool, we need to check for cached results that
         # we can reuse.
         if self.cache.named_pool is not None and \
