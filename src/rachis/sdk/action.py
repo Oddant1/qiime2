@@ -366,6 +366,7 @@ class Action(metaclass=abc.ABCMeta):
     def _rewrite_wrapper_signature(self, wrapper):
         def signature_wrapper(*args, **kwargs):
             bound = self._wrapper_signature.bind(*args, **kwargs)
+            # ensures that provenance has all default arguments.
             bound.apply_defaults()
             return wrapper(*bound.args, **bound.kwargs)
 
