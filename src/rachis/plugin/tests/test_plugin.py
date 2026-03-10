@@ -473,6 +473,5 @@ class TestPlugin(unittest.TestCase):
                             ' bad.'
             )
 
-
 if __name__ == '__main__':
     unittest.main()

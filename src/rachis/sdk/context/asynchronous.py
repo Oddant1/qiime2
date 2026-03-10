@@ -32,12 +32,6 @@ class AsynchronousContext(Context):
         except ImportError:
             pass
 
-        # This function's signature is rewritten below using
-        # `decorator.decorator`. When the signature is rewritten, args[0]
-        # is the function whose signature was used to rewrite this
-        # function's signature.
-        args = args[1:]
-
         pool = concurrent.futures.ProcessPoolExecutor(max_workers=1)
         future = pool.submit(_subprocess_apply, self, args, kwargs)
         # TODO: pool.shutdown(wait=False) caused the child process to

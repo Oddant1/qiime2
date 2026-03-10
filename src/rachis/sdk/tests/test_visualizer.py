@@ -135,11 +135,11 @@ class TestVisualizer(unittest.TestCase, ArchiveTestingMixin):
         most_common_viz = self.plugin.visualizers['most_common_viz']
 
         mapping_exp = {
-            'mapping1': Mapping, 'return': (VisualizationType,),
+            'mapping1': Mapping, 'return': tuple[VisualizationType],
             'key_label': Str, 'mapping2': Mapping, 'value_label': Str}
         most_common_exp = {
             'ints': IntSequence1 | IntSequence2,
-            'return': (VisualizationType,)}
+            'return': tuple[VisualizationType]}
 
         mapper = {
             mapping_viz: mapping_exp,
@@ -155,11 +155,11 @@ class TestVisualizer(unittest.TestCase, ArchiveTestingMixin):
         most_common_viz = self.plugin.visualizers['most_common_viz']
 
         mapping_exp = {
-            'mapping1': Mapping, 'return': (VisualizationType,),
+            'mapping1': Mapping, 'return': tuple[VisualizationType],
             'key_label': Str, 'mapping2': Mapping, 'value_label': Str}
         most_common_exp = {
             'ints': IntSequence1 | IntSequence2,
-            'return': (VisualizationType,)}
+            'return': tuple[VisualizationType]}
 
         mapper = {
             mapping_viz: mapping_exp,

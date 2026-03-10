@@ -12,7 +12,6 @@ import tempfile
 import textwrap
 from types import FunctionType
 
-import decorator
 import dill
 
 from typing import Mapping, TypedDict, Union
@@ -22,8 +21,8 @@ import rachis.sdk
 from rachis.sdk.result import Artifact, ResultCollection, ChecksumCache
 import rachis.core.type as qtype
 import rachis.core.archive as archive
-from rachis.core.util import (LateBindingAttribute, DropFirstParameter,
-                              tuplize, create_collection_name)
+from rachis.core.util import (LateBindingAttribute, tuplize,
+                              create_collection_name)
 from rachis.core.cite import CitationRecord
 
 
@@ -96,14 +95,6 @@ class Action(metaclass=abc.ABCMeta):
     asynchronous = LateBindingAttribute('_dynamic_async')
     parallel = LateBindingAttribute('_dynamic_parsl')
 
-    # Converts a callable's signature into its wrapper's signature (i.e.
-    # converts the "view API" signature into the "artifact API" signature).
-    # Accepts a callable as input and returns a callable as output with
-    # converted signature.
-    @abc.abstractmethod
-    def _callable_sig_converter_(self, callable):
-        raise NotImplementedError
-
     # Executes a callable on the provided `view_args`, wrapping and returning
     # the callable's outputs. In other words, executes the "view API", wrapping
     # and returning the outputs as the "artifact API". `view_args` is a dict
@@ -167,6 +158,7 @@ class Action(metaclass=abc.ABCMeta):
         self.examples = examples
 
         self.id = callable.__name__
+        self._wrapper_signature = self.signature.to_inspect_signature()
         self._dynamic_call = self._callable_action_wrapper()
         self._dynamic_async = self._get_async_wrapper()
         # This a temp thing to play with parsl before integrating more deeply
@@ -269,11 +261,6 @@ class Action(metaclass=abc.ABCMeta):
 
         """
         def bound_callable(*args, **kwargs):
-            # This function's signature is rewritten below using
-            # `decorator.decorator`. When the signature is rewritten,
-            # args[0] is the function whose signature was used to rewrite
-            # this function's signature.
-            args = args[1:]
             ctx = context_factory()
             provenance = self._ProvCaptureCls(
                 self.type, self.plugin_id, self.id, execution_ctx)
@@ -377,10 +364,12 @@ class Action(metaclass=abc.ABCMeta):
         return parsl_wrapper
 
     def _rewrite_wrapper_signature(self, wrapper):
-        # Convert the callable's signature into the wrapper's signature and set
-        # it on the wrapper.
-        return decorator.decorator(
-            wrapper, self._callable_sig_converter_(self._callable))
+        def signature_wrapper(*args, **kwargs):
+            bound = self._wrapper_signature.bind(*args, **kwargs)
+            bound.apply_defaults()
+            return wrapper(*bound.args, **bound.kwargs)
+
+        return signature_wrapper
 
     def _set_wrapper_name(self, wrapper, name):
         wrapper.__name__ = wrapper.__qualname__ = name
@@ -389,23 +378,13 @@ class Action(metaclass=abc.ABCMeta):
         wrapper.__module__ = self.get_import_path(include_self=False)
         wrapper.__doc__ = self._build_numpydoc()
         wrapper.__annotations__ = self._build_annotations()
-        # This is necessary so that `inspect` doesn't display the wrapped
-        # function's annotations (the annotations apply to the "view API" and
-        # not the "artifact API").
-        del wrapper.__wrapped__
+        wrapper.__signature__ = self._wrapper_signature
 
     def _build_annotations(self):
-        annotations = {}
-        for name, spec in self.signature.signature_order.items():
-            annotations[name] = spec.qiime_type
-
-        output = []
-        for spec in self.signature.outputs.values():
-            output.append(spec.qiime_type)
-        output = tuple(output)
-
-        annotations["return"] = output
-
+        annotations = {
+            name: param.annotation
+            for name, param in self._wrapper_signature.parameters.items()}
+        annotations['return'] = self._wrapper_signature.return_annotation
         return annotations
 
     def _build_numpydoc(self):
@@ -488,10 +467,6 @@ class Method(Action):
 
     # Abstract method implementations:
 
-    def _callable_sig_converter_(self, callable):
-        # No conversion necessary.
-        return callable
-
     def _callable_executor_(self, ctx, view_args, output_types, provenance):
         output_views = self._callable(**view_args)
         output_views = tuplize(output_views)
@@ -548,9 +523,6 @@ class Visualizer(Action):
 
     # Abstract method implementations:
 
-    def _callable_sig_converter_(self, callable):
-        return DropFirstParameter.from_function(callable)
-
     def _callable_executor_(self, ctx, view_args, output_types, provenance):
         with tempfile.TemporaryDirectory(prefix='rachis-temp-') as temp_dir:
             ret_val = self._callable(output_dir=temp_dir, **view_args)
@@ -580,9 +552,6 @@ class Pipeline(Action):
     """Rachis Pipeline"""
     type = 'pipeline'
     _ProvCaptureCls = archive.PipelineProvenanceCapture
-
-    def _callable_sig_converter_(self, callable):
-        return DropFirstParameter.from_function(callable)
 
     def _callable_executor_(self, ctx, view_args, output_types, provenance):
         outputs = self._callable(ctx, **view_args)

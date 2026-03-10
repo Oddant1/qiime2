@@ -244,6 +244,21 @@ class PipelineSignature:
         collated_inputs.update(kwargs)
         return collated_inputs
 
+    def to_inspect_signature(self):
+        parameters = []
+        kind = inspect.Parameter.POSITIONAL_OR_KEYWORD
+        for name, spec in self.signature_order.items():
+            default = inspect.Parameter.empty
+            if spec.has_default():
+                default = spec.default
+            parameters.append(inspect.Parameter(
+                name, kind, default=default, annotation=spec.qiime_type))
+
+        output_types = tuple(spec.qiime_type for spec in self.outputs.values())
+        return_annotation = tuple[output_types]
+        return inspect.Signature(
+            parameters=parameters, return_annotation=return_annotation)
+
     def _assert_valid_inputs(self, inputs):
         for input_name, spec in inputs.items():
             if not is_semantic_type(spec.qiime_type):
