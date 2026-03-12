@@ -359,7 +359,6 @@ class PipelineSignature:
             list[rachis.sdk.Visualization], dict[rachis.sdk.Visualization]
         ]
 
-        # TODO: Cleanup the formatting of these error messages
         if annotated:
             for name, spec in inputs.items():
                 if spec.view_type not in VALID_INPUTS:
