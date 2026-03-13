@@ -349,36 +349,40 @@ class PipelineSignature:
             inputs, parameters, outputs
         )
 
-        VALID_INPUTS = [
-            rachis.sdk.Artifact, list[rachis.sdk.Artifact],
+        VALID_INPUT_ANNOTATIONS = (
+            rachis.sdk.Artifact,
+            list[rachis.sdk.Artifact],
             dict[rachis.sdk.Artifact]
-        ]
-        VALID_OUTPUTS = [
-            rachis.sdk.Artifact, list[rachis.sdk.Artifact],
-            dict[rachis.sdk.Artifact], rachis.sdk.Visualization,
-            list[rachis.sdk.Visualization], dict[rachis.sdk.Visualization]
-        ]
+        )
+        VALID_OUTPUT_ANNOTATIONS = (
+            rachis.sdk.Artifact,
+            list[rachis.sdk.Artifact],
+            dict[rachis.sdk.Artifact],
+            rachis.sdk.Visualization,
+            list[rachis.sdk.Visualization],
+            dict[rachis.sdk.Visualization]
+        )
 
         if annotated:
             for name, spec in inputs.items():
-                if spec.view_type not in VALID_INPUTS:
+                if spec.view_type not in VALID_INPUT_ANNOTATIONS:
                     raise TypeError(
                         f'The input {name} has the view type {spec.view_type}.'
                         f' Valid view types for Pipeline inputs are'
-                        f' {VALID_INPUTS}'
+                        f' {VALID_INPUT_ANNOTATIONS}.'
                     )
 
             for name, spec in outputs.items():
-                if spec.view_type not in VALID_OUTPUTS:
+                if spec.view_type not in VALID_OUTPUT_ANNOTATIONS:
                     raise TypeError(
                         f'The output {name} has the view type'
                         f' {spec.view_type}. Valid view types for Pipeline'
-                        f' outputs are {VALID_OUTPUTS}'
+                        f' outputs are {VALID_OUTPUT_ANNOTATIONS}.'
                     )
 
     def _assert_all_annotated_or_unannotated(
-                self, inputs, parameters, outputs
-            ):
+            self, inputs, parameters, outputs
+        ):
         """
         Asserts that we don't have a mix of annotated and unannotated inputs,
         parameters, and outputs. All must be annotated or none.

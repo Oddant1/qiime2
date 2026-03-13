@@ -357,8 +357,8 @@ class TestPipeline(unittest.TestCase):
 
     def test_annotations_mixed(self):
         def mixed_annotations(
-                    ctx, annotated: int, unannotated
-                ) -> tuple[rachis.Artifact]:
+                ctx, annotated: int, unannotated
+            ) -> tuple[rachis.Artifact]:
             raise ValueError(
                 "I should never run. I should never even pass registration"
             )
@@ -403,7 +403,7 @@ class TestPipeline(unittest.TestCase):
             )
 
     def test_annotations_bad_output(self):
-        def bad_input_annotation(
+        def bad_output_annotation(
                     ctx, is_artifact: rachis.Artifact, is_int: rachis.Artifact
                 ) -> tuple[int]:
             raise ValueError(
@@ -412,7 +412,7 @@ class TestPipeline(unittest.TestCase):
 
         with self.assertRaisesRegex(TypeError, ".*out1.*int.*"):
             self.plugin.pipelines.register_function(
-                function=bad_input_annotation,
+                function=bad_output_annotation,
                 inputs={
                     'is_artifact': SingleInt,
                 },
