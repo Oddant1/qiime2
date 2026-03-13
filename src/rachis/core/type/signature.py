@@ -341,13 +341,99 @@ class PipelineSignature:
                                     " with an input type: %r")
 
     def _assert_valid_views(self, inputs, parameters, outputs):
-        for name, spec in itertools.chain(inputs.items(),
-                                          parameters.items(),
-                                          outputs.items()):
-            if spec.has_view_type():
-                raise TypeError(
-                    " Pipelines do not support function annotations (found one"
-                    " for parameter: %r)." % name)
+        """
+        Assert that the view type annotations on a Pipeline, if they are
+        present, are valid. Inputs and outputs must be some form of Result.
+        Parameters don't follow any special rules.
+
+        Parameters
+        ----------
+        inputs : Dict[string : ParameterSpec]
+            The inputs to the Pipeline
+        parameters : Dict[string : ParameterSpec]
+            The parameters to the Pipeline
+        outputs : Dict[string : ParameterSpec]
+            The outputs of the Pipeline
+
+        Raises
+        ------
+        TypeError
+            If a view type annotation on an input or an output is invalid.
+        """
+        annotated = self._assert_all_annotated_or_unannotated(
+            inputs, parameters, outputs
+        )
+
+        VALID_INPUT_ANNOTATIONS = (
+            rachis.sdk.Artifact,
+            list[rachis.sdk.Artifact],
+            dict[rachis.sdk.Artifact]
+        )
+        VALID_OUTPUT_ANNOTATIONS = (
+            rachis.sdk.Artifact,
+            list[rachis.sdk.Artifact],
+            dict[rachis.sdk.Artifact],
+            rachis.sdk.Visualization,
+            list[rachis.sdk.Visualization],
+            dict[rachis.sdk.Visualization]
+        )
+
+        if annotated:
+            for name, spec in inputs.items():
+                if spec.view_type not in VALID_INPUT_ANNOTATIONS:
+                    raise TypeError(
+                        f'The input {name} has the view type {spec.view_type}.'
+                        f' Valid view types for Pipeline inputs are'
+                        f' {VALID_INPUT_ANNOTATIONS}.'
+                    )
+
+            for name, spec in outputs.items():
+                if spec.view_type not in VALID_OUTPUT_ANNOTATIONS:
+                    raise TypeError(
+                        f'The output {name} has the view type'
+                        f' {spec.view_type}. Valid view types for Pipeline'
+                        f' outputs are {VALID_OUTPUT_ANNOTATIONS}.'
+                    )
+
+    def _assert_all_annotated_or_unannotated(
+            self, inputs, parameters, outputs
+        ):
+        """
+        Asserts that we don't have a mix of annotated and unannotated inputs,
+        parameters, and outputs. All must be annotated or none.
+
+        Parameters
+        ----------
+        inputs : Dict[string : ParameterSpec]
+            The inputs to the Pipeline
+        parameters : Dict[string : ParameterSpec]
+            The parameters to the Pipeline
+        outputs : Dict[string : ParameterSpec]
+            The outputs of the Pipeline
+
+        Returns
+        -------
+        Boolean
+            True if we have annotations False if we don't
+
+        Raises
+        ------
+        TypeError
+            If there is a mix of annotated and unannotated
+        """
+        annotated = False
+
+        all_specs = itertools.chain(
+            inputs.values(), parameters.values(), outputs.values()
+        )
+        if any(spec.has_view_type() for spec in all_specs) and not \
+                (annotated := all(spec.has_view_type() for spec in all_specs)):
+            raise TypeError(
+                "Pipelines must have annotations for all inputs, parameters,"
+                " and outputs or no annotations."
+            )
+
+        return annotated
 
     def coerce_user_input(self, **user_input):
         """ Coerce user inputs to be appropriate for callable
@@ -441,6 +527,12 @@ class PipelineSignature:
         # type
         provenance.add_input(name, _input)
         qiime_type, _ = self._get_qiime_type_and_name(spec)
+
+        if type(self) is PipelineSignature:
+            # We do not transform Artifacts to view type for Pipeline inputs.
+            # view type annotations are purely informational for
+            # whoever/whatever is looking at the pipeline signature
+            return _input
 
         # Transform artifacts to view types as necessary
         if _input is None:

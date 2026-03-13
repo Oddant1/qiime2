@@ -814,7 +814,7 @@ class TestMethod(unittest.TestCase):
                     'random_seed': Int
                 },
                 outputs=[('seed', SingleInt)],
-                name='Sets a ',
+                name='Sets a bad default CaptureHolder value',
                 description='Sets a bad value for the default. '
                             'This will always raise an error on registration'
             )

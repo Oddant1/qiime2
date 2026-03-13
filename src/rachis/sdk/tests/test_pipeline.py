@@ -355,6 +355,75 @@ class TestPipeline(unittest.TestCase):
 
         self.assertTrue(True)
 
+    def test_annotations_mixed(self):
+        def mixed_annotations(
+                ctx, annotated: int, unannotated
+            ) -> tuple[rachis.Artifact]:
+            raise ValueError(
+                "I should never run. I should never even pass registration"
+            )
+
+        with self.assertRaisesRegex(
+                    TypeError,
+                    "Pipelines must have annotations for all inputs,"
+                    " parameters, and outputs or no annotations."
+                ):
+            self.plugin.pipelines.register_function(
+                function=mixed_annotations,
+                inputs={},
+                parameters={
+                    'annotated': Int,
+                    'unannotated': Int
+                },
+                outputs=[('out1', SingleInt)],
+                name='Mixes annotated and unannotated.',
+                description=''
+            )
+
+    def test_annotations_bad_input(self):
+        def bad_input_annotation(
+                    ctx, is_artifact: int, is_int: rachis.Artifact
+                ) -> tuple[rachis.Artifact]:
+            raise ValueError(
+                "I should never run. I should never even pass registration"
+            )
+
+        with self.assertRaisesRegex(TypeError, ".*is_artifact.*int.*"):
+            self.plugin.pipelines.register_function(
+                function=bad_input_annotation,
+                inputs={
+                    'is_artifact': SingleInt,
+                },
+                parameters={
+                    'is_int': Int,
+                },
+                outputs=[('out1', SingleInt)],
+                name='Sets a bad view type on the input.',
+                description='Sets a bad view type on the input.'
+            )
+
+    def test_annotations_bad_output(self):
+        def bad_output_annotation(
+                    ctx, is_artifact: rachis.Artifact, is_int: rachis.Artifact
+                ) -> tuple[int]:
+            raise ValueError(
+                "I should never run. I should never even pass registration"
+            )
+
+        with self.assertRaisesRegex(TypeError, ".*out1.*int.*"):
+            self.plugin.pipelines.register_function(
+                function=bad_output_annotation,
+                inputs={
+                    'is_artifact': SingleInt,
+                },
+                parameters={
+                    'is_int': Int,
+                },
+                outputs=[('out1', SingleInt)],
+                name='Sets a bad view type on the output.',
+                description='Sets a bad view type on the output.'
+            )
+
     def test_failing_from_arity(self):
         for call in self.iter_callables('failing_pipeline'):
             with self.assertRaisesRegex(TypeError, 'match number.*3.*1'):
