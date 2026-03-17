@@ -164,11 +164,11 @@ class TestMethod(unittest.TestCase):
         merge_mappings = self.plugin.methods['merge_mappings']
 
         concatenate_exp = {
-            'int2': Int, 'ints2': IntSequence1, 'return': (IntSequence1,),
+            'int2': Int, 'ints2': IntSequence1, 'return': tuple[IntSequence1],
             'int1': Int, 'ints3': IntSequence2,
             'ints1': IntSequence1 | IntSequence2}
         merge_exp = {
-            'mapping2': Mapping, 'mapping1': Mapping, 'return': (Mapping,)}
+            'mapping2': Mapping, 'mapping1': Mapping, 'return': tuple[Mapping]}
 
         mapper = {
             concatenate_ints: concatenate_exp,
@@ -184,11 +184,11 @@ class TestMethod(unittest.TestCase):
         merge_mappings = self.plugin.methods['merge_mappings']
 
         concatenate_exp = {
-            'int2': Int, 'ints2': IntSequence1, 'return': (IntSequence1,),
+            'int2': Int, 'ints2': IntSequence1, 'return': tuple[IntSequence1],
             'int1': Int, 'ints3': IntSequence2,
             'ints1': IntSequence1 | IntSequence2}
         merge_exp = {
-            'mapping2': Mapping, 'mapping1': Mapping, 'return': (Mapping,)}
+            'mapping2': Mapping, 'mapping1': Mapping, 'return': tuple[Mapping]}
 
         mapper = {
             concatenate_ints: concatenate_exp,

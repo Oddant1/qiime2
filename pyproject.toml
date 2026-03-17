@@ -11,7 +11,6 @@ requires-python=">=3.10"
 dependencies = [
     "appdirs>=1.4.4,<2.0.0",
     "bibtexparser>=1.4.3,<2.0.0",
-    "decorator~=4.4.2",
     "dill>=0.4.0,<0.5.0",
     "flufl-lock>=9.0.0,<10.0.0",
     "networkx>=3.1,<4.0.0",
@@ -37,11 +36,6 @@ Repository = "https://github.com/qiime2/qiime2"
 
 [project.entry-points.'rachis.usage_drivers']
 "python3" = "rachis.core.archive.provenance_lib:ReplayPythonUsage"
-
-[project.optional-dependencies]
-jupyter = [
-    "notebook>=6.5.7,<7.0",
-]
 
 [dependency-groups]
 dev = [
