@@ -351,15 +351,15 @@ class PipelineSignature:
         VALID_INPUT_ANNOTATIONS = (
             rachis.sdk.Artifact,
             list[rachis.sdk.Artifact],
-            dict[str: rachis.sdk.Artifact]
+            dict[str, rachis.sdk.Artifact]
         )
         VALID_OUTPUT_ANNOTATIONS = (
             rachis.sdk.Artifact,
             list[rachis.sdk.Artifact],
-            dict[str: rachis.sdk.Artifact],
+            dict[str, rachis.sdk.Artifact],
             rachis.sdk.Visualization,
             list[rachis.sdk.Visualization],
-            dict[str: rachis.sdk.Visualization]
+            dict[str, rachis.sdk.Visualization]
         )
 
         if annotated:

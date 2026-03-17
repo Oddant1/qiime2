@@ -361,11 +361,11 @@ class TestPipeline(unittest.TestCase):
                     ctx,
                     is_art: rachis.Artifact,
                     is_list: list[rachis.Artifact],
-                    is_dict: dict[str: rachis.Artifact],
+                    is_dict: dict[str, rachis.Artifact],
                 ) -> tuple[rachis.Artifact, list[rachis.Artifact],
-                           dict[str: rachis.Artifact], rachis.Visualization,
+                           dict[str, rachis.Artifact], rachis.Visualization,
                            list[rachis.Visualization],
-                           dict[str: rachis.Visualization]]:
+                           dict[str, rachis.Visualization]]:
             pass
 
         self.plugin.pipelines.register_function(
