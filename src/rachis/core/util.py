@@ -23,8 +23,6 @@ import shutil
 import subprocess
 import typing
 
-import decorator
-
 READ_ONLY_FILE = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
 READ_ONLY_DIR = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH | stat.S_IRUSR \
     | stat.S_IRGRP | stat.S_IROTH
@@ -323,22 +321,6 @@ class LateBindingAttribute:
         for attr in attrs:
             curr_attr = getattr(curr_attr, attr)
         return staticmethod(curr_attr).__get__(obj, cls)
-
-
-# Removes the first parameter from a callable's signature.
-class DropFirstParameter(decorator.FunctionMaker):
-    @classmethod
-    def from_function(cls, function):
-        return cls.create(function, "return None", {})
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.signature = self._remove_first_arg(self.signature)
-        self.shortsignature = self._remove_first_arg(self.shortsignature)
-
-    def _remove_first_arg(self, string):
-        return ",".join(string.split(',')[1:])[1:]
-
 
 def _immutable_error(obj, *args):
     raise TypeError('%s is immutable.' % obj.__class__.__name__)

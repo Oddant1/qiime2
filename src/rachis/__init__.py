@@ -30,8 +30,3 @@ __all__ = ['Artifact', 'Visualization', 'ResultCollection', 'Metadata',
            'MetadataColumn', 'CategoricalMetadataColumn',
            'NumericMetadataColumn', 'Cache', 'Pool', 'get_cache', 'Note',
            'util']
-
-
-# Used by `jupyter serverextension enable`
-def _jupyter_server_extension_paths():
-    return [{"module": "rachis.jupyter"}]
