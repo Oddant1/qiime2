@@ -15,8 +15,9 @@ import rachis
 import rachis.sdk
 from rachis.core.testing.util import get_dummy_plugin
 from rachis.core.testing.type import IntSequence1, SingleInt, Mapping
-from rachis.plugin import Visualization, Int, Bool
+from rachis.plugin import  Visualization, Int, Bool
 import rachis.sdk.parallel_config
+from rachis.plugin import List, Collection
 
 
 class TestPipeline(unittest.TestCase):
@@ -355,10 +356,90 @@ class TestPipeline(unittest.TestCase):
 
         self.assertTrue(True)
 
+    def test_annotations_correct(self):
+        def annotations(
+                    ctx,
+                    is_art: rachis.Artifact,
+                    is_list: list[rachis.Artifact],
+                    is_dict: dict[str: rachis.Artifact],
+                ) -> tuple[rachis.Artifact, list[rachis.Artifact],
+                           dict[str: rachis.Artifact], rachis.Visualization,
+                           list[rachis.Visualization],
+                           dict[str: rachis.Visualization]]:
+            pass
+
+        self.plugin.pipelines.register_function(
+            function=annotations,
+            inputs={
+                'is_art': SingleInt,
+                'is_list': List[SingleInt],
+                'is_dict': Collection[SingleInt]
+            },
+            parameters={},
+            outputs=[
+                ('out1', SingleInt),
+                ('out2', Collection[SingleInt]),
+                ('out3', Collection[SingleInt]),
+                ('out4', Visualization),
+                ('out5', Collection[Visualization]),
+                ('out6', Collection[Visualization])
+            ],
+            name='Uses only collection types.',
+            description='Uses only collection types.'
+        )
+
+    def test_annotations_collections_bad_dict_input(self):
+        def annotations_collections_bad_dict_input(
+                    ctx,
+                    is_dict: dict[rachis.Artifact]
+                ) -> tuple[list[rachis.Artifact]]:
+            raise ValueError(
+                "I should never run. I should never even pass registration"
+            )
+
+        with self.assertRaisesRegex(
+                TypeError, r'.*is_dict.*dict\[rachis.sdk.result.Artifact\].*'):
+            self.plugin.pipelines.register_function(
+                function=annotations_collections_bad_dict_input,
+                inputs={
+                    'is_dict': Collection[SingleInt]
+                },
+                parameters={},
+                outputs=[
+                    ('out1', Collection[SingleInt]),
+                ],
+                name='Uses input dict with only one type.',
+                description='Uses input dict with only one type.'
+            )
+
+    def test_annotations_collections_bad_dict_output(self):
+        def annotations_collections_bad_dict_output(
+                    ctx,
+                    is_list: list[rachis.Artifact]
+                ) -> tuple[dict[rachis.Artifact]]:
+            raise ValueError(
+                "I should never run. I should never even pass registration"
+            )
+
+        with self.assertRaisesRegex(
+                TypeError, r'.*out1.*dict\[rachis.sdk.result.Artifact\].*'):
+            self.plugin.pipelines.register_function(
+                function=annotations_collections_bad_dict_output,
+                inputs={
+                    'is_list': List[SingleInt],
+                },
+                parameters={},
+                outputs=[
+                    ('out1', Collection[SingleInt])
+                ],
+                name='Uses output dict with only one type.',
+                description='Uses output dict with only one type.'
+            )
+
     def test_annotations_mixed(self):
         def mixed_annotations(
-                ctx, annotated: int, unannotated
-            ) -> tuple[rachis.Artifact]:
+                    ctx, annotated: int, unannotated
+                ) -> tuple[rachis.Artifact]:
             raise ValueError(
                 "I should never run. I should never even pass registration"
             )
