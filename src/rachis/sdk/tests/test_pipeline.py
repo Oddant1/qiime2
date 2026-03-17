@@ -359,6 +359,7 @@ class TestPipeline(unittest.TestCase):
     def test_annotations_correct(self):
         def annotations(
                     ctx,
+                    is_int: int,
                     is_art: rachis.Artifact,
                     is_list: list[rachis.Artifact],
                     is_dict: dict[str, rachis.Artifact],
@@ -375,7 +376,9 @@ class TestPipeline(unittest.TestCase):
                 'is_list': List[SingleInt],
                 'is_dict': Collection[SingleInt]
             },
-            parameters={},
+            parameters={
+                'is_int': Int,
+            },
             outputs=[
                 ('out1', SingleInt),
                 ('out2', Collection[SingleInt]),
@@ -387,6 +390,11 @@ class TestPipeline(unittest.TestCase):
             name='Uses only collection types.',
             description='Uses only collection types.'
         )
+
+        # The entire test with this pipeline is that it registered at all. We
+        # Don't care about calling it. Unregister it here so funny things don't
+        # happend when we audit what is registered to the dummy_plugin
+        self.plugin.pipelines.pop('annotations')
 
     def test_annotations_collections_bad_dict_input(self):
         def annotations_collections_bad_dict_input(
