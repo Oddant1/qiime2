@@ -369,17 +369,17 @@ class TestPipeline(unittest.TestCase):
                            dict[str, rachis.Visualization]]:
             pass
 
-        self.plugin.pipelines.register_function(
-            function=annotations,
-            inputs={
+        rachis.sdk.Pipeline._init(
+            annotations,
+            {
                 'is_art': SingleInt,
                 'is_list': List[SingleInt],
                 'is_dict': Collection[SingleInt]
             },
-            parameters={
+            {
                 'is_int': Int,
             },
-            outputs=[
+            [
                 ('out1', SingleInt),
                 ('out2', Collection[SingleInt]),
                 ('out3', Collection[SingleInt]),
@@ -387,14 +387,17 @@ class TestPipeline(unittest.TestCase):
                 ('out5', Collection[Visualization]),
                 ('out6', Collection[Visualization])
             ],
-            name='Uses only collection types.',
-            description='Uses only collection types.'
+            'dummy_plugin',
+            'Uses only collection types.',
+            'Uses only collection types.',
+            None,
+            None,
+            None,
+            None,
+            False,
+            False,
+            None
         )
-
-        # The entire test with this pipeline is that it registered at all. We
-        # Don't care about calling it. Unregister it here so funny things don't
-        # happend when we audit what is registered to the dummy_plugin
-        self.plugin.pipelines.pop('annotations')
 
     def test_annotations_collections_bad_dict_input(self):
         def annotations_collections_bad_dict_input(
@@ -407,17 +410,25 @@ class TestPipeline(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 TypeError, r'.*is_dict.*dict\[rachis.sdk.result.Artifact\].*'):
-            self.plugin.pipelines.register_function(
-                function=annotations_collections_bad_dict_input,
-                inputs={
+            rachis.sdk.Pipeline._init(
+                annotations_collections_bad_dict_input,
+                {
                     'is_dict': Collection[SingleInt]
                 },
-                parameters={},
-                outputs=[
+                {},
+                [
                     ('out1', Collection[SingleInt]),
                 ],
-                name='Uses input dict with only one type.',
-                description='Uses input dict with only one type.'
+                'dummy_plugin',
+                'Uses input dict with only one type.',
+                'Uses input dict with only one type.',
+                None,
+                None,
+                None,
+                None,
+                False,
+                False,
+                None
             )
 
     def test_annotations_collections_bad_dict_output(self):
@@ -431,17 +442,25 @@ class TestPipeline(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 TypeError, r'.*out1.*dict\[rachis.sdk.result.Artifact\].*'):
-            self.plugin.pipelines.register_function(
-                function=annotations_collections_bad_dict_output,
-                inputs={
+            rachis.sdk.Pipeline._init(
+                annotations_collections_bad_dict_output,
+                {
                     'is_list': List[SingleInt],
                 },
-                parameters={},
-                outputs=[
+                {},
+                [
                     ('out1', Collection[SingleInt])
                 ],
-                name='Uses output dict with only one type.',
-                description='Uses output dict with only one type.'
+                'dummy_plugin',
+                'Uses output dict with only one type.',
+                'Uses output dict with only one type.',
+                None,
+                None,
+                None,
+                None,
+                False,
+                False,
+                None
             )
 
     def test_annotations_mixed(self):
@@ -457,16 +476,24 @@ class TestPipeline(unittest.TestCase):
                     "Pipelines must have annotations for all inputs,"
                     " parameters, and outputs or no annotations."
                 ):
-            self.plugin.pipelines.register_function(
-                function=mixed_annotations,
-                inputs={},
-                parameters={
+            rachis.sdk.Pipeline._init(
+                mixed_annotations,
+                {},
+                {
                     'annotated': Int,
                     'unannotated': Int
                 },
-                outputs=[('out1', SingleInt)],
-                name='Mixes annotated and unannotated.',
-                description=''
+                [('out1', SingleInt)],
+                'dummy_plugin',
+                'Mixes annotated and unannotated.',
+                'Mixes annotated and unannotated.',
+                None,
+                None,
+                None,
+                None,
+                False,
+                False,
+                None
             )
 
     def test_annotations_bad_input(self):
@@ -478,17 +505,25 @@ class TestPipeline(unittest.TestCase):
             )
 
         with self.assertRaisesRegex(TypeError, ".*is_artifact.*int.*"):
-            self.plugin.pipelines.register_function(
-                function=bad_input_annotation,
-                inputs={
+            rachis.sdk.Pipeline._init(
+                bad_input_annotation,
+                {
                     'is_artifact': SingleInt,
                 },
-                parameters={
+                {
                     'is_int': Int,
                 },
-                outputs=[('out1', SingleInt)],
-                name='Sets a bad view type on the input.',
-                description='Sets a bad view type on the input.'
+                [('out1', SingleInt)],
+                'dummy_plugin',
+                'Sets a bad view type on the input.',
+                'Sets a bad view type on the input.',
+                None,
+                None,
+                None,
+                None,
+                False,
+                False,
+                None
             )
 
     def test_annotations_bad_output(self):
