@@ -15,7 +15,7 @@ import rachis
 import rachis.sdk
 from rachis.core.testing.util import get_dummy_plugin
 from rachis.core.testing.type import IntSequence1, SingleInt, Mapping
-from rachis.plugin import  Visualization, Int, Bool
+from rachis.plugin import Visualization, Int, Bool
 import rachis.sdk.parallel_config
 from rachis.plugin import List, Collection
 
