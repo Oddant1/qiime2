@@ -369,8 +369,8 @@ class TestPipeline(unittest.TestCase):
                            dict[str, rachis.Visualization]]:
             pass
 
-        rachis.sdk.Pipeline._init(
-            callable,annotations,
+        rachis.core.type.PipelineSignature(
+            callable=annotations,
             inputs={
                 'is_art': SingleInt,
                 'is_list': List[SingleInt],
@@ -387,16 +387,9 @@ class TestPipeline(unittest.TestCase):
                 ('out5', Collection[Visualization]),
                 ('out6', Collection[Visualization])
             ],
-            plugin_id='dummy_plugin',
-            name='Uses only collection types.',
-            description='Uses only collection types.',
             input_descriptions=None,
             parameter_descriptions=None,
             output_descriptions=None,
-            citations=None,
-            deprecated=False,
-            migrated=False,
-            examples=None
         )
 
     def test_annotations_collections_bad_dict_input(self):
@@ -410,7 +403,7 @@ class TestPipeline(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 TypeError, r'.*is_dict.*dict\[rachis.sdk.result.Artifact\].*'):
-            rachis.sdk.Pipeline._init(
+            rachis.core.type.PipelineSignature(
                 callable=annotations_collections_bad_dict_input,
                 inputs={
                     'is_dict': Collection[SingleInt]
@@ -419,16 +412,9 @@ class TestPipeline(unittest.TestCase):
                 outputs=[
                     ('out1', Collection[SingleInt]),
                 ],
-                plugin_id='dummy_plugin',
-                name='Uses input dict with only one type.',
-                description='Uses input dict with only one type.',
                 input_descriptions=None,
                 parameter_descriptions=None,
-                output_descriptions=None,
-                citations=None,
-                deprecated=False,
-                migrated=False,
-                examples=None
+                output_descriptions=None
             )
 
     def test_annotations_collections_bad_dict_output(self):
@@ -442,7 +428,7 @@ class TestPipeline(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 TypeError, r'.*out1.*dict\[rachis.sdk.result.Artifact\].*'):
-            rachis.sdk.Pipeline._init(
+            rachis.core.type.PipelineSignature(
                 callable=annotations_collections_bad_dict_output,
                 inputs={
                     'is_list': List[SingleInt],
@@ -451,16 +437,9 @@ class TestPipeline(unittest.TestCase):
                 outputs=[
                     ('out1', Collection[SingleInt])
                 ],
-                plugin_id='dummy_plugin',
-                name='Uses output dict with only one type.',
-                description='Uses output dict with only one type.',
                 input_descriptions=None,
                 parameter_descriptions=None,
-                output_descriptions=None,
-                citations=None,
-                deprecated=False,
-                migrated=False,
-                examples=None
+                output_descriptions=None
             )
 
     def test_annotations_mixed(self):
@@ -476,7 +455,7 @@ class TestPipeline(unittest.TestCase):
                     "Pipelines must have annotations for all inputs,"
                     " parameters, and outputs or no annotations."
                 ):
-            rachis.sdk.Pipeline._init(
+            rachis.core.type.PipelineSignature(
                 callable=mixed_annotations,
                 inputs={},
                 parameters={
@@ -484,16 +463,9 @@ class TestPipeline(unittest.TestCase):
                     'unannotated': Int
                 },
                 outputs=[('out1', SingleInt)],
-                plugin_id='dummy_plugin',
-                name='Mixes annotated and unannotated.',
-                description='Mixes annotated and unannotated.',
                 input_descriptions=None,
                 parameter_descriptions=None,
-                output_descriptions=None,
-                citations=None,
-                deprecated=False,
-                migrated=False,
-                examples=None
+                output_descriptions=None
             )
 
     def test_annotations_bad_input(self):
@@ -505,7 +477,7 @@ class TestPipeline(unittest.TestCase):
             )
 
         with self.assertRaisesRegex(TypeError, ".*is_artifact.*int.*"):
-            rachis.sdk.Pipeline._init(
+            rachis.core.type.PipelineSignature(
                 callable=bad_input_annotation,
                 inputs={
                     'is_artifact': SingleInt,
@@ -514,16 +486,9 @@ class TestPipeline(unittest.TestCase):
                     'is_int': Int,
                 },
                 outputs=[('out1', SingleInt)],
-                plugin_id='dummy_plugin',
-                name='Sets a bad view type on the input.',
-                description='Sets a bad view type on the input.',
                 input_descriptions=None,
                 parameter_descriptions=None,
-                output_descriptions=None,
-                citations=None,
-                deprecated=False,
-                migrated=False,
-                examples=None
+                output_descriptions=None
             )
 
     def test_annotations_bad_output(self):
@@ -535,8 +500,8 @@ class TestPipeline(unittest.TestCase):
             )
 
         with self.assertRaisesRegex(TypeError, ".*out1.*int.*"):
-            rachis.sdk.Pipeline._init(
-                callable==bad_output_annotation,
+            rachis.core.type.PipelineSignature(
+                callable=bad_output_annotation,
                 inputs={
                     'is_artifact': SingleInt,
                 },
@@ -544,16 +509,9 @@ class TestPipeline(unittest.TestCase):
                     'is_int': Int,
                 },
                 outputs=[('out1', SingleInt)],
-                plugin_id='dummy_plugin',
-                name='Sets a bad view type on the output.',
-                description='Sets a bad view type on the output.',
                 input_descriptions=None,
                 parameter_descriptions=None,
-                output_descriptions=None,
-                citations=None,
-                deprecated=False,
-                migrated=False,
-                examples=None
+                output_descriptions=None
             )
 
     def test_failing_from_arity(self):
