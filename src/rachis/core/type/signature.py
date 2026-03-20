@@ -111,7 +111,6 @@ class PipelineSignature:
             Parameter name to description string.
         output_descriptions : dict, optional
             Output name to description string.
-
         """
         # update type of outputs if needed
         if type(outputs) is list:
@@ -367,15 +366,15 @@ class PipelineSignature:
         VALID_INPUT_ANNOTATIONS = (
             rachis.sdk.Artifact,
             list[rachis.sdk.Artifact],
-            dict[rachis.sdk.Artifact]
+            dict[str, rachis.sdk.Artifact]
         )
         VALID_OUTPUT_ANNOTATIONS = (
             rachis.sdk.Artifact,
             list[rachis.sdk.Artifact],
-            dict[rachis.sdk.Artifact],
+            dict[str, rachis.sdk.Artifact],
             rachis.sdk.Visualization,
             list[rachis.sdk.Visualization],
-            dict[rachis.sdk.Visualization]
+            dict[str, rachis.sdk.Visualization]
         )
 
         if annotated:

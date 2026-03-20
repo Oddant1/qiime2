@@ -17,6 +17,7 @@ from rachis.core.testing.util import get_dummy_plugin
 from rachis.core.testing.type import IntSequence1, SingleInt, Mapping
 from rachis.plugin import Visualization, Int, Bool
 import rachis.sdk.parallel_config
+from rachis.plugin import List, Collection
 
 
 class TestPipeline(unittest.TestCase):
@@ -355,10 +356,96 @@ class TestPipeline(unittest.TestCase):
 
         self.assertTrue(True)
 
+    def test_annotations_correct(self):
+        def annotations(
+                    ctx,
+                    is_int: int,
+                    is_art: rachis.Artifact,
+                    is_list: list[rachis.Artifact],
+                    is_dict: dict[str, rachis.Artifact],
+                ) -> tuple[rachis.Artifact, list[rachis.Artifact],
+                           dict[str, rachis.Artifact], rachis.Visualization,
+                           list[rachis.Visualization],
+                           dict[str, rachis.Visualization]]:
+            pass
+
+        rachis.core.type.PipelineSignature(
+            callable=annotations,
+            inputs={
+                'is_art': SingleInt,
+                'is_list': List[SingleInt],
+                'is_dict': Collection[SingleInt]
+            },
+            parameters={
+                'is_int': Int,
+            },
+            outputs=[
+                ('out1', SingleInt),
+                ('out2', Collection[SingleInt]),
+                ('out3', Collection[SingleInt]),
+                ('out4', Visualization),
+                ('out5', Collection[Visualization]),
+                ('out6', Collection[Visualization])
+            ],
+            input_descriptions=None,
+            parameter_descriptions=None,
+            output_descriptions=None,
+        )
+
+    def test_annotations_collections_bad_dict_input(self):
+        def annotations_collections_bad_dict_input(
+                    ctx,
+                    is_dict: dict[rachis.Artifact]
+                ) -> tuple[list[rachis.Artifact]]:
+            raise ValueError(
+                "I should never run. I should never even pass registration"
+            )
+
+        with self.assertRaisesRegex(
+                TypeError, r'.*is_dict.*dict\[rachis.sdk.result.Artifact\].*'):
+            rachis.core.type.PipelineSignature(
+                callable=annotations_collections_bad_dict_input,
+                inputs={
+                    'is_dict': Collection[SingleInt]
+                },
+                parameters={},
+                outputs=[
+                    ('out1', Collection[SingleInt]),
+                ],
+                input_descriptions=None,
+                parameter_descriptions=None,
+                output_descriptions=None
+            )
+
+    def test_annotations_collections_bad_dict_output(self):
+        def annotations_collections_bad_dict_output(
+                    ctx,
+                    is_list: list[rachis.Artifact]
+                ) -> tuple[dict[rachis.Artifact]]:
+            raise ValueError(
+                "I should never run. I should never even pass registration"
+            )
+
+        with self.assertRaisesRegex(
+                TypeError, r'.*out1.*dict\[rachis.sdk.result.Artifact\].*'):
+            rachis.core.type.PipelineSignature(
+                callable=annotations_collections_bad_dict_output,
+                inputs={
+                    'is_list': List[SingleInt],
+                },
+                parameters={},
+                outputs=[
+                    ('out1', Collection[SingleInt])
+                ],
+                input_descriptions=None,
+                parameter_descriptions=None,
+                output_descriptions=None
+            )
+
     def test_annotations_mixed(self):
         def mixed_annotations(
-                ctx, annotated: int, unannotated
-            ) -> tuple[rachis.Artifact]:
+                    ctx, annotated: int, unannotated
+                ) -> tuple[rachis.Artifact]:
             raise ValueError(
                 "I should never run. I should never even pass registration"
             )
@@ -368,16 +455,17 @@ class TestPipeline(unittest.TestCase):
                     "Pipelines must have annotations for all inputs,"
                     " parameters, and outputs or no annotations."
                 ):
-            self.plugin.pipelines.register_function(
-                function=mixed_annotations,
+            rachis.core.type.PipelineSignature(
+                callable=mixed_annotations,
                 inputs={},
                 parameters={
                     'annotated': Int,
                     'unannotated': Int
                 },
                 outputs=[('out1', SingleInt)],
-                name='Mixes annotated and unannotated.',
-                description=''
+                input_descriptions=None,
+                parameter_descriptions=None,
+                output_descriptions=None
             )
 
     def test_annotations_bad_input(self):
@@ -389,8 +477,8 @@ class TestPipeline(unittest.TestCase):
             )
 
         with self.assertRaisesRegex(TypeError, ".*is_artifact.*int.*"):
-            self.plugin.pipelines.register_function(
-                function=bad_input_annotation,
+            rachis.core.type.PipelineSignature(
+                callable=bad_input_annotation,
                 inputs={
                     'is_artifact': SingleInt,
                 },
@@ -398,8 +486,9 @@ class TestPipeline(unittest.TestCase):
                     'is_int': Int,
                 },
                 outputs=[('out1', SingleInt)],
-                name='Sets a bad view type on the input.',
-                description='Sets a bad view type on the input.'
+                input_descriptions=None,
+                parameter_descriptions=None,
+                output_descriptions=None
             )
 
     def test_annotations_bad_output(self):
@@ -411,8 +500,8 @@ class TestPipeline(unittest.TestCase):
             )
 
         with self.assertRaisesRegex(TypeError, ".*out1.*int.*"):
-            self.plugin.pipelines.register_function(
-                function=bad_output_annotation,
+            rachis.core.type.PipelineSignature(
+                callable=bad_output_annotation,
                 inputs={
                     'is_artifact': SingleInt,
                 },
@@ -420,8 +509,9 @@ class TestPipeline(unittest.TestCase):
                     'is_int': Int,
                 },
                 outputs=[('out1', SingleInt)],
-                name='Sets a bad view type on the output.',
-                description='Sets a bad view type on the output.'
+                input_descriptions=None,
+                parameter_descriptions=None,
+                output_descriptions=None
             )
 
     def test_failing_from_arity(self):
