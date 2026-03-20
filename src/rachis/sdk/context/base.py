@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------------
 import warnings
 
+from rachis.plugin import IContext
 from rachis.core.type.util import is_collection_type
 from rachis.core.type import HashableInvocation
 from rachis.core.cache import get_cache
@@ -28,7 +29,7 @@ def _validate_collection(collection_order):
     return True
 
 
-class Context:
+class Context(IContext):
     def __init__(self, action_obj=None, parent=None):
         if parent is not None:
             self.cache = parent.cache
