@@ -369,7 +369,7 @@ class PipelineSignature:
         TypeError
             If a view type annotation on an input or an output is invalid.
         """
-        self.annotated = self._assert_all_annotated_or_unannotated(
+        annotated = self._assert_all_annotated_or_unannotated(
             ctx, inputs, parameters, outputs
         )
 
@@ -391,7 +391,7 @@ class PipelineSignature:
             dict[str, rachis.sdk.Visualization]
         )
 
-        if self.annotated:
+        if annotated:
             if ctx.view_type not in VALID_CTX_ANNOTATIONS:
                 raise TypeError(
                     f'Context has the view type {ctx.view_type}. Valid view'
