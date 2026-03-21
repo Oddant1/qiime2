@@ -442,13 +442,12 @@ class PipelineSignature:
         TypeError
             If there is a mix of annotated and unannotated
         """
-        annotated = False
-
-        all_specs = itertools.chain(
-            (ctx,), inputs.values(), parameters.values(), outputs.values()
+        all_specs = (
+            ctx, *inputs.values(), *parameters.values(), *outputs.values()
         )
-        if any(spec.has_view_type() for spec in all_specs) and not \
-                (annotated := all(spec.has_view_type() for spec in all_specs)):
+        annotated = all(spec.has_view_type() for spec in all_specs)
+
+        if any(spec.has_view_type() for spec in all_specs) and not annotated:
             raise TypeError(
                 "Pipelines must have annotations for the context, all inputs,"
                 " parameters, and outputs or no annotations."
