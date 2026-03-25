@@ -27,6 +27,11 @@ from ..util import ImmutableBase, checksum, create_collection_name
 from rachis.plugin.context import IContext
 
 
+VALID_CTX_ANNOTATIONS = (
+    IContext,
+)
+
+
 class __NoValueMeta(type):
     def __repr__(self):
         return "NOVALUE"
@@ -121,7 +126,12 @@ class PipelineSignature:
                              " to define the outputs, as the order is random."
                              % callable.__name__)
 
-        ctx, inputs, parameters, outputs, signature_order = \
+        # This is only relevant for PipelineSignatures which may or may not be
+        # annotated. This will be set in parse_signature based on whether the
+        # ctx is annotated or not.
+        self.annotated = False
+
+        inputs, parameters, outputs, signature_order = \
             self._parse_signature(callable, inputs, parameters, outputs,
                                   input_descriptions, parameter_descriptions,
                                   output_descriptions)
@@ -129,7 +139,7 @@ class PipelineSignature:
         self._assert_valid_inputs(inputs)
         self._assert_valid_parameters(parameters)
         self._assert_valid_outputs(outputs)
-        self._assert_valid_views(ctx, inputs, parameters, outputs)
+        self._assert_valid_views(inputs, parameters, outputs)
         self.inputs = inputs
         self.parameters = parameters
         self.outputs = outputs
@@ -147,7 +157,6 @@ class PipelineSignature:
             output_descriptions = {}
 
         # Copy so we can "exhaust" the collections and check for missing params
-        ctx = None
         inputs = copy.copy(inputs)
         parameters = copy.copy(parameters)
         input_descriptions = copy.copy(input_descriptions)
@@ -171,13 +180,22 @@ class PipelineSignature:
                     raise TypeError("Missing builtin argument %r, got %r" %
                                     (builtin_args[0], name))
                 if name == 'ctx':
-                    view_type = ParameterSpec.NOVALUE
+                    # The ctx special argument to pipelines may be annotated
+                    # just like all the real inputs/parameters to pipelines. We
+                    # handle this here to avoid shuttling the ctx around as if
+                    # it were an input/parameter
                     if parameter.annotation is not parameter.empty:
-                        view_type = parameter.annotation
-                    ctx = ParameterSpec(
-                        qiime_type=IContext, view_type=view_type,
-                        default=None,
-                        description='The execution context for the Pipeline.')
+                        if parameter.annotation not in VALID_CTX_ANNOTATIONS:
+                            raise TypeError(
+                                'Context has the view type'
+                                f'{parameter.annotation}. Valid view types for'
+                                f' Context are {VALID_CTX_ANNOTATIONS}.'
+                            )
+
+                        # If the ctx is annotated everything else must be as
+                        # well
+                        self.annotated = True
+
                 builtin_args = builtin_args[1:]
                 continue
 
@@ -243,7 +261,7 @@ class PipelineSignature:
                                       *parameter_descriptions,
                                       *output_descriptions])
 
-        return (ctx, annotated_inputs, annotated_parameters, annotated_outputs,
+        return (annotated_inputs, annotated_parameters, annotated_outputs,
                 signature_order)
 
     def collate_inputs(self, *args, **kwargs):
@@ -349,7 +367,7 @@ class PipelineSignature:
                     raise TypeError("An input variable has been associated"
                                     " with an input type: %r")
 
-    def _assert_valid_views(self, ctx, inputs, parameters, outputs):
+    def _assert_valid_views(self, inputs, parameters, outputs):
         """
         Assert that the view type annotations on a Pipeline, if they are
         present, are valid. Inputs and outputs must be some form of Result.
@@ -369,12 +387,8 @@ class PipelineSignature:
         TypeError
             If a view type annotation on an input or an output is invalid.
         """
-        annotated = self._assert_all_annotated_or_unannotated(
-            ctx, inputs, parameters, outputs
-        )
-
-        VALID_CTX_ANNOTATIONS = (
-            IContext,
+        self._assert_all_annotated_or_unannotated(
+            inputs, parameters, outputs
         )
 
         VALID_INPUT_ANNOTATIONS = (
@@ -391,13 +405,7 @@ class PipelineSignature:
             dict[str, rachis.sdk.Visualization]
         )
 
-        if annotated:
-            if ctx.view_type not in VALID_CTX_ANNOTATIONS:
-                raise TypeError(
-                    f'Context has the view type {ctx.view_type}. Valid view'
-                    f' types for Context are {VALID_CTX_ANNOTATIONS}.'
-                )
-
+        if self.annotated:
             for name, spec in inputs.items():
                 if spec.view_type not in VALID_INPUT_ANNOTATIONS:
                     raise TypeError(
@@ -415,7 +423,7 @@ class PipelineSignature:
                     )
 
     def _assert_all_annotated_or_unannotated(
-            self, ctx, inputs, parameters, outputs
+            self, inputs, parameters, outputs
         ):
         """
         Asserts that we don't have a mix of annotated and unannotated inputs,
@@ -423,8 +431,6 @@ class PipelineSignature:
 
         Parameters
         ----------
-        ctx : ParameterSpec
-            The Context for the Pipeline execution
         inputs : Dict[string : ParameterSpec]
             The inputs to the Pipeline
         parameters : Dict[string : ParameterSpec]
@@ -442,18 +448,17 @@ class PipelineSignature:
         TypeError
             If there is a mix of annotated and unannotated
         """
-        all_specs = (
-            ctx, *inputs.values(), *parameters.values(), *outputs.values()
-        )
-        annotated = all(spec.has_view_type() for spec in all_specs)
+        all_specs = [
+            spec.has_view_type() for spec in
+            (*inputs.values(), *parameters.values(), *outputs.values())
+        ]
 
-        if any(spec.has_view_type() for spec in all_specs) and not annotated:
+        if (not all(all_specs) and self.annotated) or \
+                (any(all_specs) and not self.annotated):
             raise TypeError(
                 "Pipelines must have annotations for the context, all inputs,"
                 " parameters, and outputs or no annotations."
             )
-
-        return annotated
 
     def coerce_user_input(self, **user_input):
         """ Coerce user inputs to be appropriate for callable
@@ -804,7 +809,7 @@ class MethodSignature(PipelineSignature):
                     "Output %r must be a semantic QIIME type, not %r" %
                     (output_name, spec.qiime_type))
 
-    def _assert_valid_views(self, ctx, inputs, parameters, outputs):
+    def _assert_valid_views(self, inputs, parameters, outputs):
         for name, spec in itertools.chain(inputs.items(),
                                           parameters.items(),
                                           outputs.items()):
@@ -833,7 +838,7 @@ class VisualizerSignature(PipelineSignature):
                 "annotation must be `None`, not %r. Write output to "
                 "`output_dir`." % output.view_type)
 
-    def _assert_valid_views(self, ctx, inputs, parameters, outputs):
+    def _assert_valid_views(self, inputs, parameters, outputs):
         for name, spec in itertools.chain(inputs.items(), parameters.items()):
             if not spec.has_view_type():
                 raise TypeError("Visualizer is missing a function annotation"
