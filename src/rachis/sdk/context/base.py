@@ -54,35 +54,6 @@ class Context(IContext):
 
         return results
 
-    def get_action(self, plugin: str, action: str):
-        """Return a function matching the callable API of an action.
-        This function is aware of the pipeline context and manages its own
-        cleanup as appropriate.
-        """
-        plugin = plugin.replace('_', '-')
-
-        pm = rachis.sdk.PluginManager()
-        try:
-            plugin_obj = pm.plugins[plugin]
-        except KeyError:
-            raise ValueError("A plugin named %r could not be found." % plugin)
-
-        try:
-            new_action_obj = plugin_obj.actions[action]
-        except KeyError:
-            raise ValueError(
-                "An action named %r was not found for plugin %r"
-                % (action, plugin))
-
-        # Create a context for the new action
-        child_context = self.__class__(new_action_obj, parent=self)
-
-        # Return a callable for the new action
-        callable_action = child_context.action_obj._rewrite_wrapper_signature(
-            child_context._callable_action_)
-        child_context.action_obj._set_wrapper_properties(callable_action)
-        return callable_action
-
     def _callable_action_(self, *args, **kwargs):
         # If we have a named_pool, we need to check for cached results that
         # we can reuse.
@@ -152,6 +123,36 @@ class Context(IContext):
 
         return rachis.sdk.Results(
             loaded_outputs.keys(), loaded_outputs.values())
+
+    def get_action(self, plugin: str, action: str):
+        """Return a function matching the callable API of an action.
+        This function is aware of the pipeline context and manages its own
+        cleanup as appropriate.
+        """
+        plugin = plugin.replace('_', '-')
+
+        pm = rachis.sdk.PluginManager()
+        try:
+            plugin_obj = pm.plugins[plugin]
+        except KeyError:
+            raise ValueError("A plugin named %r could not be found." % plugin)
+
+        try:
+            new_action_obj = plugin_obj.actions[action]
+        except KeyError:
+            raise ValueError(
+                "An action named %r was not found for plugin %r"
+                % (action, plugin))
+
+        # Create a context for the new action
+        child_context = self.__class__(new_action_obj, parent=self)
+
+        # Return a callable for the new action
+        callable_action = child_context.action_obj._rewrite_wrapper_signature(
+            child_context._callable_action_)
+        child_context.action_obj._set_wrapper_properties(callable_action)
+        return callable_action
+
 
     def make_artifact(self, type, view, view_type=None):
         """Return a new artifact from a given view.
