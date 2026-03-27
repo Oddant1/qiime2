@@ -16,6 +16,7 @@ from rachis.core.type import (SemanticType, Int, Str, Float, Metadata,
                               Range, Start, End, Choices, Bool, Set, List,
                               Collection, Visualization, TypeMap, TypeMatch,
                               Jobs, Threads, CaptureHolder)
+from .context import IContext
 
 
 __all__ = ['TextFileFormat', 'BinaryFileFormat', 'DirectoryFormat', 'Plugin',
@@ -25,7 +26,7 @@ __all__ = ['TextFileFormat', 'BinaryFileFormat', 'DirectoryFormat', 'Plugin',
            'Jobs', 'Threads', 'TypeMap', 'TypeMatch', 'ValidationError',
            'Citations', 'CitationRecord', 'get_available_cores',
            'NP_RNG_SIZE', 'set_np_random_seed', 'SingleFileDirectoryFormat',
-           'CaptureHolder']
+           'CaptureHolder', 'IContext']
 
 # IMPORTANT:
 # Autodoc cannot find a docstring unless it is defined in the same module that

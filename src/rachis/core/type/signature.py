@@ -24,6 +24,12 @@ from . import meta
 from .util import (is_semantic_type, is_collection_type, is_primitive_type,
                    parse_primitive)
 from ..util import ImmutableBase, checksum, create_collection_name
+from rachis.plugin.context import IContext
+
+
+VALID_CTX_ANNOTATIONS = (
+    IContext,
+)
 
 
 class __NoValueMeta(type):
@@ -120,6 +126,11 @@ class PipelineSignature:
                              " to define the outputs, as the order is random."
                              % callable.__name__)
 
+        # This is only relevant for PipelineSignatures which may or may not be
+        # annotated. This will be set in parse_signature based on whether the
+        # ctx is annotated or not.
+        self.annotated = False
+
         inputs, parameters, outputs, signature_order = \
             self._parse_signature(callable, inputs, parameters, outputs,
                                   input_descriptions, parameter_descriptions,
@@ -168,6 +179,23 @@ class PipelineSignature:
                 if builtin_args[0] != name:
                     raise TypeError("Missing builtin argument %r, got %r" %
                                     (builtin_args[0], name))
+                if name == 'ctx':
+                    # The ctx special argument to pipelines may be annotated
+                    # just like all the real inputs/parameters to pipelines. We
+                    # handle this here to avoid shuttling the ctx around as if
+                    # it were an input/parameter
+                    if parameter.annotation is not parameter.empty:
+                        if parameter.annotation not in VALID_CTX_ANNOTATIONS:
+                            raise TypeError(
+                                'Context has the view type'
+                                f'{parameter.annotation}. Valid view types for'
+                                f' Context are {VALID_CTX_ANNOTATIONS}.'
+                            )
+
+                        # If the ctx is annotated everything else must be as
+                        # well
+                        self.annotated = True
+
                 builtin_args = builtin_args[1:]
                 continue
 
@@ -359,7 +387,7 @@ class PipelineSignature:
         TypeError
             If a view type annotation on an input or an output is invalid.
         """
-        annotated = self._assert_all_annotated_or_unannotated(
+        self._assert_all_annotated_or_unannotated(
             inputs, parameters, outputs
         )
 
@@ -377,7 +405,7 @@ class PipelineSignature:
             dict[str, rachis.sdk.Visualization]
         )
 
-        if annotated:
+        if self.annotated:
             for name, spec in inputs.items():
                 if spec.view_type not in VALID_INPUT_ANNOTATIONS:
                     raise TypeError(
@@ -420,19 +448,17 @@ class PipelineSignature:
         TypeError
             If there is a mix of annotated and unannotated
         """
-        annotated = False
+        all_specs = [
+            spec.has_view_type() for spec in
+            (*inputs.values(), *parameters.values(), *outputs.values())
+        ]
 
-        all_specs = itertools.chain(
-            inputs.values(), parameters.values(), outputs.values()
-        )
-        if any(spec.has_view_type() for spec in all_specs) and not \
-                (annotated := all(spec.has_view_type() for spec in all_specs)):
+        if (not all(all_specs) and self.annotated) or \
+                (any(all_specs) and not self.annotated):
             raise TypeError(
-                "Pipelines must have annotations for all inputs, parameters,"
-                " and outputs or no annotations."
+                "Pipelines must have annotations for the context, all inputs,"
+                " parameters, and outputs or no annotations."
             )
-
-        return annotated
 
     def coerce_user_input(self, **user_input):
         """ Coerce user inputs to be appropriate for callable

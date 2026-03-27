@@ -17,7 +17,7 @@ from rachis.core.testing.util import get_dummy_plugin
 from rachis.core.testing.type import IntSequence1, SingleInt, Mapping
 from rachis.plugin import Visualization, Int, Bool
 import rachis.sdk.parallel_config
-from rachis.plugin import List, Collection
+from rachis.plugin import List, Collection, IContext
 
 
 class TestPipeline(unittest.TestCase):
@@ -358,7 +358,7 @@ class TestPipeline(unittest.TestCase):
 
     def test_annotations_correct(self):
         def annotations(
-                    ctx,
+                    ctx: IContext,
                     is_int: int,
                     is_art: rachis.Artifact,
                     is_list: list[rachis.Artifact],
@@ -392,9 +392,34 @@ class TestPipeline(unittest.TestCase):
             output_descriptions=None,
         )
 
+    def test_annotations_bad_context(self):
+        def annotations_collections_bad_context(
+                    ctx: rachis.Artifact,
+                    is_dict: dict[str, rachis.Artifact]
+                ) -> tuple[list[rachis.Artifact]]:
+            raise ValueError(
+                "I should never run. I should never even pass registration"
+            )
+
+        with self.assertRaisesRegex(
+                TypeError, r'.*Context.*IContext.*'):
+            rachis.core.type.PipelineSignature(
+                callable=annotations_collections_bad_context,
+                inputs={
+                    'is_dict': Collection[SingleInt]
+                },
+                parameters={},
+                outputs=[
+                    ('out1', Collection[SingleInt]),
+                ],
+                input_descriptions=None,
+                parameter_descriptions=None,
+                output_descriptions=None
+            )
+
     def test_annotations_collections_bad_dict_input(self):
         def annotations_collections_bad_dict_input(
-                    ctx,
+                    ctx: IContext,
                     is_dict: dict[rachis.Artifact]
                 ) -> tuple[list[rachis.Artifact]]:
             raise ValueError(
@@ -419,7 +444,7 @@ class TestPipeline(unittest.TestCase):
 
     def test_annotations_collections_bad_dict_output(self):
         def annotations_collections_bad_dict_output(
-                    ctx,
+                    ctx: IContext,
                     is_list: list[rachis.Artifact]
                 ) -> tuple[dict[rachis.Artifact]]:
             raise ValueError(
@@ -444,7 +469,7 @@ class TestPipeline(unittest.TestCase):
 
     def test_annotations_mixed(self):
         def mixed_annotations(
-                    ctx, annotated: int, unannotated
+                    ctx: IContext, annotated: int, unannotated
                 ) -> tuple[rachis.Artifact]:
             raise ValueError(
                 "I should never run. I should never even pass registration"
@@ -452,8 +477,8 @@ class TestPipeline(unittest.TestCase):
 
         with self.assertRaisesRegex(
                     TypeError,
-                    "Pipelines must have annotations for all inputs,"
-                    " parameters, and outputs or no annotations."
+                    "Pipelines must have annotations for the context, all"
+                    " inputs, parameters, and outputs or no annotations."
                 ):
             rachis.core.type.PipelineSignature(
                 callable=mixed_annotations,
@@ -470,7 +495,9 @@ class TestPipeline(unittest.TestCase):
 
     def test_annotations_bad_input(self):
         def bad_input_annotation(
-                    ctx, is_artifact: int, is_int: rachis.Artifact
+                    ctx: IContext,
+                    is_artifact: int,
+                    is_int: rachis.Artifact
                 ) -> tuple[rachis.Artifact]:
             raise ValueError(
                 "I should never run. I should never even pass registration"
@@ -493,7 +520,9 @@ class TestPipeline(unittest.TestCase):
 
     def test_annotations_bad_output(self):
         def bad_output_annotation(
-                    ctx, is_artifact: rachis.Artifact, is_int: rachis.Artifact
+                    ctx: IContext,
+                    is_artifact: rachis.Artifact,
+                    is_int: rachis.Artifact
                 ) -> tuple[int]:
             raise ValueError(
                 "I should never run. I should never even pass registration"
