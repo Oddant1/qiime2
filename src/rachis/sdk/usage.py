@@ -803,6 +803,10 @@ class Usage:
     implementations of: :class:`DiagnosticUsage`, :class:`ExecutionUsage`, and
     :class:`rachis.plugins.ArtifactAPIUsage`
     """
+    # Users and Interfaces are free to override this as an escape hatch.
+    # the structure below is a common format for user-agent strings
+    USER_AGENT = f'rachis/{rachis.__version__} (+https://rachis.org)'
+
     # these are here for namespace/import convenience
     UsageAction: Type[UsageAction] = UsageAction
     UsageInputs: Type[UsageInputs] = UsageInputs
@@ -1054,12 +1058,7 @@ class Usage:
         import urllib.request
         import urllib.error
 
-        headers = {
-            'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-            'AppleWebKit/537.36 (KHTML, like Gecko) '
-            'Chrome/100.0.4896.88 Safari/537.36'}
-
+        headers = {'User-Agent': self.USER_AGENT}
         try:
             request = urllib.request.Request(url, headers=headers)
             data = urllib.request.urlopen(request)
