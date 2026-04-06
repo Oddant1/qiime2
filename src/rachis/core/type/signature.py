@@ -952,9 +952,10 @@ class CaptureHolder:
         as the "instance" parameter since during normal operation the
         CaptureHolder instance is created by the framework.
         """
-        if instance is None:
-            return setter()
-        elif not isinstance(instance, CaptureHolder):
+        if not isinstance(instance, CaptureHolder):
+            if instance is None:
+                return setter()
+
             return instance
 
         if instance.is_set:
