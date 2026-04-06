@@ -249,11 +249,11 @@ def varied_method(ints1: int, ints2: list, int1: int = None,
 
 
 def random_seed_method(random_seed: qtype.CaptureHolder = None) -> int:
-    if random_seed.value is None:
-        random_int = random.randrange(sys.maxsize)
-        random_seed.set_value(random_int)
+    random_int = qtype.CaptureHolder.get_or_set(
+        random_seed, lambda: random.randrange(sys.maxsize)
+    )
 
-    return random_seed.value
+    return random_int
 
 
 def random_seed_method_set_twice(
