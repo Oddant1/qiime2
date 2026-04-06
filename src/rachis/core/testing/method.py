@@ -253,18 +253,27 @@ def random_seed_method(random_seed: qtype.CaptureHolder = None) -> int:
         random_seed, lambda: random.randrange(sys.maxsize)
     )
 
+    assert(random_int == random_seed._value)
+
     return random_int
 
 
 def random_seed_method_set_twice(
         random_seed: qtype.CaptureHolder = None) -> int:
-    random_int = random.randrange(sys.maxsize)
-    random_seed.set_value(random_int)
+    random_int1 = qtype.CaptureHolder.get_or_set(
+        random_seed, lambda: random.randrange(sys.maxsize)
+    )
 
-    random_int = random.randrange(sys.maxsize)
-    random_seed.set_value(random_int)
+    assert(random_int1 == random_seed._value)
 
-    return random_seed.value
+    random_int2 = qtype.CaptureHolder.get_or_set(
+        random_seed, lambda: random.randrange(sys.maxsize)
+    )
+
+    assert(random_int1 == random_int2)
+    assert(random_int2 == random_seed._value)
+
+    return random_int2
 
 
 def random_seed_method_never_set(

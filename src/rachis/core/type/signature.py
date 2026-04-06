@@ -953,17 +953,17 @@ class CaptureHolder:
         CaptureHolder instance is created by the framework.
         """
         if not isinstance(instance, CaptureHolder):
-            if instance is None:
+            if instance == cls.CAPTURE_HOLDER_DEFAULT:
                 return setter()
 
             return instance
 
         if instance.is_set:
-            return instance.value
+            return instance._value
 
         value = setter()
-        instance.set_value(value)
-        return instance.value
+        instance._set_value(value)
+        return instance._value
 
     def __init__(self, name, value, type, provenance):
         self._set = False
@@ -976,12 +976,8 @@ class CaptureHolder:
     def is_set(self):
         return self._set or self._value != CaptureHolder.CAPTURE_HOLDER_DEFAULT
 
-    @property
-    def value(self):
-        return self._value
-
-    def set_value(self, value):
-        if self._set:
+    def _set_value(self, value):
+        if self.is_set:
             raise ValueError(f'Value already set to {self._value}')
 
         if value is None or value in self._type:
