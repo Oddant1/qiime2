@@ -927,6 +927,43 @@ class HashableInvocation():
 class CaptureHolder:
     CAPTURE_HOLDER_DEFAULT = None
 
+    @classmethod
+    def get_or_set(cls, instance, setter):
+        """
+        Gets the value set on a CaptureHolder, or sets a value if there isn't
+        one
+
+        Parameters
+        ----------
+        instance: CaptureHolder
+            The CaptureHolder objecct we are getting/seting on
+        setter: Callable
+            A callable that generates a value to set on instance if needed
+
+        Returns
+        -------
+        Any
+            The value we have set on instance
+
+        Note
+        ----
+        In order to work when calling the functions that underly an Action
+        directly during testing, this method is tolerant of receiving anything
+        as the "instance" parameter since during normal operation the
+        CaptureHolder instance is created by the framework.
+        """
+        if instance is None:
+            return setter()
+        elif not isinstance(instance, CaptureHolder):
+            return instance
+
+        if instance.is_set:
+            return instance.value
+
+        value = setter()
+        instance.set_value(value)
+        return instance.value
+
     def __init__(self, name, value, type, provenance):
         self._set = False
         self._name = name

@@ -7,10 +7,9 @@
 # ----------------------------------------------------------------------------
 
 import psutil
-import random
+import secrets
 import subprocess
 
-from rachis.core.type import CaptureHolder
 from rachis.core.transform import ModelType
 
 
@@ -67,23 +66,19 @@ def run_commands(cmds, verbose=True):
         subprocess.run(cmd, check=True)
 
 
-# Numpy recommends using at least 128 bits of entropy as a seed, and we are
-# indirectly seeding numpy in this plugin.
-NP_RNG_SIZE = 2**128
+# Numpy recommends using at least 128 bits of entropy as a seed.
+NP_RNG_SIZE = 128
 
 
-def set_np_random_seed(random_seed: CaptureHolder):
+def get_np_random_seed():
     """
-    Sets the value on a CaptureHolder to a random value for numpy seeding if
-    there is not value set on the CaptureHolder. Does nothing if a value is
-    already set
+    Generates a random int with 128 bits of entropy. The min recommended for
+    numpy seeding. secrects.randbits is used here as it is the most reliable
+    way to produce this behavior with the Python standard libraries.
 
-    Parameters
-    ----------
-    random_seed : CaptureHolder<Int>
-        A CaptureHolder object intended to store an integer value for seeding
-        numpy rng
+    Returns
+    -------
+    int
+        A random int with 128 bits of entropy
     """
-    if not random_seed.is_set:
-        random_int = random.randrange(NP_RNG_SIZE)
-        random_seed.set_value(random_int)
+    return secrets.randbits(NP_RNG_SIZE)
