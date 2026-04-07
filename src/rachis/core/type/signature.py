@@ -11,6 +11,7 @@ import inspect
 import copy
 import itertools
 import tempfile
+import typing
 
 import rachis.sdk
 import rachis.core.type as qtype
@@ -924,25 +925,32 @@ class HashableInvocation():
         return tuple(new_collection)
 
 
-class CaptureHolder:
+T = typing.TypeVar('T')
+
+
+class CaptureHolder(typing.Generic[T]):
     CAPTURE_HOLDER_DEFAULT = None
 
     @classmethod
-    def get_or_set(cls, instance, setter):
+    def get_or_set(
+            cls,
+            instance: typing.Self | T | None,
+            setter: typing.Callable[[], T]
+        ) -> T:
         """
         Gets the value set on a CaptureHolder, or sets a value if there isn't
         one
 
         Parameters
         ----------
-        instance: CaptureHolder
-            The CaptureHolder objecct we are getting/seting on
-        setter: Callable
+        instance: CaptureHolder[T] | T | None
+            The CaptureHolder object we are getting/seting on
+        setter: Callable[[], T]
             A callable that generates a value to set on instance if needed
 
         Returns
         -------
-        Any
+        T
             The value we have set on instance
 
         Note
