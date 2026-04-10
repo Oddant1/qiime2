@@ -11,6 +11,7 @@ import inspect
 import copy
 import itertools
 import tempfile
+import typing
 
 import rachis.sdk
 import rachis.core.type as qtype
@@ -22,7 +23,7 @@ from .primitive import infer_primitive_type
 from .visualization import Visualization
 from . import meta
 from .util import (is_semantic_type, is_collection_type, is_primitive_type,
-                   parse_primitive)
+                   parse_primitive, contains_generic_base)
 from ..util import ImmutableBase, checksum, create_collection_name
 from rachis.plugin.context import IContext
 
@@ -512,6 +513,7 @@ class PipelineSignature:
 
         return param
 
+
     def transform_and_add_callable_args_to_prov(self, provenance,
                                                 **callable_args):
         """ Transform inputs to views and add all callable arguments to
@@ -531,8 +533,8 @@ class PipelineSignature:
                     self._transform_and_add_input_to_prov(
                         provenance, name, spec, arg)
             else:
-                if spec.view_type == qtype.CaptureHolder:
-                    capture = qtype.CaptureHolder(
+                if contains_generic_base(CaptureHolder, spec.view_type):
+                    capture = CaptureHolder(
                         name, arg, spec.qiime_type, provenance
                     )
                     callable_args[name] = capture
@@ -924,8 +926,53 @@ class HashableInvocation():
         return tuple(new_collection)
 
 
-class CaptureHolder:
+T = typing.TypeVar('T')
+
+
+class CaptureHolder(typing.Generic[T]):
     CAPTURE_HOLDER_DEFAULT = None
+
+    @classmethod
+    def get_or_set(
+            cls,
+            instance: 'CaptureHolder' | T | None,
+            setter: typing.Callable[[], T]
+        ) -> T:
+        """
+        Gets the value set on a CaptureHolder, or sets a value if there isn't
+        one
+
+        Parameters
+        ----------
+        instance: CaptureHolder[T] | T | None
+            The CaptureHolder object we are getting/seting on
+        setter: Callable[[], T]
+            A callable that generates a value to set on instance if needed
+
+        Returns
+        -------
+        T
+            The value we have set on instance
+
+        Note
+        ----
+        In order to work when calling the functions that underly an Action
+        directly during testing, this method is tolerant of receiving anything
+        as the "instance" parameter since during normal operation the
+        CaptureHolder instance is created by the framework.
+        """
+        if not isinstance(instance, CaptureHolder):
+            if instance == cls.CAPTURE_HOLDER_DEFAULT:
+                return setter()
+
+            return instance
+
+        if instance.is_set:
+            return instance._value
+
+        value = setter()
+        instance._set_value(value)
+        return instance._value
 
     def __init__(self, name, value, type, provenance):
         self._set = False
@@ -938,12 +985,8 @@ class CaptureHolder:
     def is_set(self):
         return self._set or self._value != CaptureHolder.CAPTURE_HOLDER_DEFAULT
 
-    @property
-    def value(self):
-        return self._value
-
-    def set_value(self, value):
-        if self._set:
+    def _set_value(self, value):
+        if self.is_set:
             raise ValueError(f'Value already set to {self._value}')
 
         if value is None or value in self._type:

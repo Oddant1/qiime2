@@ -770,18 +770,27 @@ class TestMethod(unittest.TestCase):
 
         self.assertEqual(returned_seed, prov_seed)
 
+    def test_random_seed_method_set_twice(self):
+        random_seed_method = \
+            self.plugin.methods['random_seed_method_set_twice']
+        int1, = random_seed_method(0)
+
+        # The method just returns the value of its random_seed parameter
+        returned_seed = int1.view(int)
+        self.assertEqual(returned_seed, 0)
+
+        # Get parameter value from provenance
+        action_yaml = load_action_yaml(int1._archiver.path)
+        prov_seed = action_yaml['action']['parameters'][0]['random_seed']
+
+        self.assertEqual(returned_seed, prov_seed)
+
     def test_random_seed_method_bad_value(self):
         random_seed_method = self.plugin.methods['random_seed_method']
         with self.assertRaisesRegex(
                 TypeError,
                 "\'random_seed\'.*1\\.0.*Int"):
-            int1, = random_seed_method(1.0)
-
-    def test_random_seed_method_set_twice(self):
-        random_seed_method = \
-            self.plugin.methods['random_seed_method_set_twice']
-        with self.assertRaisesRegex(ValueError, 'Value already set'):
-            random_seed_method()
+            _, = random_seed_method(1.0)
 
     def test_random_seed_method_never_set(self):
         random_seed_method = \
