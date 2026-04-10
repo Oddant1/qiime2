@@ -23,7 +23,7 @@ from .primitive import infer_primitive_type
 from .visualization import Visualization
 from . import meta
 from .util import (is_semantic_type, is_collection_type, is_primitive_type,
-                   parse_primitive)
+                   parse_primitive, contains_generic_base)
 from ..util import ImmutableBase, checksum, create_collection_name
 from rachis.plugin.context import IContext
 
@@ -513,6 +513,7 @@ class PipelineSignature:
 
         return param
 
+
     def transform_and_add_callable_args_to_prov(self, provenance,
                                                 **callable_args):
         """ Transform inputs to views and add all callable arguments to
@@ -532,8 +533,8 @@ class PipelineSignature:
                     self._transform_and_add_input_to_prov(
                         provenance, name, spec, arg)
             else:
-                if spec.view_type == qtype.CaptureHolder:
-                    capture = qtype.CaptureHolder(
+                if contains_generic_base(CaptureHolder, spec.view_type):
+                    capture = CaptureHolder(
                         name, arg, spec.qiime_type, provenance
                     )
                     callable_args[name] = capture
@@ -965,8 +966,6 @@ class CaptureHolder(typing.Generic[T]):
                 return setter()
 
             return instance
-
-        raise ValueError("HERE")
 
         if instance.is_set:
             return instance._value

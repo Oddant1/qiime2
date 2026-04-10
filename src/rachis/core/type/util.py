@@ -6,6 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import typing
 import collections
 
 from rachis.core.util import tuplize
@@ -279,3 +280,14 @@ def parse_primitive(t, value):
             else:
                 return {str(k): v for k, v in enumerate(result)}
         return collection_style.view(result)
+
+
+def contains_generic_base(base, expr):
+    origin = typing.get_origin(expr)
+    if origin is None:
+        return issubclass(base, expr)
+    if origin is typing.Union:
+        return any(
+            [contains_generic_base(base, a) for a in typing.get_args(expr)]
+        )
+    return issubclass(base, origin)
