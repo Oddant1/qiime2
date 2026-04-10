@@ -248,7 +248,7 @@ def varied_method(ints1: int, ints2: list, int1: int = None,
     return ints1, ints2, int1
 
 
-def random_seed_method(random_seed: qtype.CaptureHolder = None) -> int:
+def random_seed_method(random_seed: qtype.CaptureHolder[int]= None) -> int:
     random_int = qtype.CaptureHolder.get_or_set(
         random_seed, lambda: random.randrange(sys.maxsize)
     )
@@ -259,7 +259,7 @@ def random_seed_method(random_seed: qtype.CaptureHolder = None) -> int:
 
 
 def random_seed_method_set_twice(
-        random_seed: qtype.CaptureHolder = None) -> int:
+        random_seed: qtype.CaptureHolder[int] = None) -> int:
     random_int1 = qtype.CaptureHolder.get_or_set(
         random_seed, lambda: random.randrange(sys.maxsize)
     )
@@ -277,7 +277,7 @@ def random_seed_method_set_twice(
 
 
 def random_seed_method_never_set(
-        random_seed: qtype.CaptureHolder = None) -> int:
+        random_seed: qtype.CaptureHolder[int] = None) -> int:
     random_int = random.randrange(sys.maxsize)
     return random_int
 

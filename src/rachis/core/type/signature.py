@@ -966,6 +966,8 @@ class CaptureHolder(typing.Generic[T]):
 
             return instance
 
+        raise ValueError("HERE")
+
         if instance.is_set:
             return instance._value
 
