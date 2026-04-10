@@ -935,7 +935,7 @@ class CaptureHolder(typing.Generic[T]):
     @classmethod
     def get_or_set(
             cls,
-            instance: typing.Self | T | None,
+            instance: 'CaptureHolder' | T | None,
             setter: typing.Callable[[], T]
         ) -> T:
         """

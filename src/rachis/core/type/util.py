@@ -283,6 +283,8 @@ def parse_primitive(t, value):
 
 
 def contains_generic_base(base, expr):
+    if expr is object or expr is None:
+        return False
     origin = typing.get_origin(expr)
     if origin is None:
         return issubclass(base, expr)
