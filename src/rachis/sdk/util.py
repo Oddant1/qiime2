@@ -156,7 +156,7 @@ def validate_result_collection_keys(*args):
     """
     invalid_keys = []
     for key in args:
-        if not isinstance(key, str) or bool(re.search(r'[^\w+-.]', key)):
+        if not isinstance(key, str) or bool(re.search(r'[^\w+-.~]', key)):
             invalid_keys.append(key)
 
     if len(invalid_keys) > 0:
