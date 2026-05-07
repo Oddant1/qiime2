@@ -548,8 +548,6 @@ class Cache:
                 if not created_path:
                     # We own the temp_cache_path, so we can recreate it if
                     # there was something wrong with it
-                    print(self.path)
-                    print(temp_cache_path)
                     if self.path == temp_cache_path:
                         set_permissions(self.path, USER_GROUP_RWX,
                                         USER_GROUP_RWX, skip_root=True)
