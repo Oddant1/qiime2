@@ -163,7 +163,7 @@ def validate_result_collection_keys(*args):
         raise KeyError('Invalid key(s) provided for ResultCollection. '
                        'ResultCollection keys must be strings and may only '
                        'contain the following characters: A-Z, a-z, 0-9, +, '
-                       '-, ., and _. Offending keys include: '
+                       '-, ., _, and ~. Offending keys include: '
                        f'{", ".join(map(str, invalid_keys))}')
 
 
