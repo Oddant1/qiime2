@@ -127,18 +127,22 @@ def _get_temp_path():
         The path created for the temp cache.
     """
     tmpdir = tempfile.gettempdir()
+    qiime2_dir = pathlib.Path(os.path.join(tmpdir, 'qiime2'))
+    user = _get_user()
+    temp_cache_path = qiime2_dir / user
+    return qiime2_dir, temp_cache_path
 
-    cache_dir = os.path.join(tmpdir, 'qiime2')
 
+def _create_temp_path(qiime2_dir, temp_cache_path):
     # Make sure the sticky bit is set on the cache directory. Documentation on
     # what a sticky bit is can be found here
     # https://docs.python.org/3/library/stat.html#stat.S_ISVTX We also set
     # read/write/execute permissions for everyone on this directory. We only do
     # this if we are the owner of the /tmp/qiime2  directory or in other words
     # the first person to run QIIME 2 with this /tmp since the /tmp was wiped
-    if not os.path.exists(cache_dir):
+    if not os.path.exists(qiime2_dir):
         try:
-            os.mkdir(cache_dir)
+            os.mkdir(qiime2_dir)
         except FileExistsError:
             # we know that it didn't exist a moment ago, so we're probably
             # about to set it up in a different process
@@ -153,33 +157,29 @@ def _get_temp_path():
             # skip this if there was an error we ignored
             sticky_permissions = stat.S_ISVTX | stat.S_IRWXU | stat.S_IRWXG \
                 | stat.S_IRWXO
-            os.chmod(cache_dir, sticky_permissions)
-    elif os.stat(cache_dir).st_mode != EXPECTED_PERMISSIONS:
-        raise ValueError(f"Directory '{cache_dir}' already exists without "
-                         f"proper permissions '{oct(EXPECTED_PERMISSIONS)}' "
-                         "set. Current permissions are "
-                         f"'{oct(os.stat(cache_dir).st_mode)}.' This most "
-                         "likely means something other than QIIME 2 created "
-                         f"the directory '{cache_dir}' or QIIME 2 failed "
-                         f"between creating '{cache_dir}' and setting "
-                         "permissions on it.")
+            os.chmod(qiime2_dir, sticky_permissions)
+    elif os.stat(qiime2_dir).st_mode != EXPECTED_PERMISSIONS:
+        raise ValueError(f"Directory '{qiime2_dir}' already exists without"
+                         f" proper permissions '{oct(EXPECTED_PERMISSIONS)}'"
+                         " set. Current permissions are"
+                         f" '{oct(os.stat(qiime2_dir).st_mode)}.' This"
+                         " most likely means something other than QIIME 2"
+                         f" created the directory '{qiime2_dir}' or QIIME"
+                         f" 2 failed between creating '{qiime2_dir}' and"
+                         " setting permissions on it.")
 
     user = _get_user()
-    user_dir = os.path.join(cache_dir, user)
 
     # It is conceivable that we already have a path matching this username that
     # belongs to another uid, if we do then we want to create a garbage name
     # for the temp cache that will be used by this user
-    if os.path.exists(user_dir) and os.stat(user_dir).st_uid != os.getuid():
+    if os.path.exists(temp_cache_path) \
+            and os.stat(temp_cache_path).st_uid != os.getuid():
         uid_name = _get_uid_cache_name()
         # This really shouldn't happen
         if user == uid_name:
             raise ValueError(f'Temp cache for uid path {user} already exists '
                              'but does not belong to us.')
-
-        user_dir = os.path.join(cache_dir, uid_name)
-
-    return user_dir
 
 
 def _get_user():
@@ -461,7 +461,8 @@ class Cache:
 
     def __new__(cls, path=None):
         if path is None:
-            path = _get_temp_path()
+            qiime2_dir, path = _get_temp_path()
+            _create_temp_path(qiime2_dir, path)
 
         # We have to ensure we really have the same path here because otherwise
         # something as simple as path='/tmp/qiime2/x' and path='/tmp/qiime2/x/'
@@ -503,12 +504,13 @@ class Cache:
 
     def __init(self, path=None, process_pool_lifespan=45):
         created_path = False
-        temp_cache_path = pathlib.Path(_get_temp_path())
+        qiime2_dir, temp_cache_path = _get_temp_path()
 
         if path is not None:
             self.path = pathlib.Path(path)
         else:
-            self.path = temp_cache_path
+            _create_temp_path(qiime2_dir, temp_cache_path)
+            self.path = pathlib.Path(temp_cache_path)
 
         # We need this directory to exist so we can lock it, but we also want
         # to keep track of whether we created it or not so if we didn't create
