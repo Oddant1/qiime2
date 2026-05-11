@@ -59,8 +59,8 @@ class TestUtil(unittest.TestCase):
 
         self.assertEqual(validate_result_collection_keys('a'), None)
 
-        good_keys = ['-', '+', '.', '_', 'a', 'x', 'A', 'X', '0', '9',
-                     '90XAxa_.+-']
+        good_keys = ['-', '+', '.', '_', 'a', 'x', 'A', 'X', '0', '9', '~',
+                     '90XAxa_.+-~']
         self.assertEqual(validate_result_collection_keys(*good_keys), None)
 
     def test_validate_result_collection_keys_invalid(self):
