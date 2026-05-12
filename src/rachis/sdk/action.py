@@ -51,6 +51,17 @@ def _coerce_pipeline_outputs(ctx, outputs):
     return tuple(coerced_outputs)
 
 
+def _intersect_pipeline_output_type(expected, output_type, output_name):
+    refined_type = output_type & expected
+
+    if (not refined_type.is_bottom()) and refined_type.is_concrete():
+        return refined_type
+
+    raise TypeError(
+        "Expected output %s to be of type %r, received %r"
+        % (output_name, expected, output_type))
+
+
 # TODO: validation on these params via data.yaml in distributions
 class MigrationInfo(TypedDict):
     to_plugin: str
@@ -586,32 +597,32 @@ class Pipeline(Action):
         results = []
 
         # If we don't have a Collection, we should have a Result, if we
-        # have neither, or our types just don't match up, something bad
+        # have neither, or our types can't be reconciled, something bad
         # happened
         for output, (name, spec) in zip(outputs, output_types.items()):
-            if spec.qiime_type.name == 'Collection' and \
-                    output.collection in spec.qiime_type:
+            if spec.qiime_type.name == 'Collection':
                 size = len(output)
                 aliased_output = rachis.sdk.ResultCollection()
+                element_type = spec.qiime_type.fields[0]
 
                 for idx, (key, value) in enumerate(output.items()):
                     collection_name = create_collection_name(
                         name=name, key=key, idx=idx, size=size)
+                    refined_type = _intersect_pipeline_output_type(
+                        element_type, value.type, "%r member %r" % (name, key))
                     aliased_result = \
-                        value._alias(collection_name, provenance, ctx)
+                        value._alias(collection_name, provenance, ctx,
+                                     refined_type)
 
                     aliased_output[str(key)] = aliased_result
                 results.append(aliased_output)
-            elif output.type <= spec.qiime_type:
-                aliased_result = output._alias(name, provenance, ctx)
+            else:
+                refined_type = _intersect_pipeline_output_type(
+                    spec.qiime_type, output.type, repr(name))
+                aliased_result = output._alias(
+                    name, provenance, ctx, refined_type)
 
                 results.append(aliased_result)
-            else:
-                _type = output.type if hasattr(output, 'type') \
-                    else type(output)
-                raise TypeError(
-                    "Expected output type %r, received %r" %
-                    (spec.qiime_type, _type))
 
         if len(results) != len(self.signature.outputs):
             raise ValueError(
