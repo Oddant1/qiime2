@@ -974,6 +974,46 @@ class CaptureHolder(typing.Generic[T]):
         instance._set_value(value)
         return instance._value
 
+    @classmethod
+    def set_value(
+        cls,
+        instance: 'CaptureHolder' | T | None,
+        value: T
+    ) -> T:
+        """
+        Sets the passed value on the CaptureHolder instance provided and
+        returns the set value.
+
+        Parameters
+        ----------
+        instance: CaptureHolder[T] | T | None
+            The CaptureHolder object we are setting the value on.
+        value: T
+            The value we are setting on the CaptureHolder.
+
+        Returns
+        -------
+        T
+            The value we have set on instance
+
+        Note
+        ----
+        This method can overwrite the value set on the CaptureHolder.
+
+        In order to work when calling the functions that underly an Action
+        directly during testing, this method is tolerant of receiving anything
+        as the "instance" parameter since during normal operation the
+        CaptureHolder instance is created by the framework.
+        """
+        if not isinstance(instance, CaptureHolder):
+            if instance == cls.CAPTURE_HOLDER_DEFAULT:
+                return value
+
+            return instance
+
+        instance._set_value(value, overwrite=True)
+        return instance._value
+
     def __init__(self, name, value, type, provenance):
         self._set = False
         self._name = name
@@ -985,8 +1025,8 @@ class CaptureHolder(typing.Generic[T]):
     def is_set(self):
         return self._set or self._value != CaptureHolder.CAPTURE_HOLDER_DEFAULT
 
-    def _set_value(self, value):
-        if self.is_set:
+    def _set_value(self, value, overwrite=False):
+        if self.is_set and not overwrite:
             raise ValueError(f'Value already set to {self._value}')
 
         if value is None or value in self._type:
@@ -995,4 +1035,5 @@ class CaptureHolder(typing.Generic[T]):
             self._set = True
         else:
             raise TypeError(
-                f'Value {value} not compatible with type {self._type}')
+                f'Value {value} not compatible with type {self._type}'
+            )
