@@ -1331,7 +1331,7 @@ dummy_plugin.methods.register_function(
     inputs={},
     parameters={
        'random_seed': Int,
-       'overwrite': bool,
+       'overwrite': Bool,
     },
     outputs=[('seed', SingleInt)],
     name='Sets the value on the Capture twice.',

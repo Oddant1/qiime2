@@ -277,7 +277,9 @@ def random_seed_method_get_or_set_twice(
 
 
 def random_seed_method_set_twice(
-        random_seed: qtype.CaptureHolder[int] = None, overwrite=False) -> int:
+            random_seed: qtype.CaptureHolder[int] = None,
+            overwrite: bool = False
+        ) -> int:
     random_int1 = qtype.CaptureHolder.set_value(
         random_seed, 1, overwrite=overwrite
     )
