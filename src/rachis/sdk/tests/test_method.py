@@ -785,6 +785,28 @@ class TestMethod(unittest.TestCase):
 
         self.assertEqual(returned_seed, prov_seed)
 
+    def test_random_seed_method_set_twice_overwrite(self):
+        random_seed_method = \
+            self.plugin.methods['random_seed_method_set_twice']
+        int1, = random_seed_method(0, overwrite=True)
+
+        # The method just returns the value of its random_seed parameter
+        returned_seed = int1.view(int)
+        self.assertEqual(returned_seed, 2)
+
+        # Get parameter value from provenance
+        action_yaml = load_action_yaml(int1._archiver.path)
+        prov_seed = action_yaml['action']['parameters'][0]['random_seed']
+
+        self.assertEqual(returned_seed, prov_seed)
+
+    def test_random_seed_method_set_twice_no_overwrite(self):
+        random_seed_method = \
+            self.plugin.methods['random_seed_method_set_twice']
+        with self.assertRaisesRegex(ValueError, 'Value already set to 0'):
+            int1, = random_seed_method(0)
+
+
     def test_random_seed_method_bad_value(self):
         random_seed_method = self.plugin.methods['random_seed_method']
         with self.assertRaisesRegex(
