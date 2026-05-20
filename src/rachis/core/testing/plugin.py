@@ -1321,9 +1321,9 @@ dummy_plugin.methods.register_function(
        'random_seed': Int
     },
     outputs=[('seed', SingleInt)],
-    name='Sets the value on the Capture twice.',
-    description='Sets the value on the Capture object twice. This will always'
-                ' raise an error.'
+    name='Run get_or_sett on the the CaptureHolder twice.',
+    description='Runs get_or_set on the CaptureHolder object twice and asserts'
+                ' the value does not change.'
 )
 
 dummy_plugin.methods.register_function(
@@ -1335,8 +1335,8 @@ dummy_plugin.methods.register_function(
     },
     outputs=[('seed', SingleInt)],
     name='Sets the value on the Capture twice.',
-    description="Sets the value on the Capture object twice. This will raise "
-                "an error if we don't overwrite."
+    description='Sets the value on the Capture object twice. This will raise '
+                ' an error if we do not overwrite.'
 )
 
 dummy_plugin.methods.register_function(
