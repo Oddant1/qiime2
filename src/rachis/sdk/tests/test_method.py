@@ -770,9 +770,9 @@ class TestMethod(unittest.TestCase):
 
         self.assertEqual(returned_seed, prov_seed)
 
-    def test_random_seed_method_set_twice(self):
+    def test_random_seed_method_get_or_set_twice(self):
         random_seed_method = \
-            self.plugin.methods['random_seed_method_set_twice']
+            self.plugin.methods['random_seed_method_get_or_set_twice']
         int1, = random_seed_method(0)
 
         # The method just returns the value of its random_seed parameter

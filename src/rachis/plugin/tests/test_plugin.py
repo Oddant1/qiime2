@@ -133,6 +133,7 @@ class TestPlugin(unittest.TestCase):
                           'dict_params', 'list_params', 'varied_method',
                           '_underscore_method', 'return_four_ints',
                           'return_many_ints', 'random_seed_method',
+                          'random_seed_method_get_or_set_twice',
                           'random_seed_method_set_twice',
                           'random_seed_method_never_set',
                           'raises_rachis_warning'
@@ -182,7 +183,9 @@ class TestPlugin(unittest.TestCase):
                           'collection_outer_union', 'dict_params',
                           'list_params', 'varied_method', '_underscore_method',
                           'return_four_ints', 'return_many_ints',
-                          'random_seed_method', 'random_seed_method_set_twice',
+                          'random_seed_method',
+                          'random_seed_method_get_or_set_twice',
+                          'random_seed_method_set_twice',
                           'random_seed_method_never_set',
                           'raises_rachis_warning'
                           })
