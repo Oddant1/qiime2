@@ -258,7 +258,7 @@ def random_seed_method(random_seed: qtype.CaptureHolder[int]= None) -> int:
     return random_int
 
 
-def random_seed_method_get_set_twice(
+def random_seed_method_get_or_set_twice(
         random_seed: qtype.CaptureHolder[int] = None) -> int:
     random_int1 = qtype.CaptureHolder.get_or_set(
         random_seed, lambda: random.randrange(sys.maxsize)
