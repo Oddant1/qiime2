@@ -1321,7 +1321,7 @@ dummy_plugin.methods.register_function(
        'random_seed': Int
     },
     outputs=[('seed', SingleInt)],
-    name='Run get_or_sett on the the CaptureHolder twice.',
+    name='Run get_or_set on the the CaptureHolder twice.',
     description='Runs get_or_set on the CaptureHolder object twice and asserts'
                 ' the value does not change.'
 )
