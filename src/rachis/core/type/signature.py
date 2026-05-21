@@ -930,6 +930,7 @@ T = typing.TypeVar('T')
 
 
 class CaptureHolder(typing.Generic[T]):
+    # This value is treated as no value being set on the CaptureHolder
     CAPTURE_HOLDER_DEFAULT = None
 
     @classmethod
@@ -940,7 +941,7 @@ class CaptureHolder(typing.Generic[T]):
         ) -> T:
         """
         Gets the value set on a CaptureHolder, or sets a value if there isn't
-        one
+        one.
 
         Parameters
         ----------
@@ -960,6 +961,15 @@ class CaptureHolder(typing.Generic[T]):
         directly during testing, this method is tolerant of receiving anything
         as the "instance" parameter since during normal operation the
         CaptureHolder instance is created by the framework.
+
+        Raises
+        ------
+        ValueError:
+            If overwrite is False and a value is already set on the
+            CaptureHolder instance
+        TypeError:
+            If the type of the value passed in is incompatible with the type
+            of the CaptureHolder parameter
         """
         if not isinstance(instance, CaptureHolder):
             if instance == cls.CAPTURE_HOLDER_DEFAULT:
@@ -974,7 +984,76 @@ class CaptureHolder(typing.Generic[T]):
         instance._set_value(value)
         return instance._value
 
+    @classmethod
+    def set_value(
+        cls,
+        instance: 'CaptureHolder' | T | None,
+        value: T,
+        overwrite: bool = False
+    ) -> T:
+        """
+        Sets the passed value on the CaptureHolder instance provided and
+        returns the set value.
+
+        Parameters
+        ----------
+        instance: CaptureHolder[T] | T | None
+            The CaptureHolder object we are setting the value on.
+        value: T
+            The value we are setting on the CaptureHolder.
+        overwrite: bool
+            Whether or not we want to overwrite the value currently set on the
+            CaptureHolder or raise an error if a value is currently set.
+
+        Returns
+        -------
+        T
+            The value we have set on instance
+
+        Note
+        ----
+        This method can overwrite the value set on the CaptureHolder.
+
+        In order to work when calling the functions that underly an Action
+        directly during testing, this method is tolerant of receiving anything
+        as the "instance" parameter since during normal operation the
+        CaptureHolder instance is created by the framework.
+
+        Raises
+        ------
+        ValueError:
+            If overwrite is False and a value is already set on the
+            CaptureHolder instance.
+        TypeError:
+            If the type of the value passed in is incompatible with the type
+            of the CaptureHolder parameter.
+        """
+        if not isinstance(instance, CaptureHolder):
+            if instance == cls.CAPTURE_HOLDER_DEFAULT:
+                return value
+
+            return instance
+
+        instance._set_value(value, overwrite=overwrite)
+        return instance._value
+
     def __init__(self, name, value, type, provenance):
+        """
+        Initialize a CaptureHolder object.
+
+        Parameters
+        ----------
+        name: str
+            The name of the QIIME 2 parameter this CaptureHolder is for.
+        value: any
+            The value we are setting on this CaptureHolder at init time. Either
+            the value the user passed in or the default value of this parameter
+            if they did not pass one.
+        type: TypeExpr
+            The QIIME type of the parameter this CaptureHolder is wrapping
+        provenance: ProvenanceCapture
+            The provenance capture for this action.
+        """
         self._set = False
         self._name = name
         self._value = value
@@ -983,10 +1062,44 @@ class CaptureHolder(typing.Generic[T]):
 
     @property
     def is_set(self):
+        """
+        Returns True if a value has been set on this CaptureHolder False if
+        not.
+
+        Determines if the CaptureHolder has a set value based on whether a
+        previous function call has marked the value as set OR the value does
+        not match the CAPTURE_HOLDER_DEFAULT.
+
+        Returns
+        -------
+        bool
+            Whether a value has been set on this CaptureHolder or not.
+        """
         return self._set or self._value != CaptureHolder.CAPTURE_HOLDER_DEFAULT
 
-    def _set_value(self, value):
-        if self.is_set:
+    def _set_value(self, value, overwrite=False):
+        """
+        Sets the value on this CaptureHolder instance after performing
+        overwrite checking and typechecking.
+
+        Parameters
+        ----------
+        value: any
+            The value to set on the CaptureHolder instance.
+        overwrite: bool
+            Whether to allow overwriting the value set on the CaptureHolder or
+            not.
+
+        Raises
+        ------
+        ValueError:
+            If overwrite is False and a value is already set on the
+            CaptureHolder instance
+        TypeError:
+            If the type of the value passed in is incompatible with the type
+            of the CaptureHolder parameter
+        """
+        if self.is_set and not overwrite:
             raise ValueError(f'Value already set to {self._value}')
 
         if value is None or value in self._type:
@@ -995,4 +1108,5 @@ class CaptureHolder(typing.Generic[T]):
             self._set = True
         else:
             raise TypeError(
-                f'Value {value} not compatible with type {self._type}')
+                f'Value {value} not compatible with type {self._type}'
+            )

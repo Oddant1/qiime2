@@ -47,7 +47,8 @@ from .method import (concatenate_ints, split_ints, merge_mappings,
                      docstring_order_method, variadic_input_method,
                      unioned_primitives, type_match_list_and_set, union_inputs,
                      list_of_ints, dict_of_ints, returns_int, varied_method,
-                     random_seed_method, random_seed_method_set_twice,
+                     random_seed_method, random_seed_method_get_or_set_twice,
+                     random_seed_method_set_twice,
                      random_seed_method_never_set,
                      collection_inner_union, collection_outer_union,
                      dict_params, list_params, _underscore_method,
@@ -1314,15 +1315,28 @@ dummy_plugin.methods.register_function(
 )
 
 dummy_plugin.methods.register_function(
-    function=random_seed_method_set_twice,
+    function=random_seed_method_get_or_set_twice,
     inputs={},
     parameters={
        'random_seed': Int
     },
     outputs=[('seed', SingleInt)],
+    name='Run get_or_set on the the CaptureHolder twice.',
+    description='Runs get_or_set on the CaptureHolder object twice and asserts'
+                ' the value does not change.'
+)
+
+dummy_plugin.methods.register_function(
+    function=random_seed_method_set_twice,
+    inputs={},
+    parameters={
+       'random_seed': Int,
+       'overwrite': Bool,
+    },
+    outputs=[('seed', SingleInt)],
     name='Sets the value on the Capture twice.',
-    description='Sets the value on the Capture object twice. This will always'
-                ' raise an error.'
+    description='Sets the value on the Capture object twice. This will raise '
+                ' an error if we do not overwrite.'
 )
 
 dummy_plugin.methods.register_function(
