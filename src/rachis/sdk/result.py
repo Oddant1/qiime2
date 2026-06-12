@@ -832,7 +832,6 @@ class Artifact(Result):
         relative_metadata_paths = []
         for action_yaml in Path(prov_path).rglob('action.yaml'):
             with open(action_yaml) as fh:
-                lines = fh.readlines()
                 metadata = yaml.safe_load(fh)
                 metadatas = get_metadata_objects(metadata)
                 if metadatas is None:
@@ -845,15 +844,6 @@ class Artifact(Result):
                         action_yaml.parent / metadata.relative_fp
                     )
                     relative_metadata_paths.append(metadata.relative_fp)
-
-            # Filter `!metadata` tag from `action.yaml`
-            lines = [
-                line.replace('!metadata', "") for line in lines
-            ]
-
-            with open(action_yaml, 'w') as fh:
-                fh.writelines(lines)
-
 
         for metadata_path in metadata_paths:
             os.remove(metadata_path)
