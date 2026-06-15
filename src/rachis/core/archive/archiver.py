@@ -14,12 +14,17 @@ import zipfile
 import importlib
 import os
 import io
+import yaml
+from pathlib import Path
 
 import rachis
 import rachis.core.cite as cite
 
 from rachis.core.util import checksum_directory, from_checksum_format, is_uuid4
 from rachis.core.archive.format.v0 import ArchiveFormat
+from rachis.core.archive.provenance import (
+    metadata_path_constructor, MetadataInfo
+)
 
 _VERSION_TEMPLATE = """\
 QIIME 2
@@ -494,6 +499,11 @@ class Archiver:
         with open(self.root_dir / self._fmt.CHECKSUM_FILE) as fh:
             return dict(from_checksum_format(line) for line in fh.readlines())
 
+    def write_checksums(self, checksums):
+        with open(self.root_dir / self._fmt.CHECKSUM_FILE, 'w') as fh:
+            for k, v in checksums.items():
+                fh.write(f'{v}  {k}\n')
+
     def has_checksums(self):
         return hasattr(self._fmt, 'CHECKSUM_FILE')
 
@@ -521,3 +531,66 @@ class Archiver:
                    if exp[x] != obs[x]}
 
         return ChecksumDiff(added=added, removed=removed, changed=changed)
+
+    def get_provenance_path(self):
+        return os.path.join(self.root_dir, 'provenance')
+
+    def redact_metadata(self):
+        from rachis.core.util import checksum
+        '''
+        Finds the filepath to every metadata file based on the name included
+        in the `action.yaml` files, then removes these paths. It is also
+        neccessary to remove the corresponding lines in the `checksums` and
+        `action.yaml` files.
+        '''
+
+        def get_metadata_objects(yaml_dict):
+            '''
+            Recursively searches through dictionary returned by
+            `yaml.safe_load` returning any `MetadataInfo` objects.
+            '''
+            metadata = []
+            if isinstance(yaml_dict, MetadataInfo):
+                metadata.append(yaml_dict)
+            elif isinstance(yaml_dict, dict):
+                for value in yaml_dict.values():
+                    metadata.extend(get_metadata_objects(value))
+            elif isinstance(yaml_dict, (list, tuple)):
+                for value in yaml_dict:
+                    metadata.extend(get_metadata_objects(value))
+            return metadata
+
+        yaml.SafeLoader.add_constructor('!metadata', metadata_path_constructor)
+        prov_path = self.get_provenance_path()
+
+        metadata_paths = []
+        relative_metadata_paths = []
+        for action_yaml in Path(prov_path).rglob('action.yaml'):
+            with open(action_yaml) as fh:
+                metadata = yaml.safe_load(fh)
+                metadatas = get_metadata_objects(metadata)
+                if metadatas is None:
+                    raise ValueError(
+                        'Cannot redact metadata from an artifact that does '
+                        'contain metadata.'
+                    )
+                for metadata in metadatas:
+                    metadata_paths.append(
+                        action_yaml.parent / metadata.relative_fp
+                    )
+                    relative_metadata_paths.append(metadata.relative_fp)
+
+        # Empty metadata files
+        for metadata_path in metadata_paths:
+            open(metadata_path, 'w').close()
+
+        # Re-write checksums for empty metadata files
+        checksums = self.get_checksums()
+
+        for k, v in checksums.items():
+            if any(path in k for path in relative_metadata_paths):
+                checksums[k] = checksum(
+                    self.root_dir / k, self._fmt.CHECKSUM_FILE.split('.')[1]
+                )
+
+        self.write_checksums(checksums)
