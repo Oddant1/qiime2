@@ -611,11 +611,12 @@ class Archiver:
 
         self.write_checksums(checksums)
 
+        joined = '\n'.join(metadata_paths)
         annotation = Note(
             name='Metadata-redaction',
             text=f'Redacted metadata from all artifacts in provenance for '
                  f'performance and/or privacy reasons.\n'
-                 f"Redacted the following files:\n{'\n'.join(metadata_paths)}"
+                 f"Redacted the following files:\n{joined}"
         )
         if self.annotations_dir is not None:
             self._add_annotation(annotation, self.annotations_dir)
