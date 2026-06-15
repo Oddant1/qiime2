@@ -16,9 +16,7 @@ import collections
 import distutils.dir_util
 import pathlib
 import json
-import yaml
 from typing import Union, get_args, get_origin
-from pathlib import Path
 
 from rachis.core.format import report
 import rachis.metadata
@@ -35,9 +33,6 @@ from rachis.sdk.iresult import IResult
 from rachis.core.annotate import (Annotation, ANNOTATION_TYPE_DICT)
 from rachis.core.util import (sha512_file_hex, gpg_find_key,
                               normalize_fingerprint, unix_gpg_terminal_helper)
-from rachis.core.archive.provenance import (
-    metadata_path_constructor, MetadataInfo
-)
 
 # Note: Result, Artifact, and Visualization classes are in this file to avoid
 # circular dependencies between Result and its subclasses. Result is tightly

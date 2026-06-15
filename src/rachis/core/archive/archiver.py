@@ -19,12 +19,14 @@ from pathlib import Path
 
 import rachis
 import rachis.core.cite as cite
+import rachis.core.util as util
 
 from rachis.core.util import checksum_directory, from_checksum_format, is_uuid4
 from rachis.core.archive.format.v0 import ArchiveFormat
 from rachis.core.archive.provenance import (
     metadata_path_constructor, MetadataInfo
 )
+from rachis.core.annotate import Annotation, Note
 
 _VERSION_TEMPLATE = """\
 QIIME 2
@@ -455,6 +457,7 @@ class Archiver:
         self._fmt = fmt
         self._destructor = weakref.finalize(self, cache._deallocate,
                                             str(self.process_alias))
+        self._memoize_annotations = []
 
     @property
     def uuid(self):
@@ -507,6 +510,22 @@ class Archiver:
     def has_checksums(self):
         return hasattr(self._fmt, 'CHECKSUM_FILE')
 
+    def _add_annotation(self, annotation, annotation_dir):
+        annotation._write(annotations_dir=annotation_dir,
+                          root_result_uuid=str(self.uuid),
+                          referenced_result_uuid=str(self.uuid))
+
+        checksum_ext = self._fmt.CHECKSUM_TYPE
+        manifest = self._fmt.CHECKSUM_FILE
+
+        checksums = util.checksum_directory(str(annotation_dir),
+                                            checksum_type=checksum_ext)
+
+        with (annotation_dir / manifest).open('w') as fh:
+            for item in checksums.items():
+                fh.write(util.to_checksum_format(*item))
+                fh.write('\n')
+
     def validate_checksums(self):
         if not self.has_checksums():
             return ChecksumDiff({}, {}, {})
@@ -532,11 +551,9 @@ class Archiver:
 
         return ChecksumDiff(added=added, removed=removed, changed=changed)
 
-    def get_provenance_path(self):
-        return os.path.join(self.root_dir, 'provenance')
-
     def redact_metadata(self):
         from rachis.core.util import checksum
+        from rachis.sdk.result import Result
         '''
         Finds the filepath to every metadata file based on the name included
         in the `action.yaml` files, then removes these paths. It is also
@@ -561,11 +578,10 @@ class Archiver:
             return metadata
 
         yaml.SafeLoader.add_constructor('!metadata', metadata_path_constructor)
-        prov_path = self.get_provenance_path()
 
         metadata_paths = []
         relative_metadata_paths = []
-        for action_yaml in Path(prov_path).rglob('action.yaml'):
+        for action_yaml in Path(self.provenance_dir).rglob('action.yaml'):
             with open(action_yaml) as fh:
                 metadata = yaml.safe_load(fh)
                 metadatas = get_metadata_objects(metadata)
@@ -594,3 +610,17 @@ class Archiver:
                 )
 
         self.write_checksums(checksums)
+
+        annotation = Note(
+            name='Metadata-redaction',
+            text=f'Redacted metadata from all artifacts in provenance for '
+                 f'performance and/or privacy reasons.\n'
+                 f"Redacted the following files:\n{'\n'.join(metadata_paths)}"
+        )
+        if self.annotations_dir is not None:
+            self._add_annotation(annotation, self.annotations_dir)
+
+        for path in Path(self.provenance_dir).iterdir():
+            if any(r_path in str(path) for r_path in relative_metadata_paths):
+                if os.path.exists(path / 'annotations'):
+                    self._add_annotation(annotation, path / 'annotations')
