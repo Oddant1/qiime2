@@ -21,12 +21,13 @@ import rachis
 import rachis.core.cite as cite
 import rachis.core.util as util
 
+from rachis.core.util import checksum
 from rachis.core.util import checksum_directory, from_checksum_format, is_uuid4
 from rachis.core.archive.format.v0 import ArchiveFormat
 from rachis.core.archive.provenance import (
     metadata_path_constructor, MetadataInfo
 )
-from rachis.core.annotate import Annotation, Note
+from rachis.core.annotate import Note
 
 _VERSION_TEMPLATE = """\
 QIIME 2
@@ -552,8 +553,6 @@ class Archiver:
         return ChecksumDiff(added=added, removed=removed, changed=changed)
 
     def redact_metadata(self):
-        from rachis.core.util import checksum
-        from rachis.sdk.result import Result
         '''
         Finds the filepath to every metadata file based on the name included
         in the `action.yaml` files, then removes these paths. It is also
