@@ -13,6 +13,7 @@ import weakref
 import zipfile
 import importlib
 import os
+import re
 import io
 import yaml
 from pathlib import Path
@@ -502,6 +503,32 @@ class Archiver:
         with open(self.root_dir / self._fmt.CHECKSUM_FILE) as fh:
             return dict(from_checksum_format(line) for line in fh.readlines())
 
+    def extract_uuid_in_provenance(self, file):
+        return re.findall(r'provenance/artifacts/([0-9a-f-]{36})/', file)
+
+
+    def _add_annotation(self, annotation, reference_uuid = None):
+        if not reference_uuid:
+            annotation._write(annotations_dir=self.annotations_dir,
+                            root_result_uuid=str(self.uuid),
+                            referenced_result_uuid=str(self.uuid))
+        else:
+            annotation._write(annotations_dir=self.annotations_dir,
+                            root_result_uuid=str(self.uuid),
+                            referenced_result_uuid=str(reference_uuid))
+
+        checksum_ext = self._fmt.CHECKSUM_TYPE
+        manifest = self._fmt.CHECKSUM_FILE
+
+        checksums = util.checksum_directory(str(self.annotations_dir),
+                                            checksum_type=checksum_ext)
+
+        with (self.annotations_dir / manifest).open('w') as fh:
+            for item in checksums.items():
+                fh.write(util.to_checksum_format(*item))
+                fh.write('\n')
+
+
     def write_checksums(self, checksums):
         with open(self.root_dir / self._fmt.CHECKSUM_FILE, 'w') as fh:
             for k, v in checksums.items():
@@ -509,22 +536,6 @@ class Archiver:
 
     def has_checksums(self):
         return hasattr(self._fmt, 'CHECKSUM_FILE')
-
-    def _add_annotation(self, annotation, annotation_dir):
-        annotation._write(annotations_dir=annotation_dir,
-                          root_result_uuid=str(self.uuid),
-                          referenced_result_uuid=str(self.uuid))
-
-        checksum_ext = self._fmt.CHECKSUM_TYPE
-        manifest = self._fmt.CHECKSUM_FILE
-
-        checksums = util.checksum_directory(str(annotation_dir),
-                                            checksum_type=checksum_ext)
-
-        with (annotation_dir / manifest).open('w') as fh:
-            for item in checksums.items():
-                fh.write(util.to_checksum_format(*item))
-                fh.write('\n')
 
     def validate_checksums(self):
         if not self.has_checksums():
@@ -585,7 +596,7 @@ class Archiver:
                 metadatas = get_metadata_objects(metadata)
                 if metadatas is None:
                     raise ValueError(
-                        'Cannot redact metadata from an artifact that does '
+                        'Cannot redact metadata from an artifact that does not '
                         'contain metadata.'
                     )
                 for metadata in metadatas:
@@ -617,9 +628,9 @@ class Archiver:
                  f"Redacted the following files:\n{joined}"
         )
         if self.annotations_dir is not None:
-            self._add_annotation(annotation, self.annotations_dir)
+            self._add_annotation(annotation)
 
-        for path in Path(self.provenance_dir).iterdir():
-            if any(r_path in str(path) for r_path in relative_metadata_paths):
-                if os.path.exists(path / 'annotations'):
-                    self._add_annotation(annotation, path / 'annotations')
+            for path in os.listdir(self.provenance_dir):
+                if any(r_path in path for r_path in relative_metadata_paths):
+                    ref_uuid = self.extract_uuid_in_provenance(path)
+                    self._add_annotation(annotation, ref_uuid)
