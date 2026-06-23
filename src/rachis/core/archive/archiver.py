@@ -596,8 +596,8 @@ class Archiver:
                 metadatas = get_metadata_objects(metadata)
                 if metadatas is None:
                     raise ValueError(
-                        'Cannot redact metadata from an artifact that does not '
-                        'contain metadata.'
+                        'Cannot redact metadata from an artifact that does '
+                        'not contain metadata.'
                     )
                 for metadata in metadatas:
                     metadata_paths.append(
