@@ -833,7 +833,9 @@ def signature_test_env(monkeypatch):
     # patch calls to gpg_find_key with fake dict & subprocess.run w/fake_run
     monkeypatch.setattr(rachis.core.annotate,
                         'gpg_find_key', fake_gpg_find_key)
-    monkeypatch.setattr(rachis.sdk.result, 'gpg_find_key', fake_gpg_find_key)
+    monkeypatch.setattr(
+        rachis.core.archive.archiver, 'gpg_find_key', fake_gpg_find_key
+    )
     monkeypatch.setattr(subprocess, 'run', fake_run)
 
     def set_key_lookup(mode):
