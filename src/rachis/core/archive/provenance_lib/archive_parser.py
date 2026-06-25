@@ -857,18 +857,20 @@ class ParserV2(ParserV1):
                 framework_version=framework_version)
         }
 
-        for fp in os.listdir(archiver.provenance_dir / 'artifacts'):
-            fp = pathlib.Path(fp)
-            node_uuid = os.path.basename(fp)
+        # If this is the Result of an import, it won't have this dir.
+        if os.path.exists(archiver.provenance_dir / 'artifacts'):
+            for fp in os.listdir(archiver.provenance_dir / 'artifacts'):
+                fp = pathlib.Path(fp)
+                node_uuid = os.path.basename(fp)
 
-            if node_uuid in archive_contents:
-                continue
+                if node_uuid in archive_contents:
+                    continue
 
-            archive_version, _ = parse_version(archiver, node_uuid)
-            archive_contents[node_uuid] = ProvNode(
-                cfg, archiver, archive_version=archive_version,
-                framework_version=framework_version, uuid=node_uuid
-            )
+                archive_version, _ = parse_version(archiver, node_uuid)
+                archive_contents[node_uuid] = ProvNode(
+                    cfg, archiver, archive_version=archive_version,
+                    framework_version=framework_version, uuid=node_uuid
+                )
 
         graph = self._digraph_from_archive_contents(archive_contents)
 
