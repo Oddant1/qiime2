@@ -857,7 +857,8 @@ class ParserV2(ParserV1):
                 framework_version=framework_version)
         }
 
-        # If this is the Result of an import, it won't have this dir.
+        # If this is the Result of an import, or an Action with no inputs,
+        # it won't have this dir.
         if os.path.exists(archiver.provenance_dir / 'artifacts'):
             for fp in os.listdir(archiver.provenance_dir / 'artifacts'):
                 fp = pathlib.Path(fp)
