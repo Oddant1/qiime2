@@ -30,9 +30,6 @@ import rachis.core.util as util
 import rachis.core.exceptions as exceptions
 
 from rachis.sdk.iresult import IResult
-from rachis.core.annotate import (Annotation, ANNOTATION_TYPE_DICT)
-from rachis.core.util import (sha512_file_hex, gpg_find_key,
-                              normalize_fingerprint, unix_gpg_terminal_helper)
 
 # Note: Result, Artifact, and Visualization classes are in this file to avoid
 # circular dependencies between Result and its subclasses. Result is tightly
