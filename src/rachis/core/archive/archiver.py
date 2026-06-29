@@ -863,14 +863,10 @@ class Archiver:
 
         return ChecksumDiff(added=added, removed=removed, changed=changed)
 
-    def redact_metadata(self):
+    def metadata_paths(self):
         '''
-        Finds the filepath to every metadata file based on the name included
-        in the `action.yaml` files, then removes these paths. It is also
-        neccessary to remove the corresponding lines in the `checksums` and
-        `action.yaml` files.
+        Finds and returns all absolute and relative metadata paths.
         '''
-
         def get_metadata_objects(yaml_dict):
             '''
             Recursively searches through dictionary returned by
@@ -895,16 +891,35 @@ class Archiver:
             with open(action_yaml) as fh:
                 metadata = yaml.safe_load(fh)
                 metadatas = get_metadata_objects(metadata)
-                if metadatas is None:
-                    raise ValueError(
-                        'Cannot redact metadata from an artifact that does '
-                        'not contain metadata.'
-                    )
                 for metadata in metadatas:
-                    metadata_paths.append(
-                        action_yaml.parent / metadata.relative_fp
-                    )
+                    path = action_yaml.parent / metadata.relative_fp
+                    metadata_paths.append(path)
                     relative_metadata_paths.append(metadata.relative_fp)
+
+        return [metadata_paths, relative_metadata_paths]
+
+    def redact_metadata(self):
+        from rachis.core.exceptions import RachisWarning
+        import warnings
+        '''
+        Empties metadata files. It is also neccessary to remove the
+        corresponding lines in the `checksums` file.
+        '''
+        metadata_paths, relative_metadata_paths = self.metadata_paths()
+
+        warnings.warn(f'Redacting from: {self.root_dir}', RachisWarning)
+        warnings.warn(f'Paths: {metadata_paths}', RachisWarning)
+
+        if len(metadata_paths) == 0:
+            raise ValueError(
+                'Cannot redact metadata froma an Artifact without metadata.'
+            )
+
+        if all(os.path.getsize(path) == 0 for path in metadata_paths):
+            raise ValueError(
+                'Cannot redact metadata from an Artifact with only redacted '
+                'metadata files.'
+            )
 
         # Empty metadata files
         for metadata_path in metadata_paths:
