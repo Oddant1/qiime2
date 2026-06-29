@@ -11,7 +11,6 @@ import re
 import shutil
 import warnings
 import tempfile
-import subprocess
 import collections
 import distutils.dir_util
 import pathlib
@@ -19,7 +18,6 @@ import json
 from typing import Union, get_args, get_origin
 
 from rachis.core.format import report
-import rachis.metadata
 import rachis.plugin
 import rachis.sdk
 import rachis.core.type
