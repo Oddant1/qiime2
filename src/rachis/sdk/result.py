@@ -345,6 +345,9 @@ class Result(IResult):
         self.validate()
         return self._archiver.verify(signature_name)
 
+    def redact_metadata(self):
+        self._archiver.redact_metadata()
+
 
 class Artifact(Result):
     extension = '.qza'
