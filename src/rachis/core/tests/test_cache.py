@@ -698,7 +698,9 @@ class TestCache(unittest.TestCase):
             art1_annotation1 = self.cache.load('annotation-1')
 
         self.assertEqual(
-            set(art1_annotation1._archiver._annotations.keys()), set(['annotation-1']))
+            set(art1_annotation1._archiver._annotations.keys()),
+            set(['annotation-1'])
+        )
 
         with cache3:
             art1_copy = rachis.sdk.Result.load(art1_copy_path)
