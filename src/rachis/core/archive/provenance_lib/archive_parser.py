@@ -268,7 +268,11 @@ class ProvNode:
 
             plugin_obj = pm._plugin_by_id.get(self.action.plugin)
             if plugin_obj:
-                self._action_present = True
+                action_obj = plugin_obj.actions.get(self.action.action_name)
+                if action_obj:
+                    self._action_present = True
+                else:
+                    self._action_present = False
             else:
                 self._action_present = False
 
