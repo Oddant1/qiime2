@@ -338,6 +338,27 @@ action_results = dummy_plugin_actions.__FAKE_ACTION__(
 """  # noqa: E128
             self.assertIn(FIXME_action,rendered)
 
+    def test_replay_imported_artifact(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_fp = pathlib.Path(tmpdir) / 'rendered.txt'
+            in_fp = self.das.single_int.filepath
+
+            replay_provenance(
+                ReplayPythonUsage, in_fp, out_fp, md_out_dir=tmpdir
+            )
+            self.assertTrue(out_fp.is_file())
+
+            with open(out_fp, 'r') as fp:
+                rendered = fp.read()
+
+            self.assertIn('from rachis import Artifact', rendered)
+            self.assertIn('single_int_0 = Artifact.import_data(', rendered)
+            self.assertIn("'SingleInt',", rendered)
+            self.assertIn('<your data here>,', rendered)
+            self.assertIn(')', rendered)
+            self.assertIn("single_int_0.save('single_int_0')", rendered)
+
+
 class MultiplePluginTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

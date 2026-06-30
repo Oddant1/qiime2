@@ -74,6 +74,10 @@ class DummyArtifacts:
                 name, artifact, artifact._archiver, str(artifact.uuid), fp,
                 ProvDAG(fp)
             )
+            # This dir is empty on imported artifacts and won't actually be
+            # here for real .qzas of imported artifacts. Caused us a bit of a
+            # headache https://github.com/rachis-org/rachis/pull/943
+            os.rmdir(artifact._archiver.provenance_dir / 'artifacts')
             setattr(self, name, test_artifact)
 
     def init_action_artifacts(self):
