@@ -81,4 +81,4 @@ def get_np_random_seed():
     int
         A random int with 128 bits of entropy
     """
-    return secrets.randbits(NP_RNG_SIZE)
+    return int(secrets.randbits(NP_RNG_SIZE))
