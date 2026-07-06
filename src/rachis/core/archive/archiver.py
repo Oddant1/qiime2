@@ -934,7 +934,7 @@ class Archiver:
         joined = '\n'.join(str(p) for p in metadata_paths)
         annotation = Note(
             name='Metadata-redaction',
-            text=f'Redacted metadata from all artifacts in provenance for '
+            text=f'Redacted metadata from all Results in provenance for '
                  f'performance and/or privacy reasons.\n'
                  f"Redacted the following files:\n{joined}"
         )
