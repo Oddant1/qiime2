@@ -175,7 +175,7 @@ class Context(IContext):
     # in the named cache in the end. We only have the pipeline alias in the
     # process pool
     def add_reference(self, ref):
-        """Add a reference to something destructable that will be owned by the
+        """Add a reference to something destructible that will be owned by the
            parent scope. The reason it needs to be tracked is so that on
            failure, a context can still identify what will (no longer) be
            returned.
