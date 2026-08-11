@@ -36,8 +36,9 @@ from rachis.sdk.iresult import IResult
 # explicit.
 
 
-ResultMetadata = collections.namedtuple('ResultMetadata',
-                                        ['uuid', 'type', 'format'])
+ResultMetadata = collections.namedtuple(
+    'ResultMetadata', ['uuid', 'type', 'format', 'last_action']
+)
 
 
 class Result(IResult):

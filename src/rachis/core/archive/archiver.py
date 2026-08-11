@@ -372,7 +372,24 @@ class Archiver:
         # e.g. a new format has a new property that peek should describe. We
         # add some compatability code here to return a default for that
         # property on older formats.
-        return Format.load_metadata(archive)
+        #
+        if os.path.isdir(str(archive.path)):
+            action_path = archive.path / 'provenance/action/action.yaml'
+        else:
+            archiver = Archiver.load(filepath)
+            action_path = Path(archiver.provenance_dir) / 'action/action.yaml'
+        with open(action_path) as f:
+            yaml_dict = yaml.safe_load(f)
+            plugin = yaml_dict['action'].get('plugin')
+            if plugin is not None:
+                plugin = plugin.split(':')[-1]
+            action = yaml_dict['action'].get('action')
+        if plugin and action:
+            action = plugin + '.' + action
+        else:
+            action = None
+
+        return [*Format.load_metadata(archive), action]
 
     @classmethod
     def extract(cls, filepath, dest):
