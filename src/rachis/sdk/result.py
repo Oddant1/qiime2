@@ -450,6 +450,7 @@ class Artifact(Result):
             validation_object(data=result, level=validate_level)
 
         artifact = cls.__new__(cls)
+
         artifact._archiver = archive.Archiver.from_data(
             type, output_dir_fmt,
             data_initializer=result.path._move_or_copy,

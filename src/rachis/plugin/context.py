@@ -10,7 +10,7 @@ import abc
 
 class IContext(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def get_action(self, plugin: str, action: str):
+    def get_action(self, plugin: str, action: str, record_prov: bool=True):
         """Return a function matching the callable API of an action.
         This function is aware of the pipeline context and manages its own
         cleanup as appropriate.

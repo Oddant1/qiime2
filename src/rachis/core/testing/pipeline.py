@@ -28,9 +28,15 @@ def parameter_only_pipeline(ctx, int1, int2=2, metadata=None, other=False):
     return ints1, more_ints
 
 
-def typical_pipeline(ctx, int_sequence, mapping, do_extra_thing, add=1):
-    split_ints = ctx.get_action('dummy_plugin', 'split_ints')
-    most_common_viz = ctx.get_action('dummy_plugin', 'most_common_viz')
+def typical_pipeline(
+        ctx, int_sequence, mapping, do_extra_thing, add=1, record_prov=True
+    ):
+    split_ints = ctx.get_action(
+        'dummy_plugin', 'split_ints', record_prov=record_prov
+    )
+    most_common_viz = ctx.get_action(
+        'dummy_plugin', 'most_common_viz', record_prov=record_prov
+    )
 
     left, right = split_ints(int_sequence)
     if do_extra_thing:

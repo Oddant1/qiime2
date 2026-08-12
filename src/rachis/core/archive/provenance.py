@@ -684,3 +684,63 @@ class ReportProvenanceCapture(ProvenanceCapture):
         action['inputs'] = self.inputs
 
         return action
+
+
+# TODO: Currently this is creating a metadata.yaml and a conda-env.yaml from
+# the archiver, and that's it. So the internal artifacts are in the returned
+# artifact's provenance/artifacts dir and just look like uuid/metadata.yaml +
+# conda-env.yaml
+class NoOpProvenanceCapture(ProvenanceCapture):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def add_ancestor(self, *args, **kwargs):
+        pass
+
+    def make_citation_key(self, *args, **kwargs):
+        pass
+
+    def make_software_entry(self, *args, **kwargs):
+        pass
+
+    def reference_plugin(self, *args, **kwargs):
+        pass
+
+    def capture_env(self, *args, **kwargs):
+        pass
+
+    def transformation_recorder(self, *args, **kwargs):
+        def recorder(*args, **kwargs):
+            pass
+
+        return recorder
+
+    def make_execution_section(self, *args, **kwargs):
+        pass
+
+    def make_transformers_section(self, *args, **kwargs):
+        pass
+
+    def make_env_section(self, *args, **kwargs):
+        pass
+
+    def write_action_yaml(self,*args, **kwargs):
+        pass
+
+    def write_citations_bib(self, *args, **kwargs):
+        pass
+
+    def finalize(self, *args, **kwargs):
+        pass
+
+    def fork(self, *args, **kwargs):
+        return NoOpProvenanceCapture()
+
+    def handle_metadata(self, *args, **kwargs):
+        pass
+
+    def add_parameter(self, *args, **kwargs):
+        pass
+
+    def add_input(self, *args, **kwargs):
+        pass

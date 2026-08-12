@@ -273,8 +273,11 @@ class Action(metaclass=abc.ABCMeta):
         """
         def bound_callable(*args, **kwargs):
             ctx = context_factory()
-            provenance = self._ProvCaptureCls(
-                self.type, self.plugin_id, self.id, execution_ctx)
+            if ctx.record_prov:
+                provenance = self._ProvCaptureCls(
+                    self.type, self.plugin_id, self.id, execution_ctx)
+            else:
+                provenance = archive.NoOpProvenanceCapture()
 
             if self.deprecated:
                 with rachis.core.util.warning() as warn:
