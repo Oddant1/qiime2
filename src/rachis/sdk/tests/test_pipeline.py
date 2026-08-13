@@ -69,7 +69,9 @@ class TestPipeline(unittest.TestCase):
             ('do_extra_thing', inspect.Parameter(
                 'do_extra_thing', kind, annotation=Bool)),
             ('add', inspect.Parameter(
-                'add', kind, default=1, annotation=Int))
+                'add', kind, default=1, annotation=Int)),
+            ('record_prov', inspect.Parameter(
+                'record_prov', kind, default=True, annotation=Bool))
         ]
 
         for callable_attr in '__call__', 'asynchronous':
