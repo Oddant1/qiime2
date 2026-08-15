@@ -6,22 +6,8 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from pathlib import Path
-
-import yaml
-
 import rachis.core.archive.format.v0 as v0
 
-
-class ActionYamlLoader(yaml.SafeLoader):
-    pass
-
-
-def metadata_path_skip_constructor(loader, node):
-    return loader.construct_scalar(node)
-
-
-ActionYamlLoader.add_constructor('!metadata', metadata_path_skip_constructor)
 class ArchiveFormat(v0.ArchiveFormat):
     PROVENANCE_DIR = 'provenance'
 
@@ -45,9 +31,3 @@ class ArchiveFormat(v0.ArchiveFormat):
         super().__init__(archive_record, *args, replay=replay)
 
         self.provenance_dir = archive_record.root / self.PROVENANCE_DIR
-
-    @classmethod
-    def load_action_yaml(cls, archive):
-        action_yaml_path = Path(cls.PROVENANCE_DIR) / 'action' / 'action.yaml'
-        with archive.open(action_yaml_path) as fh:
-            return yaml.load(fh, Loader=ActionYamlLoader)
