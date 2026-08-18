@@ -53,7 +53,7 @@ import rachis
 from .path import ArchivePath
 from rachis.sdk.result import Result
 from rachis.core.util import (is_uuid4, set_permissions, touch_under_path,
-                              USER_GROUP_RWX)
+                              load_action_yaml, USER_GROUP_RWX)
 from rachis.core.archive.archiver import Archiver
 from rachis.core.type import HashableInvocation, IndexedCollectionElement
 from rachis.util import duplicate
@@ -1925,10 +1925,8 @@ class Pool:
                 alias = self.cache.process_pool._alias(_uuid)
                 self.cache.process_pool._make_symlink(_uuid, alias)
 
-                # Get action.yaml from this artifact's provenance
                 path = self.cache.data / _uuid
-                archive = Archiver.get_archive(path)
-                action_yaml = archive.load_action_yaml()
+                action_yaml = load_action_yaml(path)
                 action = action_yaml['action']
 
                 # This means the artifact was created in the pipeline by

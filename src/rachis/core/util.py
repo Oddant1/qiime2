@@ -430,42 +430,34 @@ def touch_under_path(path):
                 pass
 
 
-def load_action_yaml(path):
-    """Takes a path to an unzipped Artifact and loads its action.yaml with
+def load_action_yaml_zipped(archive):
+    """
+    Takes an Archiver for a zipped Artifact and parses the action.yaml out
+    of it using yaml.load with a custom SafeLoader
+    """
+    class ZipActionYamlLoader(yaml.SafeLoader):
+        pass
+
+    def zipfile_metadata_constructor(loader, node):
+        return loader.construct_scalar(node)
+
+    ZipActionYamlLoader.add_constructor(
+        '!metadata', zipfile_metadata_constructor
+    )
+
+    with archive.open(
+                pathlib.Path('provenance') / 'action'/ 'action.yaml'
+            ) as fh:
+        return yaml.load(fh, Loader=ZipActionYamlLoader)
+
+
+def load_action_yaml(path: pathlib.Path):
+    """
+    Takes a path to an unzipped Artifact and parses its action.yaml with
     yaml.safe_load
     """
-    # TODO: Make these actually do something useful at least for the tags
-    # that are relevant to what we need out of provenance (this is partially
-    # done)
-    def ref_constructor(loader, node):
-        # We only care about the name of the thing we are referencing which
-        # is at the end of this list
-        return node.value.split(':')[-1]
-
-    def cite_constructor(loader, node):
-        return node.value
-
-    def metadata_constructor(loader, node):
-        # Use the checksum of the metadata as its identifier, so we can tell
-        # if two artifacts used the same metadata input
-        metadata_path = prov_path / node.value
-        return checksum(filepath=metadata_path, checksum_type='md5')
-
-    # these are backstops and are generally superceded by yaml.SafeLoader
-    # which has the preferred constructors from provenance
-    # found under CONSTRUCTOR_REGISTRY within provenance.py
-    yaml.constructor.SafeConstructor.add_constructor('!ref', ref_constructor)
-    yaml.constructor.SafeConstructor.add_constructor('!cite', cite_constructor)
-    yaml.constructor.SafeConstructor.add_constructor('!metadata',
-                                                     metadata_constructor)
-
-    prov_path = path / 'provenance' / 'action'
-    action_path = prov_path / 'action.yaml'
-
-    with open(action_path) as fh:
-        prov = yaml.safe_load(fh)
-
-    return prov
+    with open(path / 'provenance' / 'action' / 'action.yaml') as fh:
+        return yaml.safe_load(fh)
 
 
 def create_collection_name(*, name, key, idx, size):

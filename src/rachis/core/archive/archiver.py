@@ -31,7 +31,7 @@ from rachis.core.util import (
 )
 from rachis.core.archive.format.v0 import ArchiveFormat
 from rachis.core.archive.provenance import (
-    metadata_path_constructor, MetadataInfo, ZipActionYamlLoader
+    metadata_path_constructor, MetadataInfo
 )
 from rachis.core.annotate import Note, Annotation, ANNOTATION_TYPE_DICT
 
@@ -238,11 +238,6 @@ class _ZipArchive(_Archive):
             path = ''
         return path
 
-    def load_action_yaml(self):
-        action_path = Path('provenance') / 'action' / 'action.yaml'
-        with self.open(action_path) as fh:
-            return yaml.load(fh, Loader=ZipActionYamlLoader)
-
 
 class _NoOpArchive(_Archive):
     """For dealing with unzipped artifacts"""
@@ -271,13 +266,6 @@ class _NoOpArchive(_Archive):
         root = path
         return ArchiveRecord(root, root / self.VERSION_FILE,
                              self.uuid, self.version, self.framework_version)
-
-    def load_action_yaml(self):
-        action_path = self.path / 'provenance' / 'action' / 'action.yaml'
-        with open(action_path) as fh:
-            prov = yaml.safe_load(fh)
-
-        return prov
 
 
 class ArchiveCheck(_Archive):
@@ -389,7 +377,7 @@ class Archiver:
         if float(version) < 1:
             return [*Format.load_metadata(archive), None]
 
-        yaml_dict = archive.load_action_yaml()
+        yaml_dict = util.load_action_yaml_zipped(archive)
 
         plugin = yaml_dict['action'].get('plugin')
         if plugin is not None:
