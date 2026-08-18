@@ -67,9 +67,9 @@ def _contains_proxies(*args, **kwargs):
 
 
 class ParallelContext(Context):
-    def __init__(self, action_obj, parent=None, record_prov=True):
+    def __init__(self, action_obj, parent=None, *, record_provenance=True):
         super(ParallelContext, self).__init__(
-            action_obj, parent=parent, record_prov=record_prov
+            action_obj, parent=parent, record_provenance=record_provenance
         )
 
         if parent is not None:

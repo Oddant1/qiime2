@@ -273,7 +273,7 @@ class Action(metaclass=abc.ABCMeta):
         """
         def bound_callable(*args, **kwargs):
             ctx = context_factory()
-            if ctx.record_prov:
+            if ctx._record_provenance:
                 provenance = self._ProvCaptureCls(
                     self.type, self.plugin_id, self.id, execution_ctx)
             else:

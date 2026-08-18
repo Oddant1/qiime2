@@ -70,8 +70,8 @@ class TestPipeline(unittest.TestCase):
                 'do_extra_thing', kind, annotation=Bool)),
             ('add', inspect.Parameter(
                 'add', kind, default=1, annotation=Int)),
-            ('record_prov', inspect.Parameter(
-                'record_prov', kind, default=True, annotation=Bool))
+            ('record_provenance', inspect.Parameter(
+                'record_provenance', kind, default=True, annotation=Bool))
         ]
 
         for callable_attr in '__call__', 'asynchronous':
@@ -255,7 +255,7 @@ class TestPipeline(unittest.TestCase):
     def test_typical_pipeline_record_no_inner_prov(self):
         for call in self.iter_callables('typical_pipeline'):
             results = call(
-                self.int_sequence, self.mapping, False, record_prov=False
+                self.int_sequence, self.mapping, False, record_provenance=False
             )
 
             self.assertEqual(results.left_viz.type, Visualization)

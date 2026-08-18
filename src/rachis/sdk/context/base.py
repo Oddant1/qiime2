@@ -30,8 +30,11 @@ def _validate_collection(collection_order):
 
 
 class Context(IContext):
-    def __init__(self, action_obj=None, parent=None, record_prov=True):
-        self.record_prov = record_prov
+    def __init__(
+                self, action_obj=None, parent=None, *,
+                record_provenance=True
+            ):
+        self._record_provenance = record_provenance
 
         if parent is not None:
             self.cache = parent.cache
@@ -126,7 +129,9 @@ class Context(IContext):
         return rachis.sdk.Results(
             loaded_outputs.keys(), loaded_outputs.values())
 
-    def get_action(self, plugin: str, action: str, record_prov: bool=True):
+    def get_action(
+                self, plugin: str, action: str, *, record_provenance: bool=True
+            ):
         """Return a function matching the callable API of an action.
         This function is aware of the pipeline context and manages its own
         cleanup as appropriate.
@@ -148,7 +153,7 @@ class Context(IContext):
 
         # Create a context for the new action
         child_context = self.__class__(
-            new_action_obj, parent=self, record_prov=record_prov
+            new_action_obj, parent=self, record_provenance=record_provenance
         )
 
         # Return a callable for the new action
@@ -192,8 +197,3 @@ class Context(IContext):
 
         # Return an artifact backed by the data in the cache
         return new_ref
-
-    # PROV TODO: Another option for prov is to capture it and then drop it at
-    # the end of the pipeline
-    def drop_inner_provenance(self, result, provenance):
-        pass
