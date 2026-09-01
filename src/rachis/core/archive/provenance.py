@@ -694,6 +694,9 @@ class NoOpProvenanceCapture(ProvenanceCapture):
     def __init__(self, *args, **kwargs):
         pass
 
+    def _build_paths(self):
+        pass
+
     def add_ancestor(self, *args, **kwargs):
         pass
 

@@ -30,6 +30,8 @@ __all__ = [
     'is_parallel_type'
 ]
 
+KEY_REGEX = r'[^\w+-.~]'
+
 
 def camel_to_snake(name: str) -> str:
     """
@@ -156,7 +158,7 @@ def validate_result_collection_keys(*args):
     """
     invalid_keys = []
     for key in args:
-        if not isinstance(key, str) or bool(re.search(r'[^\w+-.~]', key)):
+        if not isinstance(key, str) or bool(re.search(KEY_REGEX, key)):
             invalid_keys.append(key)
 
     if len(invalid_keys) > 0:
