@@ -21,4 +21,4 @@ __all__ = ['Result', 'IResult', 'Results', 'Artifact', 'Visualization',
            'PluginManager', 'parse_type', 'parse_format', 'type_from_ast',
            'Context', 'ParallelContext', 'AsynchronousContext', 'Citations',
            'PARALLEL_CONFIG', 'ValidationError', 'ImplementationError',
-           'UninitializedPluginManagerError', 'KEY_REGEX']
+           'UninitializedPluginManagerError']
