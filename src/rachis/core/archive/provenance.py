@@ -327,6 +327,8 @@ class ProvenanceCapture:
             # NOTE: this implies that it is possible for an action.yaml file to
             # contain an artifact UUID that is not in the artifacts/ directory.
             return NoProvenance(artifact.uuid)
+        elif not os.path.exists(other_path):
+            return NoProvenance(artifact.uuid)
 
         destination = self.ancestor_dir / str(artifact.uuid)
         # If it exists, then the artifact is already in the provenance
