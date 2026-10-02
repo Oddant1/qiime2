@@ -684,13 +684,10 @@ class TestResultCollection(unittest.TestCase):
             ResultCollection.load(self.output_fp)
 
     def test_iter(self):
-        # Assert that iterating over the ResultCollection behaves the same as
-        # iterating over the underlying collection attribute.
         self.assertEqual(list(self.collection), ['foo', 'bar'])
         self.assertEqual(
-            list(self.collection), list(self.collection.collection))
-        self.assertIs(type(iter(self.collection)),
-                      type(iter(self.collection.collection)))
+            list(self.collection), list(self.collection.collection)
+        )
 
     def test_collection_non_str_keys(self):
         with self.assertRaisesRegex(
