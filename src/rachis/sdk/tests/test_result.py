@@ -684,6 +684,8 @@ class TestResultCollection(unittest.TestCase):
             ResultCollection.load(self.output_fp)
 
     def test_iter(self):
+        # Assert that iterating over the ResultCollection behaves the same as
+        # iterating over the underlying collection attribute.
         self.assertEqual(list(self.collection), ['foo', 'bar'])
         self.assertEqual(
             list(self.collection), list(self.collection.collection))
