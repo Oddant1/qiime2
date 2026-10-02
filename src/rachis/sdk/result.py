@@ -793,7 +793,7 @@ class ResultCollection:
         return len(self.collection)
 
     def __iter__(self):
-        yield self.collection.__iter__()
+        return iter(self.collection)
 
     def __setitem__(self, key, item):
         rachis.sdk.util.validate_result_collection_keys(key)

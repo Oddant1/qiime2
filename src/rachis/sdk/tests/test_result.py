@@ -683,6 +683,19 @@ class TestResultCollection(unittest.TestCase):
                             "order file but does not exist"):
             ResultCollection.load(self.output_fp)
 
+    def test_iter(self):
+        self.assertEqual(list(self.collection), ['foo', 'bar'])
+        self.assertEqual(
+            list(self.collection), list(self.collection.collection))
+        self.assertIs(type(iter(self.collection)),
+                      type(iter(self.collection.collection)))
+
+        it = iter(self.collection)
+        next(it)
+        self.collection['baz'] = Artifact.import_data(SingleInt, 2)
+        with self.assertRaisesRegex(RuntimeError, 'changed size'):
+            next(it)
+
     def test_collection_non_str_keys(self):
         with self.assertRaisesRegex(
                 KeyError, 'ResultCollection keys must be strings and may only '
