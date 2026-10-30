@@ -47,8 +47,9 @@ VENDORED_CONFIG = {
         }
     }
 
-# Directs keys in the config whose values need to be objects to the module, or
-# modules in search order, that contain the class they need to instantiate
+# Directs keys in the config whose values need to be objects to the module that
+# contains the class they need to instantiate
+PARSL_DATA_PROVIDER = 'parsl.data_provider'
 PARSL_EXECUTOR = 'parsl.executors'
 PARSL_LAUNCHER = 'parsl.launchers'
 PARSL_MANAGER_SELECTOR = 'parsl.executors.high_throughput.manager_selector'
@@ -148,10 +149,12 @@ def get_vendored_config():
     """
     from rachis.core.util import in_test_mode
 
-    # If we are running tests, use the vendored config dict so the tests do not
-    # depend on or write config files on this machine
+    # If we are running tests, always use the vendored config dict, don't try
+    # to load from a file and potentially get a different config.
+    config_fp = None
     if in_test_mode():
-        config_fp = None
+        source = 'vendored config dict'
+        config_dict = copy.copy(VENDORED_CONFIG)
     else:
         config_fp = _get_vendored_config_path()
 
