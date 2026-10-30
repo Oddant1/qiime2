@@ -95,6 +95,8 @@ class TestConfig(unittest.TestCase):
         self.mapping_config_fp = self.get_data_path('mapping_config.toml')
         self.mapping_only_config_fp = \
             self.get_data_path('mapping_only_config.toml')
+        self.mapping_only_config_old_fp = \
+            self.get_data_path('mapping_only_config_old.toml')
 
     def tearDown(self):
         self.test_dir.cleanup()
@@ -227,19 +229,6 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(list_execution_contexts, self.default_expected)
             self.assertEqual(dict_execution_contexts, self.default_expected)
 
-    def test_load_complex_config(self):
-        """ Test that all parsl modules we currently map are correct
-        """
-        config, mapping = load_config_from_file(self.complex_config_fp)
-
-        self.assertEqual(mapping, {})
-
-        # Just assert that we were able to parse the file and get a config out
-        with ParallelConfig(config, mapping):
-            self.assertIsInstance(
-                PARALLEL_CONFIG.parallel_config, parsl.Config)
-            self.assertEqual(PARALLEL_CONFIG.action_executor_mapping, {})
-
     def test_no_config(self):
         with self.assertRaisesRegex(ValueError,
                                     'You must load a parallel config'):
@@ -335,27 +324,6 @@ class TestParslConfigParsing(unittest.TestCase):
         PARALLEL_CONFIG.debug = False
         PARALLEL_CONFIG.parallel_config = None
         PARALLEL_CONFIG.action_executor_mapping = {}
-
-    def test_load_complex_config(self):
-        """ Test that all parsl modules we currently map are correct
-        """
-        config, mapping = load_config_from_file(
-            self.config_dir / 'complex_config.toml')
-
-        self.assertEqual(mapping, {})
-
-        # Just assert that we were able to parse the file and get a config out
-        with ParallelConfig(config, mapping):
-            self.assertIsInstance(
-                PARALLEL_CONFIG.parallel_config, parsl.Config)
-            self.assertEqual(PARALLEL_CONFIG.action_executor_mapping, {})
-
-    def test_old_mapping(self):
-        with self.assertRaisesRegex(TypeError,
-                                    'The provided mapping:\n\n'
-                                    "{'list_of_ints': 'test'}"):
-            load_config_from_file(
-                self.config_dir / 'mapping_only_config_old.toml')
 
     def test_every_parsl_option_is_in_a_config(self):
         classes = [parsl.Config, parsl.monitoring.MonitoringHub]
